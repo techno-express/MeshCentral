@@ -16,7 +16,6 @@
     <StartWebBrowser>False</StartWebBrowser>
     <ScriptArguments>
     </ScriptArguments>
-    <LastActiveSolutionConfig>Release|Any CPU</LastActiveSolutionConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
