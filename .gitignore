@@ -297,3 +297,5 @@ __pycache__/
 *.xsd.cs
 *.db
 package-lock.json
+MeshCentralServer.njsproj
+bin/meshcentral
