@@ -57,6 +57,7 @@ function CreateMeshCentralServer(config, args) {
     obj.currentVer = null;
     obj.serverKey = new Buffer(obj.crypto.randomBytes(32), 'binary');
     obj.loginCookieEncryptionKey = null;
+    obj.serverSelfWriteAllowed = false;
     try { obj.currentVer = JSON.parse(obj.fs.readFileSync(obj.path.join(__dirname, 'package.json'), 'utf8')).version; } catch (e) { } // Fetch server version
 
     // Setup the default configuration and files paths
@@ -179,7 +180,7 @@ function CreateMeshCentralServer(config, args) {
         xprocess.stdout.on('data', function (data) { if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); } if (data.indexOf('Updating settings folder...') >= 0) { xprocess.xrestart = 1; } else if (data.indexOf('Updating server certificates...') >= 0) { xprocess.xrestart = 1; } else if (data.indexOf('Server Ctrl-C exit...') >= 0) { xprocess.xrestart = 2; } else if (data.indexOf('Starting self upgrade...') >= 0) { xprocess.xrestart = 3; } console.log(data); });
         xprocess.stderr.on('data', function (data) {
             if (data.startsWith('le.challenges[tls-sni-01].loopback')) { return; } // Ignore this error output from GreenLock
-            if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); } obj.fs.appendFileSync(obj.getConfigFilePath('mesherrors.txt'), '-------- ' + new Date().toLocaleString() + ' --------\r\n\r\n' + data + '\r\n\r\n\r\n');
+            if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); } obj.fs.appendFileSync(obj.getConfigFilePath('mesherrors.txt'), '-------- ' + new Date().toLocaleString() + ' ---- ' + obj.currentVer + ' --------\r\n\r\n' + data + '\r\n\r\n\r\n');
         });
         xprocess.on('close', function (code) { if ((code != 0) && (code != 123)) { /* console.log("Exited with code " + code); */ } });
     };
@@ -491,7 +492,7 @@ function CreateMeshCentralServer(config, args) {
     // Perform maintenance operations (called every hour)
     obj.maintenanceActions = function () {
         // Check if we need to perform server self-update
-        if (obj.args.selfupdate == true) {
+        if ((obj.args.selfupdate == true) && (obj.serverSelfWriteAllowed == true)) {
             obj.db.getValueOfTheDay('performSelfUpdate', 1, function (performSelfUpdate) {
                 if (performSelfUpdate.value > 0) {
                     performSelfUpdate.value--;
@@ -946,12 +947,12 @@ function CreateMeshCentralServer(config, args) {
         8: { id: 8, localname: 'MeshAgent-Linux-XEN-x86-32', rname: 'meshagent', desc: 'XEN x86-64', update: true, amt: false, platform: 'linux' },
         9: { id: 9, localname: 'meshagent_arm', rname: 'meshagent', desc: 'Linux ARM5', update: true, amt: false, platform: 'linux' },
         10: { id: 10, localname: 'MeshAgent-Linux-ARM-PlugPC', rname: 'meshagent', desc: 'Linux ARM PlugPC', update: true, amt: false, platform: 'linux' },
-        11: { id: 11, localname: 'MeshAgent-OSX-x86-32', rname: 'meshosx', desc: 'Apple OSX x86-32', update: true, amt: false, platform: 'linux' },
+        11: { id: 11, localname: 'meshagent_osx-x86-32', rname: 'meshosx', desc: 'Apple OSX x86-32', update: true, amt: false, platform: 'linux' },
         12: { id: 12, localname: 'MeshAgent-Android-x86', rname: 'meshandroid', desc: 'Android x86-32', update: true, amt: false, platform: 'linux' },
         13: { id: 13, localname: 'meshagent_pogo', rname: 'meshagent', desc: 'Linux ARM PogoPlug', update: true, amt: false, platform: 'linux' },
         14: { id: 14, localname: 'MeshAgent-Android-APK', rname: 'meshandroid', desc: 'Android Market', update: false, amt: false, platform: 'android' }, // Get this one from Google Play
         15: { id: 15, localname: 'meshagent_poky', rname: 'meshagent', desc: 'Linux Poky x86-32', update: true, amt: false, platform: 'linux' },
-        16: { id: 16, localname: 'MeshAgent-OSX-x86-64', rname: 'meshagent', desc: 'Apple OSX x86-64', update: true, amt: false, platform: 'osx' },
+        16: { id: 16, localname: 'meshagent_osx-x86-64', rname: 'meshagent', desc: 'Apple OSX x86-64', update: true, amt: false, platform: 'osx' },
         17: { id: 17, localname: 'MeshAgent-ChromeOS', rname: 'meshagent', desc: 'Google ChromeOS', update: false, amt: false, platform: 'chromeos' }, // Get this one from Chrome store
         18: { id: 18, localname: 'meshagent_poky64', rname: 'meshagent', desc: 'Linux Poky x86-64', update: true, amt: false, platform: 'linux' },
         19: { id: 19, localname: 'meshagent_x86_nokvm', rname: 'meshagent', desc: 'Linux x86-32 NoKVM', update: true, amt: true, platform: 'linux' },
@@ -1087,14 +1088,17 @@ function CreateMeshCentralServer(config, args) {
     // Update server state. Writes a server state file.
     var meshServerState = {};
     obj.updateServerState = function (name, val) {
-        if ((name != null) && (val != null)) {
-            var changed = false;
-            if ((name != null) && (meshServerState[name] != val)) { if ((val == null) && (meshServerState[name] != null)) { delete meshServerState[name]; changed = true; } else { if (meshServerState[name] != val) { meshServerState[name] = val; changed = true; } } }
-            if (changed == false) return;
-        }
-        var r = 'time=' + Date.now() + '\r\n';
-        for (var i in meshServerState) { r += (i + '=' + meshServerState[i] + '\r\n'); }
-        obj.fs.writeFileSync(obj.getConfigFilePath('serverstate.txt'), r);
+        try {
+            if ((name != null) && (val != null)) {
+                var changed = false;
+                if ((name != null) && (meshServerState[name] != val)) { if ((val == null) && (meshServerState[name] != null)) { delete meshServerState[name]; changed = true; } else { if (meshServerState[name] != val) { meshServerState[name] = val; changed = true; } } }
+                if (changed == false) return;
+            }
+            var r = 'time=' + Date.now() + '\r\n';
+            for (var i in meshServerState) { r += (i + '=' + meshServerState[i] + '\r\n'); }
+            obj.fs.writeFileSync(obj.getConfigFilePath('serverstate.txt'), r); // Try to write the server state, this may fail if we don't have permission.
+            obj.serverSelfWriteAllowed = true;
+        } catch (ex) { obj.serverSelfWriteAllowed = false; } // Do nothing since this is not a critical feature.
     };
     
     // Logging funtions
@@ -1104,7 +1108,7 @@ function CreateMeshCentralServer(config, args) {
     function logErrorEvent(msg) { if (obj.servicelog != null) { obj.servicelog.error(msg); } console.error(msg); }
 
     // Read entire file and return it in callback function
-    function readEntireTextFile(filepath, func) {
+    obj.readEntireTextFile = function(filepath, func) {
         var called = false;
         try {
             obj.fs.open(filepath, 'r', function (err, fd) {

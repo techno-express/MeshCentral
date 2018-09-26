@@ -14,6 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
+process.on('uncaughtException', function (ex) {
+    require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": "uncaughtException1: " + ex });
+});
+
+
 function createMeshCore(agent) {
     var obj = {};
 
@@ -23,9 +29,12 @@ function createMeshCore(agent) {
         this.Start = function Start(user) {
             if (this.container == null) {
                 if (process.platform == 'win32') {
-                    this.container = require('ScriptContainer').Create({ processIsolation: 1, sessionId: user.SessionId });
-                }
-                else {
+                    try {
+                        this.container = require('ScriptContainer').Create({ processIsolation: 1, sessionId: user.SessionId });
+                    } catch (ex) {
+                        this.container = require('ScriptContainer').Create({ processIsolation: 1 });
+                    }
+                } else {
                     this.container = require('ScriptContainer').Create({ processIsolation: 1, sessionId: user.uid });
                 }
                 this.container.parent = this;
@@ -41,33 +50,21 @@ function createMeshCore(agent) {
                 this._container = this.container;
                 this._container.parent = this;
                 this.container = null;
-
                 this._container.exit();
             }
         }
     }
+    obj.borderManager = new borderController();
     */
-
-    require('events').EventEmitter.call(obj, true).createEvent('loggedInUsers_Updated');
-    obj.on('loggedInUsers_Updated', function ()
-    {
-        var users = []
-        for(var i = 0; i < obj.loggedInUsers.length; ++i)
-        {
-            users.push((obj.loggedInUsers[i].Domain ? (obj.loggedInUsers[i].Domain + '\\') : '') + obj.loggedInUsers[i].Username);
-        }
-        sendConsoleText('LogOn Status Changed. Active Users => [' + users.join(', ') + ']');
-    });
-    //obj.borderManager = new borderController();
     
     // MeshAgent JavaScript Core Module. This code is sent to and running on the mesh agent.
-    obj.meshCoreInfo = "MeshCore v5";
+    obj.meshCoreInfo = "MeshCore v6";
     obj.meshCoreCapabilities = 14; // Capability bitmask: 1 = Desktop, 2 = Terminal, 4 = Files, 8 = Console, 16 = JavaScript
-    obj.loggedInUsers = [];
+    obj.loggedInUsers = null;
 
     var meshServerConnectionState = 0;
     var tunnels = {};
-    var lastSelfInfo = null;
+    var lastMeInfo = null;
     var lastNetworkInfo = null;
     var lastPublicLocationInfo = null;
     var selfInfoUpdateTimer = null;
@@ -84,6 +81,10 @@ function createMeshCore(agent) {
     var networkMonitor = null;
     var amtscanner = null;
     var nextTunnelIndex = 1;
+    
+    // Get the operating system description string
+    var osDesc = null;
+    try { require('os').name().then(function (v) { osDesc = v; if (mesh.isControlChannelConnected) { mesh.SendCommand({ "action": "coreinfo", "value": obj.meshCoreInfo, "osdesc": osDesc }); } }); } catch (ex) { }
 
     /*
     var AMTScanner = require("AMTScanner");
@@ -116,23 +117,23 @@ function createMeshCore(agent) {
         var AMTScannerModule = require('amt-scanner');
         amtscanner = new AMTScannerModule();
         //amtscanner.on('found', function (data) { if (typeof data != 'string') { data = JSON.stringify(data, null, " "); } sendConsoleText(data); });
-    } catch (e) { amtscanner = null; }
+    } catch (ex) { amtscanner = null; }
     
     // Try to load up the MEI module
     try {
         var amtMeiLib = require('amt-mei');
         amtMei = new amtMeiLib();
-        amtMei.on('error', function (e) { amtMeiLib = null; amtMei = null; sendPeriodicServerUpdate(); });
+        amtMei.on('error', function (e) { amtMeiLib = null; amtMei = null; amtMeiConnected = -1; });
         amtMeiConnected = 2;
-        //amtMei.on('connect', function () { amtMeiConnected = 2; sendPeriodicServerUpdate(); });
-    } catch (e) { amtMeiLib = null; amtMei = null; amtMeiConnected = -1; }
+        sendPeriodicServerUpdate(1);
+    } catch (ex) { amtMeiLib = null; amtMei = null; amtMeiConnected = -1; }
     
     // Try to load up the WIFI scanner
     try {
         var wifiScannerLib = require('wifi-scanner');
         wifiScanner = new wifiScannerLib();
         wifiScanner.on('accessPoint', function (data) { sendConsoleText(JSON.stringify(data)); });
-    } catch (e) { wifiScannerLib = null; wifiScanner = null; }
+    } catch (ex) { wifiScannerLib = null; wifiScanner = null; }
     
     // If we are running in Duktape, agent will be null
     if (agent == null) {
@@ -141,7 +142,10 @@ function createMeshCore(agent) {
         sha = require('SHA256Stream');
         mesh = require('MeshAgent');
         childProcess = require('child_process');
-        if (mesh.hasKVM == 1) { obj.meshCoreCapabilities |= 1; }
+        if (mesh.hasKVM == 1) { // if the agent is compiled with KVM support
+            // Check if this computer supports a desktop
+            try { if ((process.platform == 'win32') || (process.platform == 'darwin') || (require('monitor-info').kvm_x11_support)) { obj.meshCoreCapabilities |= 1; } } catch (ex) { }
+        }
     } else {
         // Running in nodejs
         obj.meshCoreInfo += '-NodeJS';
@@ -703,10 +707,9 @@ function createMeshCore(agent) {
                         break;
                     }
                     case 'rm': {
-                        // Remove many files or folders
+                        // Delete, possibly recursive delete
                         for (var i in cmd.delfiles) {
-                            var fullpath = obj.path.join(cmd.path, cmd.delfiles[i]);
-                            try { fs.unlinkSync(fullpath); } catch (e) { console.log(e); }
+                            try { deleteFolderRecursive(obj.path.join(cmd.path, cmd.delfiles[i]), cmd.rec); } catch (e) { }
                         }
                         break;
                     }
@@ -908,7 +911,7 @@ function createMeshCore(agent) {
             var response = null;
             switch (cmd) {
                 case 'help': { // Displays available commands
-                    response = 'Available commands: help, info, args, print, type, dbget, dbset, dbcompact, eval, parseuri, httpget,\r\nwslist, wsconnect, wssend, wsclose, notify, ls, ps, kill, amt, netinfo, location, power, wakeonlan, scanwifi,\r\nscanamt, setdebug, smbios, rawsmbios, toast, lock, users, border.';
+                    response = 'Available commands: help, info, osinfo, args, print, type, dbget, dbset, dbcompact, eval, parseuri, httpget,\r\nwslist, wsconnect, wssend, wsclose, notify, ls, ps, kill, amt, netinfo, location, power, wakeonlan, scanwifi,\r\nscanamt, setdebug, smbios, rawsmbios, toast, lock, users, sendcaps.';
                     break;
                 }
                     /*
@@ -932,12 +935,7 @@ function createMeshCore(agent) {
                     */
                 case 'users':
                     {
-                        var retList = [];
-                        for(var i = 0; i < obj.loggedInUsers.length; ++i)
-                        {
-                            retList.push((obj.loggedInUsers[i].Domain ? (obj.loggedInUsers[i].Domain + '\\') : '') + obj.loggedInUsers[i].Username);
-                        }
-                        response = 'Active Users => [' + retList.join(', ') + ']';
+                        if (obj.loggedInUsers == null) { response = 'Active users are unknown.'; } else { response = 'Active Users: ' + obj.loggedInUsers.join(', ') + '.'; }
                     }
                     break;
                 case 'toast': {
@@ -1021,17 +1019,43 @@ function createMeshCore(agent) {
                     break;
                 }
                 case 'info': { // Return information about the agent and agent core module
-                    response = 'Current Core: ' + obj.meshCoreInfo + '.\r\nAgent Time: ' + Date() + '.\r\nUser Rights: 0x' + rights.toString(16) + '.\r\nPlatform Info: ' + process.platform + '.\r\nCapabilities: ' + obj.meshCoreCapabilities + '.\r\nServer URL: ' + mesh.ServerUrl + '.';
+                    response = 'Current Core: ' + obj.meshCoreInfo + '.\r\nAgent Time: ' + Date() + '.\r\nUser Rights: 0x' + rights.toString(16) + '.\r\nPlatform: ' + process.platform + '.\r\nCapabilities: ' + obj.meshCoreCapabilities + '.\r\nServer URL: ' + mesh.ServerUrl + '.';
                     if (amtLmsState >= 0) { response += '\r\nBuilt-in LMS: ' + ['Disabled', 'Connecting..', 'Connected'][amtLmsState] + '.'; }
-                    response += '\r\nModules: ' + addedModules.join(', ');
-                    response += '\r\nServerConnected: ' + mesh.isControlChannelConnected;
+                    if (osDesc) { response += '\r\nOS: ' + osDesc + '.'; }
+                    response += '\r\nModules: ' + addedModules.join(', ') + '.';
+                    response += '\r\nServer Connection: ' + mesh.isControlChannelConnected + ', State: ' + meshServerConnectionState + '.';
+                    response += '\r\lastMeInfo: ' + lastMeInfo + '.';
                     var oldNodeId = db.Get('OldNodeId');
                     if (oldNodeId != null) { response += '\r\nOldNodeID: ' + oldNodeId + '.'; }
-                    response += '\r\ServerState: ' + meshServerConnectionState + '.';
+                    if (process.platform != 'win32') { response += '\r\nX11 support: ' + require('monitor-info').kvm_x11_support + '.'; }
                     break;
                 }
-                case 'selfinfo': { // Return self information block
-                    buildSelfInfo(function (info) { sendConsoleText(objToString(info, 0, ' ', true), sessionid); });
+                case 'osinfo': { // Return the operating system information
+                    var i = 1;
+                    if (args['_'].length > 0) { i = parseInt(args['_'][0]); if (i > 8) { i = 8; } response = 'Calling ' + i + ' times.'; }
+                    for (var j = 0; j < i; j++) {
+                        var pr = require('os').name();
+                        pr.sessionid = sessionid;
+                        pr.then(function (v) { sendConsoleText("OS: " + v, this.sessionid); });
+                    }
+                    break;
+                }
+                case 'sendcaps': { // Send capability flags to the server
+                    if (args['_'].length == 0) {
+                        response = 'Proper usage: sendcaps (number)'; // Display correct command usage
+                    } else {
+                        var flags = { "action": "coreinfo", "value": obj.meshCoreInfo, "caps": parseInt(args['_'][0]) };
+                        mesh.SendCommand(flags);
+                        response = JSON.stringify(flags);
+                    }
+                    break;
+                }
+                case 'sendosdesc': { // Send OS description
+                    var os = osDesc;
+                    if (args['_'].length > 0) { os = args['_'][0]; }
+                    var flags = { "action": "coreinfo", "value": obj.meshCoreInfo, "osdesc": os };
+                    mesh.SendCommand(flags);
+                    response = JSON.stringify(flags);
                     break;
                 }
                 case 'args': { // Displays parsed command arguments
@@ -1333,29 +1357,22 @@ function createMeshCore(agent) {
             // Server connected, send mesh core information
             var oldNodeId = db.Get('OldNodeId');
             if (oldNodeId != null) { mesh.SendCommand({ action: 'mc1migration', oldnodeid: oldNodeId }); }
-            sendPeriodicServerUpdate(true);
-            //if (selfInfoUpdateTimer == null) { selfInfoUpdateTimer = setInterval(sendPeriodicServerUpdate, 60000); } // Should be a long time, like 20 minutes. For now, 1 minute.
+
+            // Update the server wtih basic info
+            var r = { "action": "coreinfo", "value": obj.meshCoreInfo, "caps": obj.meshCoreCapabilities };
+            if (osDesc != null) { r.osdesc = osDesc; }
+            mesh.SendCommand(r);
+
+            // Update list of logged in users
+            if (obj.loggedInUsers != null) { mesh.SendCommand({ "action": "coreinfo", "v": { "users": obj.loggedInUsers } }); }
+
+            // Update the server on more advanced stuff, like Intel ME and Network Settings
+            meInfoStr = null;
+            sendPeriodicServerUpdate();
+            //if (selfInfoUpdateTimer == null) { selfInfoUpdateTimer = setInterval(sendPeriodicServerUpdate, 1200000); } // 20 minutes
         }
     }
-    
-    // Build a bunch a self information data that will be sent to the server
-    // We need to do this periodically and if anything changes, send the update to the server.
-    function buildSelfInfo(func) {
-        getAmtInfo(function (meinfo) {
-            var r = { "action": "coreinfo", "value": obj.meshCoreInfo, "caps": obj.meshCoreCapabilities };
-            if (meinfo != null) {
-                var intelamt = {}, p = false;
-                if (meinfo.Versions && meinfo.Versions.AMT) { intelamt.ver = meinfo.Versions.AMT; p = true; }
-                if (meinfo.ProvisioningState) { intelamt.state = meinfo.ProvisioningState; p = true; }
-                if (meinfo.Flags) { intelamt.flags = meinfo.Flags; p = true; }
-                if (meinfo.OsHostname) { intelamt.host = meinfo.OsHostname; p = true; }
-                if (meinfo.UUID) { intelamt.uuid = meinfo.UUID; p = true; }
-                if (p == true) { r.intelamt = intelamt }
-            }
-            func(r);
-        });
-    }
-    
+        
     // Update the server with the latest network interface information
     var sendNetworkUpdateNagleTimer = null;
     function sendNetworkUpdateNagle() { if (sendNetworkUpdateNagleTimer != null) { clearTimeout(sendNetworkUpdateNagleTimer); sendNetworkUpdateNagleTimer = null; } sendNetworkUpdateNagleTimer = setTimeout(sendNetworkUpdate, 5000); }
@@ -1370,17 +1387,33 @@ function createMeshCore(agent) {
     }
     
     // Called periodically to check if we need to send updates to the server
-    function sendPeriodicServerUpdate(force) {
-        if ((amtMeiConnected != 1) || (force == true)) { // If we are pending MEI connection, hold off on updating the server on self-info
-            // Update the self information data
-            buildSelfInfo(function (selfInfo) {
-                selfInfoStr = JSON.stringify(selfInfo);
-                if ((force == true) || (selfInfoStr != lastSelfInfo)) { mesh.SendCommand(selfInfo); lastSelfInfo = selfInfoStr; }
+    function sendPeriodicServerUpdate(flags) {
+        if (meshServerConnectionState == 0) return; // Not connected to server, do nothing.
+        if (!flags) { flags = 0xFFFFFFFF; }
+
+        if (flags & 1) {
+            // If we have a connected MEI, get Intel ME information
+            getAmtInfo(function (meinfo) {
+                try {
+                    if (meinfo == null) return;
+                    var intelamt = {}, p = false;
+                    if (meinfo.Versions && meinfo.Versions.AMT) { intelamt.ver = meinfo.Versions.AMT; p = true; }
+                    if (meinfo.ProvisioningState) { intelamt.state = meinfo.ProvisioningState; p = true; }
+                    if (meinfo.Flags) { intelamt.flags = meinfo.Flags; p = true; }
+                    if (meinfo.OsHostname) { intelamt.host = meinfo.OsHostname; p = true; }
+                    if (meinfo.UUID) { intelamt.uuid = meinfo.UUID; p = true; }
+                    if (p == true) {
+                        var meInfoStr = JSON.stringify({ "action": "coreinfo", "value": obj.meshCoreInfo, "intelamt": intelamt });
+                        if (meInfoStr != lastMeInfo) { mesh.SendCommand(meInfoStr); lastMeInfo = meInfoStr; }
+                    }
+                } catch (ex) { }
             });
         }
-        
-        // Update network information
-        sendNetworkUpdateNagle(force);
+
+        if (flags & 2) {
+            // Update network information
+            sendNetworkUpdateNagle(false);
+        }
     }
     
     // Get Intel AMT information using MEI
@@ -1442,25 +1475,24 @@ function createMeshCore(agent) {
             });
         } catch (e) { amtLmsState = -1; amtLms = null; }
 
-        // Check if the control channel is connected
-        if (mesh.isControlChannelConnected) {
-            sendPeriodicServerUpdate(true); // Send the server update
-        }
-
-        require('user-sessions').on('changed', function onUserSessionChanged()
-        {
-            require('user-sessions').enumerateUsers().then(function (users)
-            {
-                obj.loggedInUsers = users.Active;
-                obj.emit('loggedInUsers_Updated');
+        // Setup logged in user monitoring
+        try {
+            var userSession = require('user-sessions');
+            userSession.on('changed', function onUserSessionChanged() {
+                userSession.enumerateUsers().then(function (users) {
+                    var u = [], a = users.Active;
+                    for (var i = 0; i < a.length; i++) {
+                        var un = a[i].Domain ? (a[i].Domain + '\\' + a[i].Username) : (a[i].Username);
+                        if (u.indexOf(un) == -1) { u.push(un); } // Only push users in the list once.
+                    }
+                    obj.loggedInUsers = u;
+                    if (mesh.isControlChannelConnected) { mesh.SendCommand({ "action": "coreinfo", "users": u }); }
+                });
             });
-        });
-
-        require('user-sessions').emit('changed');
-        require('user-sessions').on('locked', function (user) { sendConsoleText('[' + (user.Domain ? user.Domain + '\\' : '') + user.Username + '] has LOCKED the desktop'); });
-        require('user-sessions').on('unlocked', function (user) { sendConsoleText('[' + (user.Domain ? user.Domain + '\\' : '') + user.Username + '] has UNLOCKED the desktop'); });
-        //console.log('Stopping.');
-        //process.exit();
+            userSession.emit('changed');
+            //userSession.on('locked', function (user) { sendConsoleText('[' + (user.Domain ? user.Domain + '\\' : '') + user.Username + '] has LOCKED the desktop'); });
+            //userSession.on('unlocked', function (user) { sendConsoleText('[' + (user.Domain ? user.Domain + '\\' : '') + user.Username + '] has UNLOCKED the desktop'); });
+        } catch (ex) { }
     }
     
     obj.stop = function () {
@@ -1485,7 +1517,8 @@ function createMeshCore(agent) {
     // KVM Data Channel
     //
 
-    obj.setupMeiOsAdmin = function(func, state) {
+    obj.setupMeiOsAdmin = function (func, state) {
+        if ((amtMei == null) || (amtMeiConnected != 2)) { return; } // If there is no MEI, don't bother with this.
         amtMei.getLocalSystemAccount(function (x) {
             var transport = require('amt-wsman-duk');
             var wsman = require('amt-wsman');
@@ -1724,6 +1757,23 @@ function createMeshCore(agent) {
         obj.osamtstack.IPS_KVMRedirectionSettingData_DataChannelWrite(Buffer.from(x).toString('base64'), function () { });
     }
 
+    // Delete a directory with a files and directories within it
+    function deleteFolderRecursive(path, rec) {
+        if (fs.existsSync(path)) {
+            if (rec == true) {
+                fs.readdirSync(obj.path.join(path, '*')).forEach(function (file, index) {
+                    var curPath = obj.path.join(path, file);
+                    if (fs.statSync(curPath).isDirectory()) { // recurse
+                        deleteFolderRecursive(curPath, true);
+                    } else { // delete file
+                        fs.unlinkSync(curPath);
+                    }
+                });
+            }
+            fs.unlinkSync(path);
+        }
+    };
+
     return obj;
 }
 
@@ -1731,14 +1781,18 @@ function createMeshCore(agent) {
 // Module startup
 //
 
-var xexports = null, mainMeshCore = null;
-try { xexports = module.exports; } catch (e) { }
+try {
+    var xexports = null, mainMeshCore = null;
+    try { xexports = module.exports; } catch (e) { }
 
-if (xexports != null) {
-    // If we are running within NodeJS, export the core
-    module.exports.createMeshCore = createMeshCore;
-} else {
-    // If we are not running in NodeJS, launch the core
-    mainMeshCore = createMeshCore();
-    mainMeshCore.start(null);
+    if (xexports != null) {
+        // If we are running within NodeJS, export the core
+        module.exports.createMeshCore = createMeshCore;
+    } else {
+        // If we are not running in NodeJS, launch the core
+        mainMeshCore = createMeshCore();
+        mainMeshCore.start(null);
+    }
+} catch (ex) {
+    require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": "uncaughtException2: " + ex });
 }
