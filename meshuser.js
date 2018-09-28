@@ -28,6 +28,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
     obj.common = parent.common;
     obj.fs = require('fs');
     obj.path = require('path');
+    obj.serverStatsTimer = null;
 
 // Create windows sfx mesh agent    
     var Zip = require('node-7z-forall');   
@@ -164,6 +165,19 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
         user.subscriptions = obj.parent.subscribe(user._id, ws);   // Subscribe to events
         obj.ws._socket.setKeepAlive(true, 240000);                 // Set TCP keep alive
 
+        // Send current server statistics
+        obj.SendServerStats = function () {
+            obj.db.getStats(function (data) {
+                var os = require('os');
+                var stats = { action: 'serverstats', totalmem: os.totalmem(), freemem: os.freemem() };
+                if (obj.parent.parent.platform != 'win32') { stats.cpuavg = os.loadavg(); } // else { stats.cpuavg = [ 0.2435345, 0.523234234, 0.6435345345 ]; }
+                var serverStats = { "User Accounts": Object.keys(obj.parent.users).length, "Device Groups": Object.keys(obj.parent.meshes).length, "Connected Agents": Object.keys(obj.parent.wsagents).length, "Connected Users": Object.keys(obj.parent.wssessions2).length };
+                if (obj.parent.parent.mpsserver != null) { serverStats['Connected Intel&reg; AMT'] = Object.keys(obj.parent.parent.mpsserver.ciraConnections).length; }
+                stats.values = { "Server State": serverStats, "Database": { "Records": data.total, "Users": data.users, "Device Groups": data.meshes, "Devices": data.nodes, "Device NetInfo": data.nodeInterfaces, "Device Power Event": data.powerEvents, "Notes": data.notes, "Connection Records": data.connectEvents, "SMBios": data.smbios } }
+                try { ws.send(JSON.stringify(stats)); } catch (ex) { }
+            });
+        }
+
         // When data is received from the web socket
         ws.on('message', function (msg) {
             var command, user = obj.parent.users[req.session.userid], i = 0, mesh = null, meshid = null, nodeid = null, meshlinks = null, change = 0;
@@ -172,6 +186,20 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
 
             switch (command.action) {
                 case 'ping': { try { ws.send(JSON.stringify({ action: 'pong' })); } catch (ex) { } break; }
+                case 'serverstats':
+                    {
+                        if ((user.siteadmin) != 0) {
+                            if (obj.common.validateInt(command.interval, 1000, 1000000) == false) {
+                                // Clear the timer
+                                if (obj.serverStatsTimer != null) { clearInterval(obj.serverStatsTimer); obj.serverStatsTimer = null; }
+                            } else {
+                                // Set the timer
+                                obj.SendServerStats();
+                                obj.serverStatsTimer = setInterval(obj.SendServerStats, command.interval);
+                            }
+                        }
+                        break;
+                    }
                 case 'meshes':
                     {
                         // Request a list of all meshes this user as rights to
@@ -757,12 +785,11 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                             if (mesh.links[user._id] == null || ((mesh.links[user._id].rights & 1) == 0)) return;
                             if ((command.meshid.split('/').length != 3) || (command.meshid.split('/')[1] != domain.id)) return; // Invalid domain, operation only valid for current domain
                             var sfxname = mesh.name;
-                            if ((obj.common.validateString(command.meshname, 1, 64) == true) && (command.meshname != mesh.name)) { change = 'Mesh name changed from "' + mesh.name + '" to "' + command.meshname + '"'; mesh.name = command.meshname; }
-
-                            if ((obj.common.validateString(command.desc, 0, 1024) == true) && (command.desc != mesh.desc)) { if (change != '') change += ' and description changed'; else change += 'Mesh "' + mesh.name + '" description changed'; mesh.desc = command.desc; }
-							
-                            if (change != '') {
-                                
+                            if ((obj.common.validateString(command.meshname, 1, 64) == true) && (command.meshname != mesh.name)) { change = 'Group name changed from "' + mesh.name + '" to "' + command.meshname + '"'; mesh.name = command.meshname; }
+                            if ((obj.common.validateString(command.desc, 0, 1024) == true) && (command.desc != mesh.desc)) { if (change != '') change += ' and description changed'; else change += 'Group "' + mesh.name + '" description changed'; mesh.desc = command.desc; }
+                            if ((obj.common.validateInt(command.flags) == true) && (command.flags != mesh.flags)) { if (change != '') change += ' and flags changed'; else change += 'Group "' + mesh.name + '" flags changed'; mesh.flags = command.flags; }
+					
+                            if (change != '') {                                
                                 if (sfxname != mesh.name) {
                                     var makesfx = new Zip();
                                     var tempdir = obj.path.join(__dirname, 'tmp' );
@@ -788,9 +815,8 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                             var tempfile3 = obj.path.join(tempdir, 'MeshService64.exe' );
                                             obj.fs.unlink(tempfile3, (err) => { if (err) console.log(err); });
                                         });
-                                }
-                                
-								if (change != '') { obj.db.Set(obj.common.escapeLinksFieldName(mesh)); obj.parent.parent.DispatchEvent(['*', mesh._id, user._id], obj, { etype: 'mesh', username: user.name, meshid: mesh._id, name: mesh.name, mtype: mesh.mtype, desc: mesh.desc, action: 'meshchange', links: mesh.links, msg: change, domain: domain.id }); }							
+                                }                                
+								if (change != '') { obj.db.Set(obj.common.escapeLinksFieldName(mesh)); obj.parent.parent.DispatchEvent(['*', mesh._id, user._id], obj, { etype: 'mesh', username: user.name, meshid: mesh._id, name: mesh.name, mtype: mesh.mtype, desc: mesh.desc, flags: mesh.flags, action: 'meshchange', links: mesh.links, msg: change, domain: domain.id }); }
                             }
                         }
                         break;
@@ -807,7 +833,6 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                     obj.parent.parent.DispatchEvent(['*', mesh._id, user._id], obj, { etype: 'user', username: user.name, action: 'emailsfxagent', msg: 'User: ' + user.name + 'sent remote session invite to: ' + command.clientname + ', At: ' + command.clientemail });
                                 }
                             }
-
                         }
                         break;
                     }
@@ -958,6 +983,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                     obj.db.Remove('if' + node._id); // Remove interface information
                                     obj.db.Remove('nt' + node._id); // Remove notes
                                     obj.db.Remove('lc' + node._id); // Remove last connect time
+                                    obj.db.Remove('sm' + node._id); // Remove SMBios data
                                     obj.db.RemoveNode(node._id); // Remove all entries with node:id
 
                                     // Event node deletion
@@ -1302,7 +1328,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                         if (obj.common.validateString(command.notes, 1) == false) {
                                             obj.db.Remove('nt' + command.id); // Delete the note for this node
                                         } else {
-                                            obj.db.Set({ _id: 'nt' + command.id, value: command.notes }); // Set the note for this node
+                                            obj.db.Set({ _id: 'nt' + command.id, type: 'note', value: command.notes }); // Set the note for this node
                                         }
                                     }
                                 }
@@ -1318,7 +1344,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                 if (obj.common.validateString(command.notes, 1) == false) {
                                     obj.db.Remove('nt' + command.id); // Delete the note for this node
                                 } else {
-                                    obj.db.Set({ _id: 'nt' + command.id, value: command.notes }); // Set the note for this node
+                                    obj.db.Set({ _id: 'nt' + command.id, type: 'note', value: command.notes }); // Set the note for this mesh
                                 }
                             }
                         } else if ((idtype == 'user') && ((user.siteadmin & 2) != 0)) {
@@ -1326,7 +1352,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                             if (obj.common.validateString(command.notes, 1) == false) {
                                 obj.db.Remove('nt' + command.id); // Delete the note for this node
                             } else {
-                                obj.db.Set({ _id: 'nt' + command.id, value: command.notes }); // Set the note for this node
+                                obj.db.Set({ _id: 'nt' + command.id, type: 'note', value: command.notes }); // Set the note for this user
                             }
                         }
 
@@ -1398,6 +1424,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
         // If the web socket is closed
         ws.on('close', function (req) {
             obj.parent.parent.RemoveAllEventDispatch(ws);
+            if (obj.serverStatsTimer != null) { clearInterval(obj.serverStatsTimer); obj.serverStatsTimer = null; }
             if (req.session && req.session.ws && req.session.ws == ws) { delete req.session.ws; }
             if (obj.parent.wssessions2[ws.sessionId]) { delete obj.parent.wssessions2[ws.sessionId]; }
             if (obj.parent.wssessions[ws.userid]) {
