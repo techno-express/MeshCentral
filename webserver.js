@@ -214,7 +214,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         if (!module.parent) console.log('authenticating %s:%s:%s', domain.id, name, pass);
         var user = obj.users['user/' + domain.id + '/' + name.toLowerCase()];
         // Query the db for the given username
-        if (!user) return fn(new Error('cannot find user'));
+        if (!user) { fn(new Error('cannot find user')); return; }
         // Apply the same algorithm to the POSTed password, applying the hash against the pass / salt, if there is a match we found the user
         if (user.salt == null) {
             fn(new Error('invalid password'));
@@ -1059,40 +1059,21 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     };
 
     // Handle a web socket relay request
-    function handleRelayWebSocket(ws, req) {
-        var domain = checkUserIpAddress(ws, req);
-        if (domain == null) return;
-        // Check if this is a logged in user
-        var user, peering = true;
-        if (req.query.auth == null) {
-            // Use ExpressJS session
-            if (!req.session || !req.session.userid) { return; } // Web socket attempt without login, disconnect.
-            if (req.session.domainid != domain.id) { console.log('ERR: Invalid domain'); return; }
-            user = obj.users[req.session.userid];
-        } else {
-            // Get the session from the cookie
-            if (obj.parent.multiServer == null) { return; }
-            var session = obj.parent.decodeCookie(req.query.auth);
-            if (session == null) { console.log('ERR: Invalid cookie'); return; }
-            if (session.domainid != domain.id) { console.log('ERR: Invalid domain'); return; }
-            user = obj.users[session.userid];
-            peering = false; // Don't allow the connection to jump again to a different server
-        }
-        if (!user) { console.log('ERR: Not a user'); return; }
+    function handleRelayWebSocket(ws, req, domain, user, cookie) {
+        if (!(req.query.host)) { console.log('ERR: No host target specified'); try { ws.close(); } catch (e) { } return; } // Disconnect websocket
         Debug(1, 'Websocket relay connected from ' + user.name + ' for ' + req.query.host + '.');
 
-        ws.pause();                                         // Hold this socket until we are ready.
-        ws._socket.setKeepAlive(true, 240000);              // Set TCP keep alive
+        try { ws._socket.setKeepAlive(true, 240000); } catch (ex) { }   // Set TCP keep alive
 
         // Fetch information about the target
         obj.db.Get(req.query.host, function (err, docs) {
-            if (docs.length == 0) { console.log('ERR: Node not found'); return; }
+            if (docs.length == 0) { console.log('ERR: Node not found'); try { ws.close(); } catch (e) { } return; } // Disconnect websocket
             var node = docs[0];
-            if (!node.intelamt) { console.log('ERR: Not AMT node'); return; }
+            if (!node.intelamt) { console.log('ERR: Not AMT node'); try { ws.close(); } catch (e) { } return; } // Disconnect websocket
 
             // Check if this user has permission to manage this computer
             var meshlinks = user.links[node.meshid];
-            if ((!meshlinks) || (!meshlinks.rights) || ((meshlinks.rights & MESHRIGHT_REMOTECONTROL) == 0)) { console.log('ERR: Access denied (2)'); return; }
+            if ((!meshlinks) || (!meshlinks.rights) || ((meshlinks.rights & MESHRIGHT_REMOTECONTROL) == 0)) { console.log('ERR: Access denied (2)'); try { ws.close(); } catch (e) { } return; }
 
             // Check what connectivity is available for this node
             var state = parent.GetConnectivityState(req.query.host);
@@ -1100,7 +1081,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             if (!state || state.connectivity == 0) { Debug(1, 'ERR: No routing possible (1)'); try { ws.close(); } catch (e) { } return; } else { conn = state.connectivity; }
 
             // Check what server needs to handle this connection
-            if ((obj.parent.multiServer != null) && (peering == true)) {
+            if ((obj.parent.multiServer != null) && (cookie == null)) { // If a cookie is provided, don't allow the connection to jump again to a different server
                 var server = obj.parent.GetRoutingServerId(req.query.host, 2); // Check for Intel CIRA connection
                 if (server != null) {
                     if (server.serverid != obj.parent.serverId) {
@@ -1122,6 +1103,8 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
 
             // If Intel AMT CIRA connection is available, use it
             if (((conn & 2) != 0) && (parent.mpsserver.ciraConnections[req.query.host] != null)) {
+                Debug(1, 'Opening relay CIRA channel connection to ' + req.query.host + '.');
+
                 var ciraconn = parent.mpsserver.ciraConnections[req.query.host];
 
                 // Compute target port, look at the CIRA port mappings, if non-TLS is allowed, use that, if not use TLS
@@ -1132,7 +1115,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
 
                 // Setup a new CIRA channel
                 if ((port == 16993) || (port == 16995)) {
-                    // Perform TLS - ( TODO: THIS IS BROKEN on Intel AMT v7 but works on v10, Not sure why )
+                    // Perform TLS - ( TODO: THIS IS BROKEN on Intel AMT v7 but works on v10, Not sure why. Well, could be broken TLS 1.0 in firmware )
                     var ser = new SerialTunnel();
                     var chnl = parent.mpsserver.SetupCiraChannel(ciraconn, port);
 
@@ -1150,7 +1133,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         if (data.length > 0) { try { ser.updateBuffer(Buffer.from(data, 'binary')); } catch (e) { } }
                     };
 
-                    // Handke CIRA tunnel state change
+                    // Handle CIRA tunnel state change
                     chnl.onStateChange = function (ciraconn, state) {
                         Debug(2, 'Relay TLS CIRA state change', state);
                         if (state == 0) { try { ws.close(); } catch (e) { } }
@@ -1169,6 +1152,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         try {
                             data = data.toString('binary');
                             if (ws.interceptor) { data = ws.interceptor.processAmtData(data); } // Run data thru interceptor
+                            //ws.send(Buffer.from(data, 'binary'));
                             ws.send(data);
                         } catch (e) { }
                     });
@@ -1209,7 +1193,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 ws.forwardclient.onData = function (ciraconn, data) {
                     Debug(4, 'Relay CIRA data', data.length);
                     if (ws.interceptor) { data = ws.interceptor.processAmtData(data); } // Run data thru interceptor
-                    if (data.length > 0) { try { ws.send(data); } catch (e) { } } // TODO: Add TLS support
+                    if (data.length > 0) { try { ws.send(new Buffer(data, 'binary')); } catch (e) { } } // TODO: Add TLS support
                 };
 
                 ws.forwardclient.onSendOk = function (ciraconn) {
@@ -1234,7 +1218,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
 
             // If Intel AMT direct connection is possible, option a direct socket
             if ((conn & 4) != 0) {   // We got a new web socket connection, initiate a TCP connection to the target Intel AMT host/port.
-                Debug(2, 'Opening relay TCP socket connection to ' + req.query.host + '.');
+                Debug(1, 'Opening relay TCP socket connection to ' + req.query.host + '.');
 
                 // When data is received from the web socket, forward the data into the associated TCP connection.
                 ws.on('message', function (msg) {
@@ -1831,9 +1815,6 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         obj.app.post(url + 'resetaccount', handleResetAccountRequest);
         obj.app.get(url + 'checkmail', handleCheckMailRequest);
         obj.app.post(url + 'amtevents.ashx', obj.handleAmtEventRequest);
-        obj.app.get(url + 'webrelay.ashx', function (req, res) { res.send('Websocket connection expected'); });
-        obj.app.ws(url + 'webrelay.ashx', handleRelayWebSocket);
-        obj.app.ws(url + 'control.ashx', function (ws, req) { try { var domain = checkUserIpAddress(ws, req); if (domain != null) { obj.meshUserHandler.CreateMeshUser(obj, obj.db, ws, req, obj.args, domain); } } catch (e) { console.log(e); } });
         obj.app.get(url + 'meshagents', obj.handleMeshAgentRequest);
 <<<<<<< HEAD
         obj.app.get(url + 'meshsfxagents', obj.handleMeshSfxAgentRequest);
@@ -1846,7 +1827,10 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         obj.app.post(url + 'uploadmeshcorefile.ashx', handleUploadMeshCoreFile);
         obj.app.get(url + 'userfiles/*', handleDownloadUserFiles);
         obj.app.ws(url + 'echo.ashx', handleEchoWebSocket);
-        obj.app.ws(url + 'meshrelay.ashx', function (ws, req) { try { obj.meshRelayHandler.CreateMeshRelay(obj, ws, req, getDomain(req)); } catch (e) { console.log(e); } });
+        obj.app.ws(url + 'meshrelay.ashx', function (ws, req) { PerformWSSessionAuth(ws, req, true, function (ws1, req1, domain, user, cookie) { obj.meshRelayHandler.CreateMeshRelay(obj, ws1, req1, domain, user, cookie); }); });
+        obj.app.get(url + 'webrelay.ashx', function (req, res) { res.send('Websocket connection expected'); });
+        obj.app.ws(url + 'webrelay.ashx', function (ws, req) { PerformWSSessionAuth(ws, req, false, handleRelayWebSocket); });
+        obj.app.ws(url + 'control.ashx', function (ws, req) { PerformWSSessionAuth(ws, req, false, function (ws1, req1, domain, user, cookie) { obj.meshUserHandler.CreateMeshUser(obj, obj.db, ws1, req1, obj.args, domain, user); }); });
 
         // Server picture
         obj.app.get(url + 'serverpic.ashx', function (req, res) {
@@ -1877,6 +1861,70 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
 
         // Indicates to ExpressJS that the public folder should be used to serve static files.
         obj.app.use(url, obj.express.static(obj.path.join(__dirname, 'public')));
+    }
+
+    // Authenticates a session and forwards
+    function PerformWSSessionAuth(ws, req, noAuthOk, func) {
+        try {
+            // Hold this websocket until we are ready.
+            ws.pause();
+
+            // Check IP filtering and domain
+            var domain = checkUserIpAddress(ws, req);
+            if (domain == null) { try { ws.send(JSON.stringify({ action: 'close', cause: 'noauth' })); ws.close(); return; } catch (e) { return; } }
+
+            // A web socket session can be authenticated in many ways (Default user, session, user/pass and cookie). Check authentication here.
+            if ((req.query.user != null) && (req.query.pass != null)) {
+                // A user/pass is provided in URL arguments
+                obj.authenticate(req.query.user, req.query.pass, domain, function (err, userid) {
+                    if ((err == null) && (obj.users[userid])) {
+                        // We are authenticated
+                        func(ws, req, domain, obj.users[userid]);
+                    } else {
+                        // Failed to authenticate, see if a default user is active
+                        if (obj.args.user && obj.users['user/' + domain.id + '/' + obj.args.user.toLowerCase()]) {
+                            // A default user is active
+                            func(ws, req, domain, obj.users['user/' + domain.id + '/' + obj.args.user.toLowerCase()]);
+                        } else {
+                            // If not authenticated, close the websocket connection
+                            Debug(1, 'ERR: Websocket bad user/pass auth');
+                            try { ws.send(JSON.stringify({ action: 'close', cause: 'noauth' })); ws.close(); } catch (e) { }
+                        }
+                    }
+                });
+                return;
+            } else if (req.query.auth != null) {
+                // This is a encrypted cookie authentication
+                var cookie = obj.parent.decodeCookie(req.query.auth, null, 60); // Cookie with 60 minute timeout
+                if ((cookie != null) && (obj.users[cookie.userid])) {
+                    // Valid cookie, we are authenticated
+                    func(ws, req, domain, obj.users[cookie.userid], cookie);
+                } else {
+                    // This is a bad cookie
+                    Debug(1, 'ERR: Websocket bad cookie auth: ' + req.query.auth);
+                    try { ws.send(JSON.stringify({ action: 'close', cause: 'noauth' })); ws.close(); } catch (e) { }
+                }
+                return;
+            } else if (obj.args.user && obj.users['user/' + domain.id + '/' + obj.args.user.toLowerCase()]) {
+                // A default user is active
+                func(ws, req, domain, obj.users['user/' + domain.id + '/' + obj.args.user.toLowerCase()]);
+                return;
+            } else if (req.session && (req.session.userid != null) && (req.session.domainid == domain.id) && (obj.users[req.session.userid])) {
+                // This user is logged in using the ExpressJS session
+                func(ws, req, domain, obj.users[req.session.userid]);
+                return;
+            }
+
+            if (noAuthOk != true) {
+                // If not authenticated, close the websocket connection
+                Debug(1, 'ERR: Websocket no auth');
+                try { ws.send(JSON.stringify({ action: 'close', cause: 'noauth' })); ws.close(); } catch (e) { }
+            } else {
+                // Continue this session without user authentication,
+                // this is expected if the agent is connecting for a tunnel.
+                func(ws, req, domain, null);
+            }
+        } catch (e) { console.log(e); }
     }
 
     // Find a free port starting with the specified one and going up.

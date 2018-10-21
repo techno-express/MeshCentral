@@ -14,7 +14,7 @@
 "use strict";
 
 // Construct a MeshAgent object, called upon connection
-module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
+module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain, user) {
     var obj = {};
     obj.db = db;
     obj.ws = ws;
@@ -23,6 +23,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
     obj.certificates = parent.certificates;
     obj.certificateOperations = require('./certoperations.js').CertificateOperations();
     obj.args = args;
+    obj.user = user;
     obj.parent = parent;
     obj.domain = domain;
     obj.common = parent.common;
@@ -119,23 +120,12 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
 
     try {
         // Check if the user is logged in
-        if ((!req.session) || (!req.session.userid) || (req.session.domainid != domain.id)) {
-            // If a default user is active, setup the session here.
-            if (obj.args.user && obj.parent.users['user/' + domain.id + '/' + obj.args.user.toLowerCase()]) {
-                if (req.session && req.session.loginmode) { delete req.session.loginmode; }
-                req.session.userid = 'user/' + domain.id + '/' + obj.args.user.toLowerCase();
-                req.session.domainid = domain.id;
-                req.session.currentNode = '';
-            } else {
-                // Close the websocket connection
-                try { obj.ws.close(); } catch (e) { } return;
-            }
-        }
-        req.session.ws = obj.ws; // Associate this websocket session with the web session
-        req.session.ws.userid = req.session.userid;
-        req.session.ws.domainid = domain.id;
-        var user = obj.parent.users[req.session.userid];
         if (user == null) { try { obj.ws.close(); } catch (e) { } return; }
+
+        // Associate this websocket session with the web session
+        //req.session.ws = obj.ws;
+        //req.session.ws.userid = req.session.userid;
+        //req.session.ws.domainid = domain.id;
 
         // Add this web socket session to session list
         obj.ws.sessionId = user._id + '/' + ('' + Math.random()).substring(2);
@@ -162,8 +152,8 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
             }
         };
 
-        user.subscriptions = obj.parent.subscribe(user._id, ws);   // Subscribe to events
-        obj.ws._socket.setKeepAlive(true, 240000);                 // Set TCP keep alive
+        user.subscriptions = obj.parent.subscribe(user._id, ws); // Subscribe to events
+        try { obj.ws._socket.setKeepAlive(true, 240000); } catch (ex) { } // Set TCP keep alive
 
         // Send current server statistics
         obj.SendServerStats = function () {
@@ -180,9 +170,9 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
 
         // When data is received from the web socket
         ws.on('message', function (msg) {
-            var command, user = obj.parent.users[req.session.userid], i = 0, mesh = null, meshid = null, nodeid = null, meshlinks = null, change = 0;
+            var command, i = 0, mesh = null, meshid = null, nodeid = null, meshlinks = null, change = 0;
             try { command = JSON.parse(msg.toString('utf8')); } catch (e) { return; }
-            if ((user == null) || (obj.common.validateString(command.action, 3, 32) == false)) return; // User must be set and action must be a string between 3 and 32 chars
+            if (obj.common.validateString(command.action, 3, 32) == false) return; // Action must be a string between 3 and 32 chars
 
             switch (command.action) {
                 case 'ping': { try { ws.send(JSON.stringify({ action: 'pong' })); } catch (ex) { } break; }
@@ -371,7 +361,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                     command.sessionid = ws.sessionId;   // Set the session id, required for responses.
                                     command.rights = rights.rights;     // Add user rights flags to the message
                                     delete command.nodeid;              // Remove the nodeid since it's implyed.
-                                    agent.send(JSON.stringify(command));
+                                    try { agent.send(JSON.stringify(command)); } catch (ex) { }
                                 }
                             } else {
                                 // Check if a peer server is connected to this agent
@@ -643,7 +633,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
 
                         // Get the list of sessions for this user
                         var sessions = obj.parent.wssessions[command.userid];
-                        if (sessions != null) { for (i in sessions) { sessions[i].send(JSON.stringify(notification)); } }
+                        if (sessions != null) { for (i in sessions) { try { sessions[i].send(JSON.stringify(notification)); } catch (ex) { } } }
 
                         if (obj.parent.parent.multiServer != null) {
                             // TODO: Add multi-server support
@@ -1043,7 +1033,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                                         var agent = obj.parent.wsagents[i];
                                                         if ((targetMeshes.indexOf(agent.dbMeshKey) >= 0) && (agent.authenticated == 2)) {
                                                             //console.log('Asking agent ' + agent.dbNodeKey + ' to wake ' + macs.join(','));
-                                                            agent.send(JSON.stringify({ action: 'wakeonlan', macs: macs }));
+                                                            try { agent.send(JSON.stringify({ action: 'wakeonlan', macs: macs })); } catch (ex) { }
                                                             wakeActions++;
                                                         }
                                                     }
@@ -1084,7 +1074,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                             var agent = obj.parent.wsagents[node._id];
                                             if (agent != null) {
                                                 // Send the power command
-                                                agent.send(JSON.stringify({ action: 'poweraction', actiontype: command.actiontype }));
+                                                try { agent.send(JSON.stringify({ action: 'poweraction', actiontype: command.actiontype })); } catch (ex) { }
                                                 powerActions++;
                                             }
                                         }
@@ -1122,7 +1112,7 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
                                             var agent = obj.parent.wsagents[node._id];
                                             if (agent != null) {
                                                 // Send the power command
-                                                agent.send(JSON.stringify({ action: 'toast', title: command.title, msg: command.msg }));
+                                                try { agent.send(JSON.stringify({ action: 'toast', title: command.title, msg: command.msg })); } catch (ex) { }
                                             }
                                         }
                                     }
@@ -1459,10 +1449,13 @@ module.exports.CreateMeshUser = function (parent, db, ws, req, args, domain) {
         try { ws.send(JSON.stringify({ action: 'serverinfo', serverinfo: serverinfo })); } catch (ex) { }
 
         // Send user information to web socket, this is the first thing we send
-        var userinfo = obj.common.Clone(obj.parent.users[req.session.userid]);
+        var userinfo = obj.common.Clone(obj.parent.users[user._id]);
         delete userinfo.salt;
         delete userinfo.hash;
         try { ws.send(JSON.stringify({ action: 'userinfo', userinfo: userinfo })); } catch (ex) { }
+
+        // We are all set, start receiving data
+        ws.resume();
     } catch (e) { console.log(e); }
 
     // Read entire file and return it in callback function
