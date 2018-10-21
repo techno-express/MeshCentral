@@ -13,7 +13,7 @@ export MONGODBCOL
 
 su - meshserver
 cd /home/meshserver/
-npm install github:techno-express/MeshCentral
+npm install github:techno-express/MeshCentral 
 
 sed -i "s#: 443,#: $PORT,#" meshcentral-data/config.json
 sed -i "s#: 80,#: $REDIRPORT,#" meshcentral-data/config.json
