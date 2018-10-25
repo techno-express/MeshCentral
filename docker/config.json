@@ -1,4 +1,4 @@
-{ 
+{
     "settings": {
         "Port": 443,
         "RedirPort": 80,
@@ -6,19 +6,19 @@
         "AllowLoginToken": true,
         "AllowFraming": true,
         "WebRTC": true
-        },
+	},
     "letsencrypt": {
-        "email": "mail@",
-        "names": "host.ltd,smtp.host.ltd",
+        "email": "mail@host",
+        "names": "host.ltd",
         "rsaKeySize": 3072,
         "production": true
-        },
+	},
     "smtp": {
         "host": "smtp.host.ltd",
         "port": 25,
-        "from": "mail@",
+        "from": "mail@host",
         "user": "smtp@user",
         "pass": "smtppass!",
-        "tls": true
-        }
+        "tls": false
+	}
 }
