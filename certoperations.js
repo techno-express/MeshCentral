@@ -20,12 +20,26 @@ module.exports.CertificateOperations = function () {
     obj.fs = require("fs");
     obj.forge = require("node-forge");
     obj.crypto = require("crypto");
+    obj.tls = require('tls');
     obj.pki = obj.forge.pki;
     obj.dirExists = function (filePath) { try { return obj.fs.statSync(filePath).isDirectory(); } catch (err) { return false; } };
     obj.getFilesizeInBytes = function (filename) { try { return obj.fs.statSync(filename).size; } catch (err) { return -1; } };
     obj.fileExists = function (filePath) { try { return obj.fs.statSync(filePath).isFile(); } catch (err) { return false; } };
 
-    // Return the SHA386 hash of the certificate public key
+    // Return the certificate of the remote HTTPS server
+    obj.loadCertificate = function (url, tag, func) {
+        var u = require('url').parse(url);
+        if (u.protocol == 'https:') {
+            var tlssocket = obj.tls.connect((u.port ? u.port : 443), u.hostname, { rejectUnauthorized: false }, function () { this.xxcert = this.getPeerCertificate(); this.end(); });
+            tlssocket.xxurl = url;
+            tlssocket.xxfunc = func;
+            tlssocket.xxtag = tag;
+            tlssocket.on('end', function () { this.xxfunc(this.xxurl, this.xxcert, this.xxtag); });
+            tlssocket.on('error', function () { this.xxfunc(this.xxurl, null, this.xxtag); });
+        } else { func(url, null, tag); }
+    };
+
+    // Return the SHA384 hash of the certificate public key
     obj.getPublicKeyHash = function (cert) {
         var publickey = obj.pki.certificateFromPem(cert).publicKey;
         return obj.pki.getPublicKeyFingerprint(publickey, { encoding: "hex", md: obj.forge.md.sha384.create() });
@@ -108,7 +122,7 @@ module.exports.CertificateOperations = function () {
             rcount++;
         }
 
-        if (args.tlsoffload === true) {
+        if (args.tlsoffload) {
             // If the web certificate already exist, load it. Load just the certificate since we are in TLS offload situation
             if (obj.fileExists(parent.getConfigFilePath("webserver-cert-public.crt"))) {
                 r.web = { cert: obj.fs.readFileSync(parent.getConfigFilePath("webserver-cert-public.crt"), "utf8") };
@@ -190,7 +204,7 @@ module.exports.CertificateOperations = function () {
         for (i in config.domains) {
             if ((i != "") && (config.domains[i] != null) && (config.domains[i].dns != null)) {
                 dnsname = config.domains[i].dns;
-                if (args.tlsoffload === true) {
+                if (args.tlsoffload) {
                     // If the web certificate already exist, load it. Load just the certificate since we are in TLS offload situation
                     if (obj.fileExists(parent.getConfigFilePath("webserver-" + i + "-cert-public.crt"))) {
                         r.dns[i] = { cert: obj.fs.readFileSync(parent.getConfigFilePath("webserver-" + i + "-cert-public.crt"), "utf8") };
@@ -356,7 +370,7 @@ module.exports.CertificateOperations = function () {
         for (i in config.domains) {
             if ((i != "") && (config.domains[i] != null) && (config.domains[i].dns != null)) {
                 dnsname = config.domains[i].dns;
-                if (args.tlsoffload != true) {
+                if (!args.tlsoffload) {
                     // If the web certificate does not exist, create it
                     if ((obj.fileExists(parent.getConfigFilePath("webserver-" + i + "-cert-public.crt")) === false) || (obj.fileExists(parent.getConfigFilePath("webserver-" + i + "-cert-private.key")) === false)) {
                         console.log("Generating HTTPS certificate for " + i + "...");

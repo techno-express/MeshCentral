@@ -16,7 +16,9 @@
     "_ClickOnce": false,
     "_SelfUpdate": true,
     "_UserAllowedIP": "127.0.0.1,::1,192.168.0.100",
-    "_LocalDiscovery": { "name": "Local server name", "info": "Information about this server" }
+    "_LocalDiscovery": { "name": "Local server name", "info": "Information about this server" },
+    "_TlsOffload": true,
+    "_MpsTlsOffload":  true
   },
   "_domains": {
     "": {
@@ -25,7 +27,8 @@
       "userQuota": 1048576,
       "meshQuota": 248576,
       "newAccounts": 1,
-      "footer": "<a href='https://twitter.com/mytwitter'>Twitter</a>"
+      "footer": "<a href='https://twitter.com/mytwitter'>Twitter</a>",
+      "_certUrl": "https://192.168.2.106:443/"
     },
     "customer1": {
       "dns": "customer1.myserver.com",
@@ -33,7 +36,8 @@
       "title2": "TestServer",
       "newAccounts": 1,
       "auth": "sspi",
-      "footer": "Test"
+      "footer": "Test",
+      "_certUrl": "https://192.168.2.106:443/"
     },
     "info": {
       "share": "C:\\ExtraWebSite"

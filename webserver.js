@@ -104,18 +104,39 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     // Perform hash on web certificate and agent certificate
     obj.webCertificateHash = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.web.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' });
     obj.webCertificateHashs = { '': obj.webCertificateHash };
-    for (var i in obj.parent.config.domains) { if (obj.parent.config.domains[i].dns != null) { obj.webCertificateHashs[i] = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.parent.config.domains[i].certs.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' }); } }
     obj.webCertificateHashBase64 = new Buffer(parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.web.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
     obj.agentCertificateHashHex = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.agent.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'hex' });
     obj.agentCertificateHashBase64 = new Buffer(parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.agent.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
     obj.agentCertificateAsn1 = parent.certificateOperations.forge.asn1.toDer(parent.certificateOperations.forge.pki.certificateToAsn1(parent.certificateOperations.forge.pki.certificateFromPem(parent.certificates.agent.cert))).getBytes();
+
+    // Compute the hash of all of the web certificates for each domain
+    for (var i in obj.parent.config.domains) {
+        if (obj.parent.config.domains[i].certhash != null) {
+            // If the web certificate hash is provided, use it.
+            obj.webCertificateHashs[i] = new Buffer(obj.parent.config.domains[i].certhash, 'hex').toString('binary');
+        } else if ((obj.parent.config.domains[i].dns != null) && (obj.parent.config.domains[i].certs != null)) {
+            // If the domain has a different DNS name, use a different certificate hash.
+            try {
+                // Decode a RSA certificate and hash the public key
+                obj.webCertificateHashs[i] = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.parent.config.domains[i].certs.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' });
+            } catch (ex) {
+                // This may be a ECDSA certificate, hash the entire cert
+                var x1 = obj.parent.config.domains[i].certs.cert.indexOf('-----BEGIN CERTIFICATE-----'), x2 = obj.parent.config.domains[i].certs.cert.indexOf('-----END CERTIFICATE-----');
+                if ((x1 >= 0) && (x2 > x1)) {
+                    obj.webCertificateHashs[i] = obj.crypto.createHash('sha384').update(new Buffer(obj.parent.config.domains[i].certs.cert.substring(x1 + 27, x2), 'base64')).digest('binary');
+                } else { console.log('ERROR: Unable to decode certificate for domain "' + i + '".'); }
+            }
+        }
+    }
+
+    // If we are running the legacy swarm server, compute the hash for that certificate
     if (parent.certificates.swarmserver != null) {
         obj.swarmCertificateAsn1 = parent.certificateOperations.forge.asn1.toDer(parent.certificateOperations.forge.pki.certificateToAsn1(parent.certificateOperations.forge.pki.certificateFromPem(parent.certificates.swarmserver.cert))).getBytes();
         obj.swarmCertificateHash384 = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.swarmserver.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' });
         obj.swarmCertificateHash256 = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.swarmserver.cert).publicKey, { md: parent.certificateOperations.forge.md.sha256.create(), encoding: 'binary' });
     }
 
-    // Main lists    
+    // Main lists
     obj.wsagents = {};
     obj.wssessions = {};         // UserId --> Array Of Sessions
     obj.wssessions2 = {};        // "UserId + SessionRnd" --> Session  (Note that the SessionId is the UserId + / + SessionRnd)
@@ -157,23 +178,16 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     // Setup middleware
     obj.app.engine('handlebars', obj.exphbs({})); // defaultLayout: 'main'
     obj.app.set('view engine', 'handlebars');
+    if (obj.args.tlsoffload) { obj.app.set('trust proxy', obj.args.tlsoffload); } // Reverse proxy should add the "X-Forwarded-*" headers
     obj.app.use(obj.bodyParser.urlencoded({ extended: false }));
-    if (obj.args.sessiontime != null) {
-        obj.app.use(obj.session({
-            name: 'xid', // Recommanded security practice to not use the default cookie name
-            httpOnly: true,
-            keys: [obj.args.sessionkey], // If multiple instances of this server are behind a load-balancer, this secret must be the same for all instances
-            secure: (obj.args.notls != true), // Use this cookie only over TLS
-            maxAge: (obj.args.sessiontime * 60 * 1000) // Number of minutes
-        }));
-    } else {
-        obj.app.use(obj.session({
-            name: 'xid', // Recommanded security practice to not use the default cookie name
-            httpOnly: true,
-            keys: [obj.args.sessionkey], // If multiple instances of this server are behind a load-balancer, this secret must be the same for all instances
-            secure: (obj.args.notls != true) // Use this cookie only over TLS
-        }));
+    var sessionOptions = {
+        name: 'xid', // Recommanded security practice to not use the default cookie name
+        httpOnly: true,
+        keys: [obj.args.sessionkey], // If multiple instances of this server are behind a load-balancer, this secret must be the same for all instances
+        secure: (obj.args.notls != true) // Use this cookie only over TLS (Check this: https://expressjs.com/en/guide/behind-proxies.html)
     }
+    if (obj.args.sessiontime != null) { sessionOptions.maxAge = (obj.args.sessiontime * 60 * 1000); } 
+    obj.app.use(obj.session(sessionOptions));
 
     // Session-persisted message middleware
     obj.app.use(function (req, res, next) {
@@ -262,9 +276,9 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function checkUserIpAddressEx(req, res, allowedIpList) {
         if (allowedIpList == null) { return true; }
         try {
-            var ip = null, type = 0;
-            if (req.connection) { ip = req.connection.remoteAddress; type = 1; } // HTTP(S) request
-            else if (req._socket) { ip = req._socket.remoteAddress; type = 2; } // WebSocket request
+            var ip = req.ip, type = 0;
+            if (req.connection) { type = 1; } // HTTP(S) request
+            else if (req._socket) { type = 2; } // WebSocket request
             if (ip.startsWith('::ffff:')) { ip = ip.substring(7); } // Fix IPv4 IP's encoded in IPv6 form
             if ((ip != null) && (allowedIpList.indexOf(ip) >= 0)) { return true; }
             if (type == 1) { res.sendStatus(401); }
@@ -322,7 +336,6 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 user.login = Date.now();
                 obj.db.SetUser(user);
 
-
                 // Regenerate session when signing in to prevent fixation
                 //req.session.regenerate(function () {
                 // Store the user's primary key in the session store to be retrieved, or in this case the entire user object
@@ -348,6 +361,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         res.redirect(domain.url);
                     });
                     */
+                    res.redirect(domain.url); // Temporary
                 } else {
                     res.redirect(domain.url);
                 }
@@ -695,8 +709,9 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             }
         }
 
-        // If a user is logged in, serve the default app, otherwise server the login app.
-        if (req.session && req.session.userid) {
+        // If a user exists and is logged in, serve the default app, otherwise server the login app.
+        if (req.session && req.session.userid && obj.users[req.session.userid]) {
+            var user = obj.users[req.session.userid];
             if (req.session.domainid != domain.id) { req.session = null; res.redirect(domain.url); return; } // Check is the session is for the correct domain
             var viewmode = 1;
             if (req.session.viewmode) {
@@ -713,16 +728,15 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 currentNode = 'node/' + domain.id + '/' + req.query.node;
             }
             var logoutcontrol = '';
-            if (obj.args.nousers != true) { logoutcontrol = 'Welcome ' + obj.users[req.session.userid].name + '.'; }
+            if (obj.args.nousers != true) { logoutcontrol = 'Welcome ' + user.name + '.'; }
 
             // Give the web page a list of supported server features
             features = 0;
-            user = obj.users[req.session.userid];
             if (obj.args.wanonly == true) { features += 1; } // WAN-only mode
             if (obj.args.lanonly == true) { features += 2; } // LAN-only mode
             if (obj.args.nousers == true) { features += 4; } // Single user mode
             if (domain.userQuota == -1) { features += 8; } // No server files mode
-            if (obj.args.tlsoffload == true) { features += 16; } // No mutual-auth CIRA
+            if (obj.args.mpstlsoffload) { features += 16; } // No mutual-auth CIRA
             if ((parent.config != null) && (parent.config.settings != null) && (parent.config.settings.allowframing == true)) { features += 32; } // Allow site within iframe
             if ((obj.parent.mailserver != null) && (obj.parent.certificates.CommonName != null) && (obj.parent.certificates.CommonName != 'un-configured') && (obj.args.lanonly != true)) { features += 64; } // Email invites
             if (obj.args.webrtc == true) { features += 128; } // Enable WebRTC (Default false for now)
@@ -1384,7 +1398,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                                             if (auth.response === obj.common.ComputeDigesthash(auth.username, amtpass, auth.realm, "POST", auth.uri, auth.qop, auth.nonce, auth.nc, auth.cnonce)) {
 
                                                 // This is an authenticated Intel AMT event, update the host address
-                                                var amthost = req.connection.remoteAddress;
+                                                var amthost = req.ip;
                                                 if (amthost.substring(0, 7) === '::ffff:') { amthost = amthost.substring(7); }
                                                 if (node.host != amthost) {
                                                     // Get the mesh for this device
@@ -1782,6 +1796,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             // Two more headers to take a look at:
             //   'Public-Key-Pins': 'pin-sha256="X3pGTSOuJeEVw989IJ/cEtXUEmy52zs1TZQrU06KUKg="; max-age=10'
             //   'strict-transport-security': 'max-age=31536000; includeSubDomains'
+            /*
             var headers = null;
             if (obj.args.notls) {
                 // Default headers if no TLS is used
@@ -1792,6 +1807,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             }
             if (parent.config.settings.accesscontrolalloworigin != null) { headers['Access-Control-Allow-Origin'] = parent.config.settings.accesscontrolalloworigin; }
             res.set(headers);
+            */
             return next();
         }
     });
@@ -1835,13 +1851,13 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         // Server picture
         obj.app.get(url + 'serverpic.ashx', function (req, res) {
             // Check if we have "server.png" in the data folder, if so, use that.
-            var p = obj.path.join(obj.parent.datapath, 'server.png');
+            var p = obj.path.join(obj.parent.datapath, 'server.jpg');
             if (obj.fs.existsSync(p)) {
                 // Use the data folder server picture
                 try { res.sendFile(p); } catch (e) { res.sendStatus(404); }
             } else {
                 // Use the default server picture
-                try { res.sendFile(obj.path.join(__dirname, 'public/images/server-200.png')); } catch (e) { res.sendStatus(404); }
+                try { res.sendFile(obj.path.join(__dirname, 'public/images/server-200.jpg')); } catch (e) { res.sendStatus(404); }
             }
         });
 
