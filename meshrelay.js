@@ -35,6 +35,7 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
     const MESHRIGHT_SERVERFILES = 32;
     const MESHRIGHT_WAKEDEVICE = 64;
     const MESHRIGHT_SETNOTES = 128;
+    const MESHRIGHT_REMOTEVIEW = 256;
 
     // Site rights
     const SITERIGHT_SERVERBACKUP = 1;
@@ -93,6 +94,20 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
         if (obj.id == null) { try { obj.close(); } catch (e) { } return null; } // Attempt to connect without id, drop this.
         ws._socket.setKeepAlive(true, 240000); // Set TCP keep alive
 
+        // If this is a MeshMessenger session, the ID is the two userid's and authentication must match one of them.
+        if (obj.id.startsWith('meshmessenger/')) {
+            if (obj.user == null) { try { obj.close(); } catch (e) { } return null; }
+            var x = obj.id.split('/'), user1 = x[1] + '/' + x[2] + '/' + x[3], user2 = x[4] + '/' + x[5] + '/' + x[6];
+            if ((x[1] != 'user') && (x[4] != 'user')) { try { obj.close(); } catch (e) { } return null; } // MeshMessenger session must have at least one authenticated user
+            if ((x[1] == 'user') && (x[4] == 'user')) {
+                // If this is a user-to-user session, you must be authenticated to join.
+                if ((obj.user._id != user1) && (obj.user._id != user2)) { try { obj.close(); } catch (e) { } return null; }
+            } else {
+                // If only one side of the session is a user
+                // !!!!! TODO: Need to make sure that one of the two sides is the correct user. !!!!!
+            }
+        }
+
         // Validate that the id is valid, we only need to do this on non-authenticated sessions.
         // TODO: Figure out when this needs to be done.
         /*
@@ -126,8 +141,8 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
                     relayinfo.state = 2;
                     obj.ws.send('c'); // Send connect to both peers
                     relayinfo.peer1.ws.send('c');
-                    relayinfo.peer1.ws.resume(); // Release the traffic
-                    relayinfo.peer2.ws.resume(); // Release the traffic
+                    relayinfo.peer1.ws._socket.resume(); // Release the traffic
+                    relayinfo.peer2.ws._socket.resume(); // Release the traffic
 
                     relayinfo.peer1.ws.peer = relayinfo.peer2.ws;
                     relayinfo.peer2.ws.peer = relayinfo.peer1.ws;
@@ -142,7 +157,7 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
                 }
             } else {
                 // Wait for other relay connection
-                ws.pause(); // Hold traffic until the other connection
+                ws._socket.pause(); // Hold traffic until the other connection
                 parent.wsrelays[obj.id] = { peer1: obj, state: 1 };
                 obj.parent.parent.debug(1, 'Relay holding: ' + obj.id + ' (' + obj.remoteaddr + ') ' + (obj.authenticated ? 'Authenticated' : ''));
 
@@ -162,19 +177,25 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
         }
     }
 
-    ws.flushSink = function () { try { ws.resume(); } catch (e) { } };
+    ws.flushSink = function () { try { ws._socket.resume(); } catch (ex) { console.log(ex); } };
 
     // When data is received from the mesh relay web socket
     ws.on('message', function (data) {
         //console.log(typeof data, data.length);
         if (this.peer != null) {
             //if (typeof data == 'string') { console.log('Relay: ' + data); } else { console.log('Relay:' + data.length + ' byte(s)'); }
-            try { this.pause(); this.peer.send(data, ws.flushSink); } catch (e) { }
+            try {
+                this._socket.pause();
+                this.peer.send(data, ws.flushSink);
+            } catch (ex) { console.log(ex); }
         }
     });
 
     // If error, do nothing
-    ws.on('error', function (err) { /*console.log('Relay Error: ' + err);*/ });
+    ws.on('error', function (err) {
+        console.log('Relay Error', err);
+        obj.close();
+    });
 
     // If the mesh relay web socket is closed
     ws.on('close', function (req) {

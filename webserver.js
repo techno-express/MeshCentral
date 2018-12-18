@@ -102,29 +102,31 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     }
 
     // Perform hash on web certificate and agent certificate
-    obj.webCertificateHash = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.web.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' });
+    obj.webCertificateHash = parent.certificateOperations.getPublicKeyHashBinary(obj.certificates.web.cert);
     obj.webCertificateHashs = { '': obj.webCertificateHash };
-    obj.webCertificateHashBase64 = new Buffer(parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.web.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
-    obj.agentCertificateHashHex = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.agent.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'hex' });
-    obj.agentCertificateHashBase64 = new Buffer(parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.certificates.agent.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
+    obj.webCertificateHashBase64 = new Buffer(obj.webCertificateHash, 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
+    obj.webCertificateFullHash = parent.certificateOperations.getCertHashBinary(obj.certificates.web.cert);
+    obj.webCertificateFullHashs = { '': obj.webCertificateFullHash };
+    obj.agentCertificateHashHex = parent.certificateOperations.getPublicKeyHash(obj.certificates.agent.cert);
+    obj.agentCertificateHashBase64 = new Buffer(obj.agentCertificateHashHex, 'hex').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
     obj.agentCertificateAsn1 = parent.certificateOperations.forge.asn1.toDer(parent.certificateOperations.forge.pki.certificateToAsn1(parent.certificateOperations.forge.pki.certificateFromPem(parent.certificates.agent.cert))).getBytes();
 
     // Compute the hash of all of the web certificates for each domain
     for (var i in obj.parent.config.domains) {
         if (obj.parent.config.domains[i].certhash != null) {
             // If the web certificate hash is provided, use it.
-            obj.webCertificateHashs[i] = new Buffer(obj.parent.config.domains[i].certhash, 'hex').toString('binary');
+            obj.webCertificateHashs[i] = obj.webCertificateFullHashs[i] = new Buffer(obj.parent.config.domains[i].certhash, 'hex').toString('binary');
+            if (obj.parent.config.domains[i].certkeyhash != null) { obj.webCertificateHashs[i] = new Buffer(obj.parent.config.domains[i].certkeyhash, 'hex').toString('binary'); }
         } else if ((obj.parent.config.domains[i].dns != null) && (obj.parent.config.domains[i].certs != null)) {
             // If the domain has a different DNS name, use a different certificate hash.
+            // Hash the full certificate
+            obj.webCertificateFullHashs[i] = parent.certificateOperations.getCertHashBinary(obj.parent.config.domains[i].certs.cert);
             try {
-                // Decode a RSA certificate and hash the public key
-                obj.webCertificateHashs[i] = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(obj.parent.config.domains[i].certs.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'binary' });
+                // Decode a RSA certificate and hash the public key.
+                obj.webCertificateHashs[i] = parent.certificateOperations.getPublicKeyHashBinary(obj.parent.config.domains[i].certs.cert);
             } catch (ex) {
-                // This may be a ECDSA certificate, hash the entire cert
-                var x1 = obj.parent.config.domains[i].certs.cert.indexOf('-----BEGIN CERTIFICATE-----'), x2 = obj.parent.config.domains[i].certs.cert.indexOf('-----END CERTIFICATE-----');
-                if ((x1 >= 0) && (x2 > x1)) {
-                    obj.webCertificateHashs[i] = obj.crypto.createHash('sha384').update(new Buffer(obj.parent.config.domains[i].certs.cert.substring(x1 + 27, x2), 'base64')).digest('binary');
-                } else { console.log('ERROR: Unable to decode certificate for domain "' + i + '".'); }
+                // This may be a ECDSA certificate, hash the entire cert.
+                obj.webCertificateHashs[i] = obj.webCertificateFullHashs[i];
             }
         }
     }
@@ -159,7 +161,14 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         for (i in obj.certificates.dns) { if (obj.parent.config.domains[i].dns != null) { obj.dnsDomains[obj.parent.config.domains[i].dns.toLowerCase()] = obj.parent.config.domains[i]; obj.tlsSniCredentials[obj.parent.config.domains[i].dns] = obj.tls.createSecureContext(obj.certificates.dns[i]).context; dnscount++; } }
         if (dnscount > 0) { obj.tlsSniCredentials[''] = obj.tls.createSecureContext({ cert: obj.certificates.web.cert, key: obj.certificates.web.key, ca: obj.certificates.web.ca }).context; } else { obj.tlsSniCredentials = null; }
     }
-    function TlsSniCallback(name, cb) { var c = obj.tlsSniCredentials[name]; if (c != null) { cb(null, c); } else { cb(null, obj.tlsSniCredentials['']); } }
+    function TlsSniCallback(name, cb) {
+        var c = obj.tlsSniCredentials[name];
+        if (c != null) {
+            cb(null, c);
+        } else {
+            cb(null, obj.tlsSniCredentials['']);
+        }
+    }
 
     function EscapeHtml(x) { if (typeof x == "string") return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;'); if (typeof x == "boolean") return x; if (typeof x == "number") return x; }
     //function EscapeHtmlBreaks(x) { if (typeof x == "string") return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;').replace(/\r/g, '<br />').replace(/\n/g, '').replace(/\t/g, '&nbsp;&nbsp;'); if (typeof x == "boolean") return x; if (typeof x == "number") return x; }
@@ -172,6 +181,8 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         var tlsOptions = { cert: obj.certificates.web.cert, key: obj.certificates.web.key, ca: obj.certificates.web.ca, rejectUnauthorized: true, secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE | obj.constants.SSL_OP_NO_TLSv1 | obj.constants.SSL_OP_NO_TLSv11 };
         if (obj.tlsSniCredentials != null) { tlsOptions.SNICallback = TlsSniCallback; } // We have multiple web server certificate used depending on the domain name
         obj.tlsServer = require('https').createServer(tlsOptions, obj.app);
+        obj.tlsServer.on('secureConnection', function () { });
+        obj.tlsServer.on('error', function (a, b, c) { console.log('tlsServer error', a, b, c); });
         obj.expressWs = require('express-ws')(obj.app, obj.tlsServer);
     }
 
@@ -214,7 +225,8 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         for (i in docs) { var u = obj.users[docs[i]._id] = docs[i]; domainUserCount[u.domain]++; }
         for (i in parent.config.domains) {
             if (domainUserCount[i] == 0) {
-                if (parent.config.domains[i].newaccounts == 0) { parent.config.domains[i].newaccounts = 2; }
+                // If newaccounts is set to no new accounts, but no accounts exists, temporarly allow account creation.
+                if ((parent.config.domains[i].newaccounts === 0) || (parent.config.domains[i].newaccounts === false)) { parent.config.domains[i].newaccounts = 2; }
                 console.log('Server ' + ((i == '') ? '' : (i + ' ')) + 'has no users, next new account will be site administrator.');
             }
         }
@@ -276,9 +288,10 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function checkUserIpAddressEx(req, res, allowedIpList) {
         if (allowedIpList == null) { return true; }
         try {
-            var ip = req.ip, type = 0;
-            if (req.connection) { type = 1; } // HTTP(S) request
-            else if (req._socket) { type = 2; } // WebSocket request
+            var ip, type = 0;
+            if (req.connection) { type = 1; ip = req.ip; } // HTTP(S) request
+            else if (req._socket) { type = 2; ip = req._socket.remoteAddress; } // WebSocket request
+            if (!ip) return false;
             if (ip.startsWith('::ffff:')) { ip = ip.substring(7); } // Fix IPv4 IP's encoded in IPv6 form
             if ((ip != null) && (allowedIpList.indexOf(ip) >= 0)) { return true; }
             if (type == 1) { res.sendStatus(401); }
@@ -384,7 +397,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function handleCreateAccountRequest(req, res) {
         var domain = checkUserIpAddress(req, res);
         if (domain == null) return;
-        if (domain.newaccounts == 0) { res.sendStatus(401); return; }
+        if ((domain.newaccounts === 0) || (domain.newaccounts === false)) { res.sendStatus(401); return; }
         if (!obj.common.validateUsername(req.body.username, 1, 64) || !obj.common.validateEmail(req.body.email, 1, 256) || !obj.common.validateString(req.body.password1, 1, 256) || !obj.common.validateString(req.body.password2, 1, 256) || (req.body.password1 != req.body.password2) || req.body.username == '~') {
             req.session.loginmode = 2;
             req.session.error = '<b style=color:#8C001A>Unable to create account.</b>';
@@ -414,7 +427,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         var user = { type: 'user', _id: 'user/' + domain.id + '/' + req.body.username.toLowerCase(), name: req.body.username, email: req.body.email, creation: Date.now(), login: Date.now(), domain: domain.id, passhint: hint };
                         var usercount = 0;
                         for (var i in obj.users) { if (obj.users[i].domain == domain.id) { usercount++; } }
-                        if (usercount == 0) { user.siteadmin = 0xFFFFFFFF; if (domain.newaccounts == 2) { domain.newaccounts = 0; } } // If this is the first user, give the account site admin.
+                        if (usercount == 0) { user.siteadmin = 0xFFFFFFFF; if (domain.newaccounts === 2) { domain.newaccounts = 0; } } // If this is the first user, give the account site admin.
                         obj.users[user._id] = user;
                         req.session.userid = user._id;
                         req.session.domainid = domain.id;
@@ -438,7 +451,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function handleResetAccountRequest(req, res) {
         var domain = checkUserIpAddress(req, res);
         if (domain == null) return;
-        if (domain.newaccounts == 0) { res.sendStatus(401); return; }
+        if ((domain.newaccounts === 0) || (domain.newaccounts === false)) { res.sendStatus(401); return; }
         if (!req.body.email || checkEmail(req.body.email) == false) {
             req.session.loginmode = 3;
             req.session.error = '<b style=color:#8C001A>Invalid email.</b>';
@@ -752,14 +765,14 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             if (obj.args.minify && !req.query.nominify) {
                 // Try to server the minified version if we can.
                 try {
-                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile-min' : 'views/default-min'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: obj.webCertificateHashBase64, footer: (domain.footer == null) ? '' : domain.footer });
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile-min' : 'views/default-min'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: obj.getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: new Buffer(obj.webCertificateFullHashs[domain.id], 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$'), footer: (domain.footer == null) ? '' : domain.footer });
                 } catch (ex) {
                     // In case of an exception, serve the non-minified version.
-                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile' : 'views/default'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: obj.webCertificateHashBase64, footer: (domain.footer == null) ? '' : domain.footer });
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile' : 'views/default'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: obj.getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: new Buffer(obj.webCertificateFullHashs[domain.id], 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$'), footer: (domain.footer == null) ? '' : domain.footer });
                 }
             } else {
                 // Serve non-minified version of web pages.
-                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile' : 'views/default'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: obj.webCertificateHashBase64, footer: (domain.footer == null) ? '' : domain.footer });
+                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/default-mobile' : 'views/default'), { viewmode: viewmode, currentNode: currentNode, logoutControl: logoutcontrol, title: domain.title, title2: domain.title2, domainurl: domain.url, domain: domain.id, debuglevel: parent.debugLevel, serverDnsName: obj.getWebServerName(domain), serverRedirPort: args.redirport, serverPublicPort: httpsPort, noServerBackup: (args.noserverbackup == 1 ? 1 : 0), features: features, sessiontime: args.sessiontime, mpspass: args.mpspass, webcerthash: new Buffer(obj.webCertificateFullHashs[domain.id], 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$'), footer: (domain.footer == null) ? '' : domain.footer });
             }
         } else {
             // Send back the login application
@@ -772,18 +785,18 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
             if (obj.args.minify && !req.query.nominify) {
                 // Try to server the minified version if we can.
                 try {
-                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile-min' : 'views/login-min'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile-min' : 'views/login-min'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: obj.getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
                 } catch (ex) {
                     // In case of an exception, serve the non-minified version.
-                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile' : 'views/login'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile' : 'views/login'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: obj.getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
                 }
             } else {
                 // Serve non-minified version of web pages.
-                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile' : 'views/login'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
+                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile' : 'views/login'), { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: obj.getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, sessiontime: args.sessiontime, footer: (domain.footer == null) ? '' : domain.footer });
             }
 
             /*
-            var xoptions = { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, footer: (domain.footer == null) ? '' : domain.footer };
+            var xoptions = { loginmode: loginmode, rootCertLink: getRootCertLink(), title: domain.title, title2: domain.title2, newAccount: domain.newaccounts, newAccountPass: (((domain.newaccountspass == null) || (domain.newaccountspass == '')) ? 0 : 1), serverDnsName: obj.getWebServerName(domain), serverPublicPort: httpsPort, emailcheck: obj.parent.mailserver != null, features: features, footer: (domain.footer == null) ? '' : domain.footer };
             var xpath = obj.path.join(__dirname, isMobileBrowser(req) ? 'views/login-mobile' : 'views/login');
             console.log('Render...');
             res.render(xpath, xoptions, function (err, html) {
@@ -804,13 +817,33 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function handleTermsRequest(req, res) {
         var domain = checkUserIpAddress(req, res);
         if (domain == null) return;
-        res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
-        if (req.session && req.session.userid) {
-            if (req.session.domainid != domain.id) { req.session = null; res.redirect(domain.url); return; } // Check is the session is for the correct domain
-            var user = obj.users[req.session.userid];
-            res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2, logoutControl: 'Welcome ' + user.name + '. <a href=' + domain.url + 'logout?' + Math.random() + ' style=color:white>Logout</a>' });
+
+        // See if there is a terms.txt file in meshcentral-data
+        var p = obj.path.join(obj.parent.datapath, 'terms.txt');
+        if (obj.fs.existsSync(p)) {
+            readEntireTextFile(p, function (data) {
+                if (data == null) { res.sendStatus(404); return; }
+
+                // Send the terms
+                res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+                if (req.session && req.session.userid) {
+                    if (req.session.domainid != domain.id) { req.session = null; res.redirect(domain.url); return; } // Check is the session is for the correct domain
+                    var user = obj.users[req.session.userid];
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2, terms: encodeURIComponent(data), logoutControl: 'Welcome ' + user.name + '. <a href=' + domain.url + 'logout?' + Math.random() + ' style=color:white>Logout</a>' });
+                } else {
+                    res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2, terms: encodeURIComponent(data) });
+                }
+            });
         } else {
-            res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2 });
+            // Send the terms
+            res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+            if (req.session && req.session.userid) {
+                if (req.session.domainid != domain.id) { req.session = null; res.redirect(domain.url); return; } // Check is the session is for the correct domain
+                var user = obj.users[req.session.userid];
+                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2, logoutControl: 'Welcome ' + user.name + '. <a href=' + domain.url + 'logout?' + Math.random() + ' style=color:white>Logout</a>' });
+            } else {
+                res.render(obj.path.join(__dirname, isMobileBrowser(req) ? 'views/terms-mobile' : 'views/terms'), { title: domain.title, title2: domain.title2 });
+            }
         }
     }
 
@@ -1158,7 +1191,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     var tlsoptions = { secureProtocol: ((req.query.tls1only == 1) ? 'TLSv1_method' : 'SSLv23_method'), ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE, rejectUnauthorized: false, cert: obj.certificates.console.cert, key: obj.certificates.console.key };
                     var tlsock = new TLSSocket(ser, tlsoptions);
                     tlsock.on('error', function (err) { Debug(1, "CIRA TLS Connection Error ", err); });
-                    tlsock.on('secureConnect', function () { Debug(2, "CIRA Secure TLS Connection"); ws.resume(); });
+                    tlsock.on('secureConnect', function () { Debug(2, "CIRA Secure TLS Connection"); ws._socket.resume(); });
 
                     // Decrypted tunnel from TLS communcation to be forwarded to websocket
                     tlsock.on('data', function (data) {
@@ -1178,7 +1211,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     // Without TLS
                     ws.forwardclient = parent.mpsserver.SetupCiraChannel(ciraconn, port);
                     ws.forwardclient.xtls = 0;
-                    ws.resume();
+                    ws._socket.resume();
                 }
 
                 // When data is received from the web socket, forward the data into the associated CIRA cahnnel.
@@ -1249,8 +1282,8 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 ws.on('error', function (err) { console.log('WEBSERVER WSERR2: ' + err); });
 
                 // If the web socket is closed, close the associated TCP connection.
-                ws.on('close', function (req) {
-                    Debug(1, 'Closing relay web socket connection to ' + ws.upgradeReq.query.host + '.');
+                ws.on('close', function () {
+                    Debug(1, 'Closing relay web socket connection to ' + req.query.host + '.');
                     if (ws.forwardclient) { try { ws.forwardclient.destroy(); } catch (e) { } }
                 });
 
@@ -1265,7 +1298,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     ws.forwardclient.setEncoding('binary');
                     ws.forwardclient.xstate = 0;
                     ws.forwardclient.forwardwsocket = ws;
-                    ws.resume();
+                    ws._socket.resume();
                 } else {
                     // If TLS is going to be used, setup a TLS socket
                     var tlsoptions = { secureProtocol: ((req.query.tls1only == 1) ? 'TLSv1_method' : 'SSLv23_method'), ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE, rejectUnauthorized: false, cert: obj.certificates.console.cert, key: obj.certificates.console.key };
@@ -1273,7 +1306,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         // The TLS connection method is the same as TCP, but located a bit differently.
                         Debug(2, 'TLS connected to ' + node.host + ':' + port + '.');
                         ws.forwardclient.xstate = 1;
-                        ws.resume();
+                        ws._socket.resume();
                     });
                     ws.forwardclient.setEncoding('binary');
                     ws.forwardclient.xstate = 0;
@@ -1311,7 +1344,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     ws.forwardclient.connect(port, node.host, function () {
                         Debug(1, 'TCP relay connected to ' + node.host + ':' + port + '.');
                         ws.forwardclient.xstate = 1;
-                        ws.resume();
+                        ws._socket.resume();
                     });
                 }
                 return;
@@ -1527,8 +1560,10 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 var xdomain = (domain.dns == null) ? domain.id : '';
                 if (xdomain != '') xdomain += "/";
                 var meshsettings = "MeshName=" + mesh.name + "\r\nMeshType=" + mesh.mtype + "\r\nMeshID=0x" + meshidhex + "\r\nServerID=" + serveridhex + "\r\n";
-                if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
+                if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + obj.getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
                 if (req.query.tag != null) { meshsettings += "Tag=" + req.query.tag + "\r\n"; }
+                if ((req.query.installflags != null) && (req.query.installflags != 0)) { meshsettings += "InstallFlags=" + req.query.installflags + "\r\n"; }
+
                 res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename=' + argentInfo.rname });
                 obj.parent.exeHandler.streamExeWithMeshPolicy({ platform: 'win32', sourceFileName: obj.parent.meshAgentBinaries[req.query.id].path, destinationStream: res, msh: meshsettings, peinfo: obj.parent.meshAgentBinaries[req.query.id].pe });
             }
@@ -1587,7 +1622,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     };
                     if (user != null) { meshaction.username = user.name; }
                     var httpsPort = ((obj.args.aliasport == null) ? obj.args.port : obj.args.aliasport); // Use HTTPS alias port is specified
-                    if (obj.args.lanonly != true) { meshaction.serverUrl = ((obj.args.notls == true) ? 'ws://' : 'wss://') + getWebServerName(domain) + ':' + httpsPort + '/' + ((domain.id == '') ? '' : ('/' + domain.id)) + 'meshrelay.ashx'; }
+                    if (obj.args.lanonly != true) { meshaction.serverUrl = ((obj.args.notls == true) ? 'ws://' : 'wss://') + obj.getWebServerName(domain) + ':' + httpsPort + '/' + ((domain.id == '') ? '' : ('/' + domain.id)) + 'meshrelay.ashx'; }
                     res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0', 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment; filename=meshaction.txt' });
                     res.send(JSON.stringify(meshaction, null, ' '));
                 });
@@ -1602,7 +1637,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                 };
                 if (user != null) { meshaction.username = user.name; }
                 var httpsPort = ((obj.args.aliasport == null) ? obj.args.port : obj.args.aliasport); // Use HTTPS alias port is specified
-                if (obj.args.lanonly != true) { meshaction.serverUrl = ((obj.args.notls == true) ? 'ws://' : 'wss://') + getWebServerName(domain) + ':' + httpsPort + '/' + ((domain.id == '') ? '' : ('/' + domain.id)) + 'meshrelay.ashx'; }
+                if (obj.args.lanonly != true) { meshaction.serverUrl = ((obj.args.notls == true) ? 'ws://' : 'wss://') + obj.getWebServerName(domain) + ':' + httpsPort + '/' + ((domain.id == '') ? '' : ('/' + domain.id)) + 'meshrelay.ashx'; }
                 res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0', 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment; filename=meshaction.txt' });
                 res.send(JSON.stringify(meshaction, null, ' '));
             } else {
@@ -1625,7 +1660,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     };
 
     // Get the web server hostname. This may change if using a domain with a DNS name.
-    function getWebServerName(domain) {
+    obj.getWebServerName = function(domain) {
         if (domain.dns != null) return domain.dns;
         return obj.certificates.CommonName;
     }
@@ -1663,8 +1698,9 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         var xdomain = (domain.dns == null) ? domain.id : '';
         if (xdomain != '') xdomain += "/";
         var meshsettings = "MeshName=" + mesh.name + "\r\nMeshType=" + mesh.mtype + "\r\nMeshID=0x" + meshidhex + "\r\nServerID=" + serveridhex + "\r\n";
-        if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
+        if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + obj.getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
         if (req.query.tag != null) { meshsettings += "Tag=" + req.query.tag + "\r\n"; }
+        if ((req.query.installflags != null) && (req.query.installflags != 0)) { meshsettings += "InstallFlags=" + req.query.installflags + "\r\n"; }
 
         // Setup the response output
         var archive = require('archiver')('zip', { level: 5 }); // Sets the compression method.
@@ -1682,12 +1718,13 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                     // Skip all folder entries
                     zipfile.readEntry();
                 } else {
-                    if (entry.fileName == 'Mesh Agent.mpkg/Contents/distribution.dist') {
+                    if (entry.fileName == 'MeshAgent.mpkg/Contents/distribution.dist') {
                         // This is a special file entry, we need to fix it.
                         zipfile.openReadStream(entry, function (err, readStream) {
                             readStream.on("data", function (data) { if (readStream.xxdata) { readStream.xxdata += data; } else { readStream.xxdata = data; } });
                             readStream.on("end", function () {
-                                var welcomemsg = 'Welcome to the MeshCentral agent for OSX\\\n\\\nThis installer will install the mesh agent for "' + mesh.name + '" and allow the administrator to remotely monitor and control this computer over the internet. For more information, go to info.meshcentral.com.\\\n\\\nThis software is provided under Apache 2.0 license.\\\n';
+                                var meshname = mesh.name.split(']').join('').split('[').join(''); // We can't have ']]' in the string since it will terminate the CDATA.
+                                var welcomemsg = 'Welcome to the MeshCentral agent for MacOS\n\nThis installer will install the mesh agent for "' + meshname + '" and allow the administrator to remotely monitor and control this computer over the internet. For more information, go to https://www.meshcommander.com/meshcentral2.\n\nThis software is provided under Apache 2.0 license.\n';
                                 var installsize = Math.floor((argentInfo.size + meshsettings.length) / 1024);
                                 archive.append(readStream.xxdata.toString().split('###WELCOMEMSG###').join(welcomemsg).split('###INSTALLSIZE###').join(installsize), { name: entry.fileName });
                                 zipfile.readEntry();
@@ -1697,15 +1734,17 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
                         // Normal file entry
                         zipfile.openReadStream(entry, function (err, readStream) {
                             if (err) { throw err; }
-                            archive.append(readStream, { name: entry.fileName });
+                            var options = { name: entry.fileName };
+                            if (entry.fileName.endsWith('postflight') || entry.fileName.endsWith('Uninstall.command')) { options.mode = 493; }
+                            archive.append(readStream, options);
                             readStream.on('end', function () { zipfile.readEntry(); });
                         });
                     }
                 }
             });
             zipfile.on("end", function () {
-                archive.file(argentInfo.path, { name: "Mesh Agent.mpkg/Contents/Packages/meshagent.pkg/Contents/MeshAgent" });
-                archive.append(meshsettings, { name: "Mesh Agent.mpkg/Contents/Packages/meshagent.pkg/Contents/MeshAgent.msh" });
+                archive.file(argentInfo.path, { name: "MeshAgent.mpkg/Contents/Packages/internal.pkg/Contents/meshagent_osx64.bin" });
+                archive.append(meshsettings, { name: "MeshAgent.mpkg/Contents/Packages/internal.pkg/Contents/meshagent_osx64.msh" });
                 archive.finalize();
             });
         });
@@ -1740,7 +1779,9 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
         if (xdomain != '') xdomain += "/";
         var meshsettings = "MeshName=" + mesh.name + "\r\nMeshType=" + mesh.mtype + "\r\nMeshID=0x" + meshidhex + "\r\nServerID=" + serveridhex + "\r\n";
         var httpsPort = ((obj.args.aliasport == null) ? obj.args.port : obj.args.aliasport); // Use HTTPS alias port is specified
-        if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
+        if (obj.args.lanonly != true) { meshsettings += "MeshServer=ws" + (obj.args.notls ? '' : 's') + "://" + obj.getWebServerName(domain) + ":" + httpsPort + "/" + xdomain + "agent.ashx\r\n"; } else { meshsettings += "MeshServer=local"; }
+        if (req.query.tag != null) { meshsettings += "Tag=" + req.query.tag + "\r\n"; }
+        if ((req.query.installflags != null) && (req.query.installflags != 0)) { meshsettings += "InstallFlags=" + req.query.installflags + "\r\n"; }
 
         res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename=meshagent.msh' });
         res.send(meshsettings);
@@ -1883,7 +1924,7 @@ module.exports.CreateWebServer = function (parent, db, args, certificates) {
     function PerformWSSessionAuth(ws, req, noAuthOk, func) {
         try {
             // Hold this websocket until we are ready.
-            ws.pause();
+            ws._socket.pause();
 
             // Check IP filtering and domain
             var domain = checkUserIpAddress(ws, req);

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
 process.on('uncaughtException', function (ex) {
     require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": "uncaughtException1: " + ex });
 });
@@ -651,24 +652,18 @@ function createMeshCore(agent) {
                     }
 
                     // Remote terminal using native pipes
-                    if (process.platform == "win32")
-                    {
-                        this.httprequest._term = require('win-terminal').Start(80, 25);
-                        this.httprequest._term.pipe(this, { dataTypeSkip: 1 });
-                        this.pipe(this.httprequest._term, { dataTypeSkip: 1, end: false });
-                        this.prependListener('end', function () { this.httprequest._term.end(function () { console.log('Terminal was closed');}); });
-                        //this.httprequest.process = childProcess.execFile("%windir%\\system32\\cmd.exe");
-                    } else
-                    {
+                    if (process.platform == "win32") {
+                        this.httprequest.process = childProcess.execFile("%windir%\\system32\\cmd.exe");
+                    } else {
                         this.httprequest.process = childProcess.execFile("/bin/sh", ["sh"], { type: childProcess.SpawnTypes.TERM });
-                        this.httprequest.process.tunnel = this;
-                        this.httprequest.process.on('exit', function (ecode, sig) { this.tunnel.end(); });
-                        this.httprequest.process.stderr.on('data', function (chunk) { this.parent.tunnel.write(chunk); });
-                        this.httprequest.process.stdout.pipe(this, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
-                        this.pipe(this.httprequest.process.stdin, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
-                        this.prependListener('end', function () { this.httprequest.process.kill(); });
                     }
 
+                    this.httprequest.process.tunnel = this;
+                    this.httprequest.process.on('exit', function (ecode, sig) { this.tunnel.end(); });
+                    this.httprequest.process.stderr.on('data', function (chunk) { this.parent.tunnel.write(chunk); });
+                    this.httprequest.process.stdout.pipe(this, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
+                    this.pipe(this.httprequest.process.stdin, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
+                    this.prependListener('end', function () { this.httprequest.process.kill(); });
                     this.removeAllListeners('data');
                     this.on('data', onTunnelControlData);
                     //this.write('MeshCore Terminal Hello');
@@ -919,15 +914,8 @@ function createMeshCore(agent) {
         } else if (obj.type == 'webrtc0') { // Browser indicates we can start WebRTC switch-over.
             if (ws.httprequest.protocol == 1) { // Terminal
                 // This is a terminal data stream, unpipe the terminal now and indicate to the other side that terminal data will no longer be received over WebSocket
-                if (process.platform == 'win32')
-                {
-                    ws.httprequest._term.unpipe(ws);
-                }
-                else
-                {
-                    ws.httprequest.process.stdout.unpipe(ws);
-                    ws.httprequest.process.stderr.unpipe(ws);
-                }
+                ws.httprequest.process.stdout.unpipe(ws);
+                ws.httprequest.process.stderr.unpipe(ws);
             } else if (ws.httprequest.protocol == 2) { // Desktop
                 // This is a KVM data stream, unpipe the KVM now and indicate to the other side that KVM data will no longer be received over WebSocket
                 ws.httprequest.desktop.kvm.unpipe(ws);
@@ -941,16 +929,8 @@ function createMeshCore(agent) {
         } else if (obj.type == 'webrtc1') {
             if (ws.httprequest.protocol == 1) { // Terminal
                 // Switch the user input from websocket to webrtc at this point.
-                if (process.platform == 'win32')
-                {
-                    ws.unpipe(ws.httprequest._term);
-                    ws.rtcchannel.pipe(ws.httprequest._term, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
-                }
-                else
-                {
-                    ws.unpipe(ws.httprequest.process.stdin);
-                    ws.rtcchannel.pipe(ws.httprequest.process.stdin, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
-                }
+                ws.unpipe(ws.httprequest.process.stdin);
+                ws.rtcchannel.pipe(ws.httprequest.process.stdin, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
                 ws.resume(); // Resume the websocket to keep receiving control data
             } else if (ws.httprequest.protocol == 2) { // Desktop
                 // Switch the user input from websocket to webrtc at this point.
@@ -962,15 +942,8 @@ function createMeshCore(agent) {
         } else if (obj.type == 'webrtc2') {
             // Other side received websocket end of data marker, start sending data on WebRTC channel
             if (ws.httprequest.protocol == 1) { // Terminal
-                if (process.platform == 'win32')
-                {
-                    ws.httprequest._term.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
-                }
-                else
-                {
-                    ws.httprequest.process.stdout.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
-                    ws.httprequest.process.stderr.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
-                }
+                ws.httprequest.process.stdout.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
+                ws.httprequest.process.stderr.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1, end: false }); // 0 = Binary, 1 = Text.
             } else if (ws.httprequest.protocol == 2) { // Desktop
                 ws.httprequest.desktop.kvm.pipe(ws.webrtc.rtcchannel, { dataTypeSkip: 1 }); // 0 = Binary, 1 = Text.
             }
@@ -1012,7 +985,6 @@ function createMeshCore(agent) {
         try {
             switch (process.platform) {
                 case 'win32':
-                    //child = require('child_process').execFile(process.env['windir'] + '\\system32\\cmd.exe', ["/c", "start", url], { type: childProcess.SpawnTypes.USER, uid: require('user-sessions').Current().Active[0].SessionId }); // TODO: Using user-session breaks Win7
                     child = require('child_process').execFile(process.env['windir'] + '\\system32\\cmd.exe', ["/c", "start", url], { type: childProcess.SpawnTypes.USER });
                     break;
                 case 'linux':
@@ -1061,7 +1033,6 @@ function createMeshCore(agent) {
                 }
                 case 'users': {
                     if (meshCoreObj.users == null) { response = 'Active users are unknown.'; } else { response = 'Active Users: ' + meshCoreObj.users.join(', ') + '.'; }
-                    //require('user-sessions').enumerateUsers().then(function (u) { for (var i in u) { sendConsoleText(u[i]); } });
                     break;
                 }
                 case 'toast': {
@@ -1596,7 +1567,7 @@ function createMeshCore(agent) {
             });
         } catch (e) { amtLmsState = -1; amtLms = null; }
 
-        // Setup logged in user monitoring (THIS IS BROKEN IN WIN7)
+        // Setup logged in user monitoring // TODO: This causes a problem on Windows7
         /*
         try {
             var userSession = require('user-sessions');

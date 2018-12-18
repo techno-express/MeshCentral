@@ -14,6 +14,9 @@
 /*jshint esversion: 6 */
 "use strict";
 
+// If running NodeJS less than version 8, try to polyfill promisify
+try { if (Number(process.version.match(/^v(\d+\.\d+)/)[1]) < 8) { require('util.promisify').shim(); } } catch (ex) { }
+
 // If app metrics is available
 if (process.argv[2] == '--launch') { try { require('appmetrics-dash').monitor({ url: '/', title: 'MeshCentral', port: 88, host: '127.0.0.1' }); } catch (e) { } }
 
@@ -180,7 +183,8 @@ function CreateMeshCentralServer(config, args) {
         xprocess.stdout.on('data', function (data) { if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); } if (data.indexOf('Updating settings folder...') >= 0) { xprocess.xrestart = 1; } else if (data.indexOf('Updating server certificates...') >= 0) { xprocess.xrestart = 1; } else if (data.indexOf('Server Ctrl-C exit...') >= 0) { xprocess.xrestart = 2; } else if (data.indexOf('Starting self upgrade...') >= 0) { xprocess.xrestart = 3; } console.log(data); });
         xprocess.stderr.on('data', function (data) {
             if (data.startsWith('le.challenges[tls-sni-01].loopback')) { return; } // Ignore this error output from GreenLock
-            if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); } obj.fs.appendFileSync(obj.getConfigFilePath('mesherrors.txt'), '-------- ' + new Date().toLocaleString() + ' ---- ' + obj.currentVer + ' --------\r\n\r\n' + data + '\r\n\r\n\r\n');
+            if (data[data.length - 1] == '\n') { data = data.substring(0, data.length - 1); }
+            try { obj.fs.appendFileSync(obj.getConfigFilePath('mesherrors.txt'), '-------- ' + new Date().toLocaleString() + ' ---- ' + obj.currentVer + ' --------\r\n\r\n' + data + '\r\n\r\n\r\n'); } catch (ex) { console.log('ERROR: Unable to write to mesherrors.txt.'); }
         });
         xprocess.on('close', function (code) { if ((code != 0) && (code != 123)) { /* console.log("Exited with code " + code); */ } });
     };
@@ -242,6 +246,7 @@ function CreateMeshCentralServer(config, args) {
         if ((obj.args.user != null) && (typeof obj.args.user != 'string')) { delete obj.args.user; }
         if ((obj.args.ciralocalfqdn != null) && ((obj.args.lanonly == true) || (obj.args.wanonly == true))) { console.log("WARNING: CIRA local FQDN's ignored when server in LAN-only or WAN-only mode."); }
         if ((obj.args.ciralocalfqdn != null) && (obj.args.ciralocalfqdn.split(',').length > 4)) { console.log("WARNING: Can't have more than 4 CIRA local FQDN's. Ignoring value."); obj.args.ciralocalfqdn = null; }
+        if (obj.args.ignoreagenthashcheck === true) { console.log("WARNING: Agent hash checking is being skipped, this is unsafe."); }
         if (obj.args.port == null || typeof obj.args.port != 'number') { if (obj.args.notls == null) { obj.args.port = 443; } else { obj.args.port = 80; } }
         if (obj.args.aliasport != null && (typeof obj.args.aliasport != 'number')) obj.args.aliasport = null;
         if (obj.args.mpsport == null || typeof obj.args.mpsport != 'number') obj.args.mpsport = 4433;
@@ -368,7 +373,7 @@ function CreateMeshCentralServer(config, args) {
                 obj.updateMeshCore();
                 obj.updateMeshCmd();
 
-                // Setup and start the redirection server if needed
+                // Setup and start the redirection server if needed. We must start the redirection server before Let's Encrypt.
                 if ((obj.args.redirport != null) && (typeof obj.args.redirport == 'number') && (obj.args.redirport != 0)) {
                     obj.redirserver = require('./redirserver.js').CreateRedirServer(obj, obj.db, obj.args, obj.StartEx2);
                 } else {
@@ -383,7 +388,7 @@ function CreateMeshCentralServer(config, args) {
         // Load server certificates
         obj.certificateOperations = require('./certoperations.js').CertificateOperations();
         obj.certificateOperations.GetMeshServerCertificate(obj, obj.args, obj.config, function (certs) {
-            if (obj.config.letsencrypt == null) {
+            if ((obj.config.letsencrypt == null) || (obj.redirserver == null)) {
                 obj.StartEx3(certs); // Just use the configured certificates
             } else {
                 var le = require('./letsencrypt.js');
@@ -414,22 +419,23 @@ function CreateMeshCentralServer(config, args) {
                 webCertLoadCount++;
                 obj.certificateOperations.loadCertificate(obj.config.domains[i].certurl, obj.config.domains[i], function (url, cert, xdomain) {
                     if (cert != null) {
-                        try {
-                            // Decode a RSA certificate and hash the public key
-                            var forgeCert = obj.certificateOperations.forge.pki.certificateFromAsn1(obj.certificateOperations.forge.asn1.fromDer(cert.raw.toString('binary')));
-                            var hash = obj.certificateOperations.forge.pki.getPublicKeyFingerprint(forgeCert.publicKey, { md: obj.certificateOperations.forge.md.sha384.create(), encoding: 'hex' });
-                            if (xdomain.certhash != hash) {
-                                xdomain.certhash = hash;
-                                console.log('Loaded RSA web certificate at ' + url + ', SHA384: ' + xdomain.certhash + '.');
-                            }
-                        } catch (ex) {
-                            // This may be a ECDSA certificate, hash the entire cert
-                            var hash = obj.crypto.createHash('sha384').update(cert.raw).digest('hex');
-                            if (xdomain.certhash != hash) {
-                                xdomain.certhash = hash;
-                                console.log('Loaded non-RSA web certificate at ' + url + ', SHA384: ' + xdomain.certhash + '.');
-                            }
+                        // Hash the entire cert
+                        var hash = obj.crypto.createHash('sha384').update(Buffer.from(cert, 'binary')).digest('hex');
+                        if (xdomain.certhash != hash) {
+                            xdomain.certkeyhash = hash;
+                            xdomain.certhash = hash;
                         }
+
+                        try {
+                            // Decode a RSA certificate and hash the public key, if this is not RSA, skip this.
+                            var forgeCert = obj.certificateOperations.forge.pki.certificateFromAsn1(obj.certificateOperations.forge.asn1.fromDer(cert));
+                            xdomain.certkeyhash = obj.certificateOperations.forge.pki.getPublicKeyFingerprint(forgeCert.publicKey, { md: obj.certificateOperations.forge.md.sha384.create(), encoding: 'hex' });
+                            //console.log('V1: ' + xdomain.certkeyhash);
+                        } catch (ex) { }
+
+                        console.log('Loaded web certificate from ' + url);
+                        console.log('  SHA384 cert hash: ' + xdomain.certhash);
+                        if (xdomain.certhash != xdomain.certkeyhash) { console.log('  SHA384 key hash:  ' + xdomain.certkeyhash); }
                     } else {
                         console.log('Failed to load web certificate at: ' + url);
                     }
@@ -448,7 +454,12 @@ function CreateMeshCentralServer(config, args) {
         var i;
 
         // If the certificate is un-configured, force LAN-only mode
-        if (obj.certificates.CommonName == 'un-configured') { console.log('Server name not configured, running in LAN-only mode.'); obj.args.lanonly = true; }
+        if (obj.certificates.CommonName == 'un-configured') { /*console.log('Server name not configured, running in LAN-only mode.');*/ obj.args.lanonly = true; }
+
+        // Write server version and run mode
+        var productionMode = (process.env.NODE_ENV && (process.env.NODE_ENV == 'production'));
+        var runmode = (obj.args.lanonly ? 2 : (obj.args.wanonly ? 1 : 0));
+        console.log('MeshCentral v' + obj.currentVer + ', ' + (['Hybrid (LAN + WAN) mode', 'WAN mode', 'LAN mode'][runmode]) + (productionMode ? ', Production mode.' : '.'));
 
         // Check that no sub-domains have the same DNS as the parent
         for (i in obj.config.domains) {
@@ -1271,6 +1282,9 @@ function mainStart(args) {
         if (config.letsencrypt != null) { modules.push('greenlock'); modules.push('le-store-certbot'); modules.push('le-challenge-fs'); modules.push('le-acme-core'); } // Add Greenlock Modules
         if (config.settings.mongodb != null) { modules.push('mongojs'); } // Add MongoDB
         if (config.smtp != null) { modules.push('nodemailer'); } // Add SMTP support
+
+        // If running NodeJS < 8, install "util.promisify"
+        if (Number(process.version.match(/^v(\d+\.\d+)/)[1]) < 8) { modules.push('util.promisify'); }
 
         // Install any missing modules and launch the server
         InstallModules(modules, function () { meshserver = CreateMeshCentralServer(config, args); meshserver.Start(); });
