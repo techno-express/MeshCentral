@@ -13,10 +13,10 @@ COPY package.json /home/meshserver/
 COPY config.json /home/meshserver/meshcentral-data/
 RUN su - meshserver \
 	&& cd /home/meshserver \
-    && npm install github:techno-express/MeshCentral
-    
-ENV PORT 443  
-ENV REDIRPORT 80  
+    && npm install meshcentral
+
+ENV PORT 443
+ENV REDIRPORT 80
 ENV MPSPORT 4443
 ENV EMAIL mail@host
 ENV HOST host.ltd
