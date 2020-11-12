@@ -1,7 +1,7 @@
 ﻿/**
 * @description MeshCentral Intel(R) AMT Local Scanner
 * @author Ylian Saint-Hilaire & Joko Sastriawan
-* @copyright Intel Corporation 2018
+* @copyright Intel Corporation 2018-2020
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -21,7 +21,6 @@ module.exports.CreateAmtScanner = function (parent) {
     obj.net = require('net');
     obj.tls = require('tls');
     obj.dns = require('dns');
-    obj.constants = require('constants');
     obj.dgram = require('dgram');
     obj.common = require('./common.js');
     obj.servers = {};
@@ -36,10 +35,11 @@ module.exports.CreateAmtScanner = function (parent) {
     obj.nextTag = 0;
     const PeriodicScanTime = 30000; // Interval between scan sweeps
     const PeriodicScanTimeout = 65000; // After this time, timeout the device.
+    const constants = (require('crypto').constants ? require('crypto').constants : require('constants')); // require('constants') is deprecated in Node 11.10, use require('crypto').constants instead.
 
     // Build a RMCP packet with a given tag field
     obj.buildRmcpPing = function (tag) {
-        var packet = new Buffer(obj.common.hex2rstr('06000006000011BE80000000'), 'ascii');
+        var packet = Buffer.from(obj.common.hex2rstr('06000006000011BE80000000'), 'ascii');
         packet[9] = tag;
         return packet;
     };
@@ -71,11 +71,9 @@ module.exports.CreateAmtScanner = function (parent) {
         rangeinfo.server = obj.dgram.createSocket("udp4");
         rangeinfo.server.bind(0);
         rangeinfo.server.on('error', (err) => { console.log(err); });
-        rangeinfo.server.on('message', (data, rinfo) => { obj.parseRmcpPacket(data, rinfo, 0, obj.reportMachineState, rangeinfo); });
-        rangeinfo.server.on('listening', () => {
-            for (var i = rangeinfo.min; i <= rangeinfo.max; i++) { rangeinfo.server.send(obj.rpacket, 623, obj.IPv4NumToStr(i)); }
-        });
-        rangeinfo.timer = setTimeout(function () { // ************************* USER OF OUTER VARS!!!!!!!!!!!!!!!
+        rangeinfo.server.on('message', function (data, rinfo) { obj.parseRmcpPacket(data, rinfo, 0, obj.reportMachineState, rangeinfo); });
+        rangeinfo.server.on('listening', function() { for (var i = rangeinfo.min; i <= rangeinfo.max; i++) { rangeinfo.server.send(obj.rpacket, 623, obj.IPv4NumToStr(i)); } });
+        rangeinfo.timer = setTimeout(function () { // ************************* USE OF OUTER VARS!!!!!!!!!!!!!!!
             obj.parent.DispatchEvent(['*', userid], obj, { action: 'scanamtdevice', range: rangeinfo.range, results: rangeinfo.results, nolog: 1 });
             rangeinfo.server.close();
             delete rangeinfo.server;
@@ -166,7 +164,8 @@ module.exports.CreateAmtScanner = function (parent) {
             if (err == null && docs.length > 0) {
                 for (var i in docs) {
                     var doc = docs[i], host = doc.host.toLowerCase();
-                    if ((host != '127.0.0.1') && (host != '::1') && (host.toLowerCase() != 'localhost')) {
+                    const ciraConnections = obj.parent.mpsserver ? obj.parent.mpsserver.GetConnectionToNode(doc._id, null, true) : null; // See if any OOB connections are present
+                    if ((host != '127.0.0.1') && (host != '::1') && (host.toLowerCase() != 'localhost') && (ciraConnections == null)) {
                         var scaninfo = obj.scanTable[doc._id];
                         if (scaninfo == undefined) {
                             var tag = obj.nextTag++;
@@ -180,6 +179,7 @@ module.exports.CreateAmtScanner = function (parent) {
                                 // More than 2 minutes without a response, mark the node as unknown state
                                 scaninfo.state = 0;
                                 obj.parent.ClearConnectivityState(scaninfo.nodeinfo.meshid, scaninfo.nodeinfo._id, 4); // Clear connectivity state
+                                if (obj.parent.amtManager != null) { obj.parent.amtManager.stopAmtManagement(scaninfo.nodeinfo._id, 3, scaninfo.nodeinfo.host); }
                             } else if ((scaninfo.tcp == null) && ((scaninfo.state == 0) || isNaN(delta) || (delta > PeriodicScanTime))) {
                                 // More than 30 seconds without a response, try TCP detection
                                 obj.checkTcpPresence(host, (doc.intelamt.tls == 1) ? 16993 : 16992, scaninfo, function (tag, result, version) {
@@ -190,6 +190,7 @@ module.exports.CreateAmtScanner = function (parent) {
                                         tag.state = 1;
                                         obj.parent.SetConnectivityState(tag.nodeinfo.meshid, tag.nodeinfo._id, tag.lastpong, 4, 7); // Report power state as "present" (7).
                                         if (version != null) { obj.changeAmtState(tag.nodeinfo._id, version, 2, tag.nodeinfo.intelamt.tls); }
+                                        if (obj.parent.amtManager != null) { obj.parent.amtManager.startAmtManagement(tag.nodeinfo._id, 3, tag.nodeinfo.host); }
                                     }
                                 });
                             }
@@ -286,6 +287,7 @@ module.exports.CreateAmtScanner = function (parent) {
                 scaninfo.nodeinfo.intelamt.state = provisioningState;
                 obj.parent.SetConnectivityState(scaninfo.nodeinfo.meshid, scaninfo.nodeinfo._id, scaninfo.lastpong, 4, 7); // Report power state as "present" (7).
                 obj.changeAmtState(scaninfo.nodeinfo._id, scaninfo.nodeinfo.intelamt.ver, provisioningState, scaninfo.nodeinfo.intelamt.tls);
+                if (obj.parent.amtManager != null) { obj.parent.amtManager.startAmtManagement(scaninfo.nodeinfo._id, 3, scaninfo.nodeinfo.host); }
             }
         }
     };
@@ -295,11 +297,11 @@ module.exports.CreateAmtScanner = function (parent) {
         //var provisioningStates = { 0: 'Pre', 1: 'in', 2: 'Post' };
         //var provisioningStateStr = provisioningStates[provisioningState];
         //console.log(rinfo.address + ': Intel AMT ' + majorVersion + '.' + minorVersion + ', ' + provisioningStateStr + '-Provisioning, Open Ports: [' + openPorts.join(', ') + ']');
-        obj.dns.reverse(rinfo.address, function (err, hostname) {
-            if ((err != undefined) && (hostname != undefined)) {
-                user.results[rinfo.address] = { ver: majorVersion + '.' + minorVersion, tls: (((openPort == 16993) || (dualPorts == true)) ? 1 : 0), state: provisioningState, hostname: hostname[0] };
+        obj.dns.reverse(rinfo.address, function (err, hostnames) {
+            if ((err == null) && (hostnames != null) && (hostnames.length > 0)) {
+                user.results[rinfo.address] = { ver: majorVersion + '.' + minorVersion, tls: (((openPort == 16993) || (dualPorts == true)) ? 1 : 0), state: provisioningState, hostname: hostnames[0], hosttype: 'host' };
             } else {
-                user.results[rinfo.address] = { ver: majorVersion + '.' + minorVersion, tls: (((openPort == 16993) || (dualPorts == true)) ? 1 : 0), state: provisioningState, hostname: rinfo.address };
+                user.results[rinfo.address] = { ver: majorVersion + '.' + minorVersion, tls: (((openPort == 16993) || (dualPorts == true)) ? 1 : 0), state: provisioningState, hostname: rinfo.address, hosttype: 'addr' };
             }
         });
     };
@@ -332,9 +334,8 @@ module.exports.CreateAmtScanner = function (parent) {
 
                     // Event the node change
                     event.msg = 'Intel&reg; AMT changed device ' + node.name + ' from mesh ' + mesh.name + ': ' + changes.join(', ');
-                    var node2 = obj.parent.common.Clone(node);
-                    if (node2.intelamt && node2.intelamt.pass) delete node2.intelamt.pass; // Remove the Intel AMT password before eventing this.
-                    event.node = node2;
+                    event.node = obj.parent.webserver.CloneSafeNode(node);
+                    if (obj.parent.db.changeStream) { event.noact = 1; } // If DB change stream is active, don't use this event to change the node. Another event will come.
                     obj.parent.DispatchEvent(['*', node.meshid], obj, event);
                 }
             });
@@ -371,7 +372,9 @@ module.exports.CreateAmtScanner = function (parent) {
             } else {
                 // Connect using TLS, we will switch from default TLS to TLS1-only and back if we get a connection error to support older Intel AMT.
                 if (scaninfo.tlsoption == null) { scaninfo.tlsoption = 0; }
-                client = obj.tls.connect(port, host, scaninfo.tlsoption == 1 ? { secureProtocol: 'TLSv1_method', rejectUnauthorized: false, ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE } : { rejectUnauthorized: false, ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE }, function () { this.write('GET / HTTP/1.1\r\nhost: ' + host + '\r\n\r\n'); });
+                const tlsOptions = { rejectUnauthorized: false, ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_COMPRESSION | constants.SSL_OP_CIPHER_SERVER_PREFERENCE };
+                if (scaninfo.tlsoption == 1) { tlsOptions.secureProtocol = 'TLSv1_method'; }
+                client = obj.tls.connect(port, host, tlsOptions, function () { this.write('GET / HTTP/1.1\r\nhost: ' + host + '\r\n\r\n'); });
             }
             client.scaninfo = scaninfo;
             client.func = func;

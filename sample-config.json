@@ -1,65 +1,30 @@
 {
-  "__comment__" : "This is a sample configuration file, edit a section and remove the _ in front of the name. Refer to the user's guide for details.",
+  "$schema": "http://info.meshcentral.com/downloads/meshcentral-config-schema.json",
+  "__comment1__": "This is a simple configuration file, all values and sections that start with underscore (_) are ignored. Edit a section and remove the _ in front of the name. Refer to the user's guide for details.",
+  "__comment2__": "See node_modules/meshcentral/sample-config-advanced.json for a more advanced example.",
   "settings": {
-    "_MongoDb": "mongodb://127.0.0.1:27017/meshcentral",
-    "_MongoDbCol": "meshcentral",
+    "_cert": "myserver.mydomain.com",
     "_WANonly": true,
     "_LANonly": true,
-    "_Minify": 1,
-    "_SessionTime": 30,
-    "_SessionKey": "MyReallySecretPassword",
-    "_Port": 443,
-    "_RedirPort": 80,
-    "_AllowLoginToken": true,
-    "_AllowFraming": true,
-    "_WebRTC": false,
-    "_ClickOnce": false,
-    "_SelfUpdate": true,
-    "_UserAllowedIP": "127.0.0.1,::1,192.168.0.100",
-    "_LocalDiscovery": { "name": "Local server name", "info": "Information about this server" },
-    "_TlsOffload": true,
-    "_MpsTlsOffload":  true
+    "_sessionKey": "MyReallySecretPassword1",
+    "_port": 443,
+    "_aliasPort": 443,
+    "_redirPort": 80,
+    "_redirAliasPort": 80
   },
-  "_domains": {
+  "domains": {
     "": {
-      "title": "MyServer",
-      "title2": "Servername",
-      "userQuota": 1048576,
-      "meshQuota": 248576,
-      "newAccounts": 1,
-      "footer": "<a href='https://twitter.com/mytwitter'>Twitter</a>",
-      "_certUrl": "https://192.168.2.106:443/"
-    },
-    "customer1": {
-      "dns": "customer1.myserver.com",
-      "title": "Customer1",
-      "title2": "TestServer",
-      "newAccounts": 1,
-      "auth": "sspi",
-      "footer": "Test",
-      "_certUrl": "https://192.168.2.106:443/"
-    },
-    "info": {
-      "share": "C:\\ExtraWebSite"
+      "_title": "MyServer",
+      "_title2": "Servername",
+      "_minify": true,
+      "_newAccounts": true,
+      "_userNameIsEmail": true
     }
   },
   "_letsencrypt": {
-    "email": "myemail@myserver.com ",
-    "names": "myserver.com,customer1.myserver.com",
-    "rsaKeySize": 3072,
+    "__comment__": "Requires NodeJS 8.x or better, Go to https://letsdebug.net/ first before trying Let's Encrypt.",
+    "email": "myemail@mydomain.com",
+    "names": "myserver.mydomain.com",
     "production": false
-  },
-  "_peers": {
-    "serverId": "server1",
-    "servers": {
-      "server1": { "url": "wss://192.168.2.133:443/" },
-      "server2": { "url": "wss://192.168.1.106:443/" }
-    }
-  },
-  "_smtp": {
-    "host": "smtp.myserver.com",
-    "port": 25,
-    "from": "myemail@myserver.com",
-    "tls": false
   }
 }

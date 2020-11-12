@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <title>RDP</title>
+    <script type="text/javascript" src="mstsc/mstsc.js"></script>
+    <script type="text/javascript" src="mstsc/keyboard.js"></script>
+    <script type="text/javascript" src="mstsc/rle.js"></script>
+    <script type="text/javascript" src="mstsc/client.js"></script>
+    <script type="text/javascript" src="mstsc/canvas.js"></script>
+    <style>
+        body {
+            font-family:sans-serif;
+            margin: 0;
+            background-color: black;
+        }
+
+        .container {
+            background-color:cadetblue;
+            background: linear-gradient(to bottom right, #003366, #0055AA);
+        }
+
+        .middleContainer {
+            color: lightgray;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -moz-transform: translateX(-50%) translateY(-50%);
+            -webkit-transform: translateX(-50%) translateY(-50%);
+            transform: translateX(-50%) translateY(-50%);
+        }
+
+        .signinform {
+            width: 380px;
+            margin: 0 auto;
+        }
+
+        .formLabel { }
+
+        .formControl {
+            width:calc(100% - 16px);
+            font-size: 17px;
+            border-radius: 5px;
+        }
+
+        .connectButton {
+            margin-top: 6px;
+            width: 100%;
+            padding: 6px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor:pointer;
+        }
+
+        .mainCanvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -moz-transform: translateX(-50%) translateY(-50%);
+            -webkit-transform: translateX(-50%) translateY(-50%);
+            transform: translateX(-50%) translateY(-50%);
+        }
+    </style>
+    <script language="javascript">
+        var client = null;
+        var canvas = null;
+        var urlargs = parseUriArgs();
+        if (urlargs.key && (isAlphaNumeric(urlargs.key) == false)) { delete urlargs.key; }
+        var cookie = '{{{cookie}}}';
+        var name = decodeURIComponent('{{{name}}}');
+        if (name != '') { document.title = name + ' - ' + document.title; }
+
+        function load() {
+            if (name != '') { QH('computerName', EscapeHtml(name)); }
+            client = MstscClient.create(Q('myCanvas'));
+            Q('inputDomain').focus();
+            canvas = Q('myCanvas');
+            if (cookie == '') {
+                QE('inputDomain', false);
+                QE('inputUsername', false);
+                QE('inputPassword', false);
+                QE('connectButton', false);
+            }
+        }
+
+        function connect(domain, username, password) {
+            if (cookie == '') return;
+            var domain = Q('inputDomain').value;
+            var username = Q('inputUsername').value;
+            var password = Q('inputPassword').value;
+            QV('myCanvas', true);
+            QV('main', false);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            client.connect(cookie, domain, username, password, function (err) { QV('myCanvas', false); QV('main', true); });
+            return false;
+        }
+
+        function Q(x) { return document.getElementById(x); }                            // "Q"
+        function QS(x) { try { return Q(x).style; } catch (x) { } }                     // "Q" style
+        function QE(x, y) { try { Q(x).disabled = !y; } catch (x) { } }                 // "Q" enable
+        function QV(x, y) { try { QS(x).display = (y ? '' : 'none'); } catch (x) { } }  // "Q" visible
+        function QA(x, y) { Q(x).innerHTML += y; }                                      // "Q" append
+        function QH(x, y) { Q(x).innerHTML = y; }                                       // "Q" html
+        function QC(x) { try { return Q(x).classList; } catch (x) { } }                 // "Q" class
+        function EscapeHtml(x) { if (typeof x == 'string') return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;'); if (typeof x == 'boolean') return x; if (typeof x == 'number') return x; }
+        function EscapeHtmlBreaks(x) { if (typeof x == 'string') return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;').replace(/\r/g, '<br />').replace(/\n/g, '').replace(/\t/g, '&nbsp;&nbsp;'); if (typeof x == 'boolean') return x; if (typeof x == 'number') return x; }
+
+        // String validation
+        function isAlphaNumeric(str) { return (str.match(/^[A-Za-z0-9]+$/) != null); };
+        function isSafeString(str) { return ((typeof str == 'string') && (str.indexOf('<') == -1) && (str.indexOf('>') == -1) && (str.indexOf('&') == -1) && (str.indexOf('"') == -1) && (str.indexOf('\'') == -1) && (str.indexOf('+') == -1) && (str.indexOf('(') == -1) && (str.indexOf(')') == -1) && (str.indexOf('#') == -1) && (str.indexOf('%') == -1) && (str.indexOf(':') == -1)) };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|\=]/);
+            parsedUri.splice(0, 1);
+            for (x in parsedUri) {
+                switch (x % 2) {
+                    case 0: { name = decodeURIComponent(parsedUri[x]); break; }
+                    case 1: {
+                        r[name] = decodeURIComponent(parsedUri[x]);
+                        if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+                        break;
+                    } default: { break; }
+                }
+            }
+            return r;
+        }
+    </script>
+</head>
+<body onload='load()' style="position:absolute;top:0px;right:0;left:0;bottom:0px">
+    <div id="main" class="container" style="position:absolute;top:0px;right:0;left:0;bottom:0px">
+        <div class="middleContainer">
+            <div id="computerName" style="width:100%;text-align:center;font-size:24px"></div>
+            <table class="signinform">
+                <tr>
+                    <td colspan="2"><hr style="color:gray;border:1px solid;" /></td>
+                </tr>
+                <tr>
+                    <td><label for="inputDomain" class="formLabel">Domain</label></td>
+                    <td style="text-align:right"><input type="text" id="inputDomain" class="formControl" placeholder="Domain"></td>
+                </tr>
+                <tr>
+                    <td><label for="inputUsername" class="formLabel">Username</label></td>
+                    <td style="text-align:right"><input type="text" id="inputUsername" class="formControl" placeholder="Username"></td>
+                </tr>
+                <tr>
+                    <td><label for="inputPassword" class="formLabel">Password</label></td>
+                    <td style="text-align:right"><input type="password" id="inputPassword" class="formControl" placeholder="Password"></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><button class="connectButton" onclick="return connect()">Connect</button></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <canvas id="myCanvas" class="mainCanvas" style="display:none" />
+</body>
+</html>

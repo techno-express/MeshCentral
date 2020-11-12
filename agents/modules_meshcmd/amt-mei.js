@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Intel Corporation
+Copyright 2018-2020 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ function amt_heci() {
     emitterUtils.createEvent('error');
 
     var heci = require('heci');
+    var sendConsole = function (msg) { try { require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": msg }); } catch (ex) { } }
 
     this._ObjectID = "pthi";
     this._rq = new Q();
     this._setupPTHI = function _setupPTHI()
     {
         this._amt = heci.create();
+        this._amt.descriptorMetadata = "amt-pthi";
         this._amt.BiosVersionLen = 65;
         this._amt.UnicodeStringLen = 20;
 
@@ -256,7 +258,7 @@ function amt_heci() {
         var optional = [];
         for (var i = 2; i < arguments.length; ++i) { optional.push(arguments[i]); }
 
-        var data = new Buffer(4);
+        var data = Buffer.alloc(4);
         data.writeUInt32LE(handle, 0);
 
         this.sendCommand(0x2D, data, function (header, fn, opt) {
@@ -356,7 +358,7 @@ function amt_heci() {
     this.unprovision = function unprovision(mode, callback) {
         var optional = [];
         for (var i = 2; i < arguments.length; ++i) { optional.push(arguments[i]); }
-        var data = new Buffer(4);
+        var data = Buffer.alloc(4);
         data.writeUInt32LE(mode, 0);
         this.sendCommand(16, data, function (header, fn, opt) {
             opt.unshift(header.Status);
@@ -396,20 +398,25 @@ function amt_heci() {
             fn.apply(this, opt);
         }, callback, optional);
     }
-    this.getProtocolVersion = function getProtocolVersion(callback) {
+    this.getProtocolVersion = function getProtocolVersion(callback)
+    {
         var optional = [];
         for (var i = 1; i < arguments.length; ++i) { opt.push(arguments[i]); }
 
-        heci.doIoctl(heci.IOCTL.HECI_VERSION, Buffer.alloc(5), Buffer.alloc(5), function (status, buffer, self, fn, opt) {
+        if (!this._tmpSession) { this._tmpSession = heci.create(); this._tmpSession.parent = this;}
+        this._tmpSession.doIoctl(heci.IOCTL.HECI_VERSION, Buffer.alloc(5), Buffer.alloc(5), function (status, buffer, self, fn, opt)
+        {
             if (status == 0) {
                 var result = buffer.readUInt8(0).toString() + '.' + buffer.readUInt8(1).toString() + '.' + buffer.readUInt8(2).toString() + '.' + buffer.readUInt16BE(3).toString();
                 opt.unshift(result);
                 fn.apply(self, opt);
             }
-            else {
+            else
+            {
                 opt.unshift(null);
                 fn.apply(self, opt);
             }
+
         }, this, callback, optional);
     }
 }

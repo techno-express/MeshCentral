@@ -15,64 +15,70 @@ PIDFILE=/var/run/meshagent.pid
 LOGFILE=/var/log/meshagent.log
 
 start() {
-  if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE"); then
+  if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
     echo 'Service already running' >&2
     return 1
   fi
   echo 'Starting service…' >&2
-  local CMD="$SCRIPT &> \"$LOGFILE\" & echo \$!"
+  local CMD="$SCRIPT -exec \"var child; process.on('SIGTERM', function () { child.removeAllListeners('exit'); child.kill(); process.exit(); }); function start() { child = require('child_process').execFile(process.execPath, [process.argv0, \"\"]); child.stdout.on('data', function (c) { }); child.stderr.on('data', function (c) { }); child.on('exit', function (status) { start(); }); } start();\" &> \"$LOGFILE\" & echo \$!"
+
+  cd /usr/local/mesh
   su -c "$CMD" $RUNAS > "$PIDFILE"
   echo 'Service started' >&2
 }
 
 stop() {
-  if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE"); then
+  if [ ! -f "$PIDFILE" ]; then
     echo 'Service not running' >&2
     return 1
+  else
+    pid=$( cat "$PIDFILE" )
+    if kill -0 $pid 2>/dev/null; then
+          echo 'Stopping service…' >&2
+          kill -15 $pid
+          echo 'Service stopped' >&2
+    else
+      echo 'Service not running'
+    fi
+    rm -f $"PIDFILE"
   fi
-  echo 'Stopping service…' >&2
-  kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
-  echo 'Service stopped' >&2
 }
-
-uninstall() {
-  echo -n "Are you really sure you want to uninstall this service? That cannot be undone. [yes|No] "
-  local SURE
-  read SURE
-  if [ "$SURE" = "yes" ]; then
+restart(){
     stop
-    rm -f "$PIDFILE"
-    echo "Notice: log file will not be removed: '$LOGFILE'" >&2
-    update-rc.d -f <NAME> remove
-    rm -fv "$0"
-  fi
+    start
+}
+status(){
+    if [ -f "$PIDFILE" ]
+    then
+        pid=$( cat "$PIDFILE" )
+        if kill -0 $pid 2>/dev/null; then
+            echo "meshagent start/running, process $pid"
+        else
+            echo 'meshagent stop/waiting'
+        fi
+    else
+        echo 'meshagent stop/waiting'
+    fi
+
 }
 
-forceuninstall() {
-  stop
-  rm -f "$PIDFILE"
-  rm -f "$LOGFILE"
-  update-rc.d -f <NAME> remove
-  rm -fv "$0"
-}
 
 case "$1" in
-  start)
-    start
-    ;;
-  stop)
-    stop
-    ;;
-  uninstall)
-    uninstall
-    ;;
-  forceuninstall)
-    uninstall
-    ;;
-  restart)
-    stop
-    start
-    ;;
-  *)
-    echo "Usage: $0 {start|stop|restart|uninstall}"
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: service meshagent {start|stop|restart|status}"
+        ;;
 esac
+exit 0

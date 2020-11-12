@@ -1,7 +1,7 @@
 /**
 * @description MeshCentral accelerator
 * @author Ylian Saint-Hilaire
-* @copyright Intel Corporation 2018
+* @copyright Intel Corporation 2018-2020
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -17,13 +17,20 @@
 const crypto = require('crypto');
 var certStore = null;
 
-process.on('message', function (message) {
+// When the parent process terminates, we exit also.
+process.on('disconnect', function () { process.exit(); });
+
+// Handle parent messages
+process.on('message', function (message) { module.exports.processMessage(message); });
+
+// Process an incoming message
+module.exports.processMessage = function(message) {
     switch (message.action) {
         case 'sign': {
             if (typeof message.key == 'number') { message.key = certStore[message.key].key; }
             try {
                 const sign = crypto.createSign('SHA384');
-                sign.end(new Buffer(message.data, 'binary'));
+                sign.end(Buffer.from(message.data, 'binary'));
                 process.send(sign.sign(message.key).toString('binary'));
             } catch (e) { process.send(null); }
             break;
@@ -32,5 +39,14 @@ process.on('message', function (message) {
             certStore = message.certs;
             break;
         }
+        case 'indexMcRec': {
+            //console.log('indexMcRec', message.data);
+            require(require('path').join(__dirname, 'mcrec.js')).indexFile(message.data);
+            break;
+        }
+        default: {
+            console.log('Unknown accelerator action: ' + message.action + '.');
+            break;
+        }
     }
-});
+}

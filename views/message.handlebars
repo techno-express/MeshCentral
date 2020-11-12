@@ -1,29 +1,33 @@
 ﻿<!DOCTYPE html>
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
-<head>
+<head lang="en">
     <meta http-equiv=X-UA-Compatible content="IE=edge" />
     <meta content="text/html;charset=utf-8" http-equiv=Content-Type />
     <meta name=viewport content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
     <meta name=apple-mobile-web-app-capable content=yes />
     <meta name=format-detection content="telephone=no" />
+    <meta name="robots" content="noindex,nofollow">
     <link type=text/css href="/styles/style.css" media="screen" rel="stylesheet" title="CSS" />
-    <title>MeshCentral - {{{title3}}}</title>
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <title id="topTitle">{{{title}}}</title>
 </head>
 <body>
     <div id=container style=max-height:100vh>
         <div id=mastheadx></div>
-        <div id=masthead style="background:url(/images/logoback.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
-            <div style=float:left;height:66px;color:#c8c8c8;padding-left:20px;padding-top:8px>
-                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif">{{{title}}}</font></strong>
+        <div id=masthead style="background:url(logo.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
+            <div style="float:left;text-shadow: 1px 1px 2px #000">{{{titlehtml}}}</div>
+            <div style=float:left;height:66px;color:#c8c8c8;padding-left:14px;padding-top:7px>
+                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title1}}}</font></strong>
             </div>
             <div style=float:left;height:66px;color:#c8c8c8;padding-left:5px;padding-top:14px>
-                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif">{{{title2}}}</font></strong>
+                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title2}}}</font></strong>
             </div>
         </div>
         <div id=page_content style=max-height:calc(100vh-138px)>
             <div id=column_l>
-                <h1>{{{title3}}}</h1>
-                <p style=margin-left:20px>{{{message}}}</p>
+                <h1 id="mainTitle"></h1>
+                <p id="mainMessage"></p>
                 <br />
             </div>
             <div id=footer>
@@ -38,5 +42,61 @@
             </div>
         </div>
     </div>
+    <script>
+        var titleid = parseInt('{{{titleid}}}');
+        var msgid = parseInt('{{{msgid}}}');
+        var domainurl = decodeURIComponent('{{{domainurl}}}');
+        var arg1 = decodeURIComponent('{{{arg1}}}');
+        var arg2 = decodeURIComponent('{{{arg2}}}');
+        var urlargs = parseUriArgs();
+
+        var title = '';
+        if (titleid == 1) { title = "Account Verification"; }
+        if (titleid == 2) { title = "Desktop Sharing"; }
+        QH('topTitle', Q('topTitle').innerText + ' - ' + title);
+        QH('mainTitle', title);
+
+        var msg = '';
+        switch (msgid) {
+            case 1: { msg = "ERROR: Invalid domain."; break; }
+            case 2: { msg = "ERROR: Invalid username \"{0}\"."; break; }
+            case 3: { msg = format("ERROR: Invalid e-mail \"{0}\" for user \"{1}\".", arg1, arg2); break; }
+            case 4: { msg = format("E-mail \"{0}\" for user \"{1}\" already verified.", arg1, arg2); break; }
+            case 5: { msg = format("E-mail \"{0}\" already in use on a different account. Change the email address and try again.", arg1); break; }
+            case 6: { msg = format("Verified email {0} for user account {1}.", '<b>' + arg1 + '</b>', '<b>' + arg2 + '</b>'); break; }
+            case 7: { msg = format("E-mail \"{0}\" for user \"{1}\" not verified.", arg1, arg2); break; }
+            case 8: {
+                msg = '<div>' + format("Password for account {0} has been reset to:", '<b>' + arg1 + '</b>') + '</div><div style=padding:14px;font-size:18px><b>' + arg2 + '</b></div>';
+                msg += "Login and go to the \"My Account\" tab to update your password.";
+                break;
+            }
+            case 9: { msg = "ERROR: Invalid account check."; break; }
+            case 10: { msg = "ERROR: Invalid account check, verification url is only valid for 30 minutes."; break; }
+            case 11: { msg = "Sharing link not valid yet."; break; }
+            case 12: { msg = "Sharing link is expired."; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "Go to login page" + '</a>.' }
+        QH('mainMessage', msg);
+
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|]/);
+            parsedUri.splice(0, 1);
+            for (var j in parsedUri) {
+                var arg = parsedUri[j], i = arg.indexOf('=');
+                name = arg.substring(0, i);
+                r[name] = arg.substring(i + 1);
+                if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+            }
+            return r;
+        }
+
+    </script>
 </body>
 </html>

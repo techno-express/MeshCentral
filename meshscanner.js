@@ -1,7 +1,7 @@
 ﻿/**
 * @description MeshCentral Mesh Agent Local Scanner
 * @author Ylian Saint-Hilaire
-* @copyright Intel Corporation 2018
+* @copyright Intel Corporation 2018-2020
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -28,6 +28,31 @@ module.exports.CreateMeshScanner = function (parent) {
     const membershipIPv6 = 'FF02:0:0:0:0:0:0:FE';
     obj.agentCertificateHashHex = parent.certificateOperations.forge.pki.getPublicKeyFingerprint(parent.certificateOperations.forge.pki.certificateFromPem(parent.certificates.agent.cert).publicKey, { md: parent.certificateOperations.forge.md.sha384.create(), encoding: 'hex' }).toUpperCase();
     obj.error = 0;
+
+    // Setup the multicast key if present
+    if ((typeof obj.parent.args.localdiscovery == 'object') && (typeof obj.parent.args.localdiscovery.key == 'string') && (obj.parent.args.localdiscovery.key.length > 0)) {
+        obj.multicastKey = parent.crypto.createHash('sha384').update(obj.parent.args.localdiscovery.key).digest('raw').slice(0, 32);
+    }
+
+    // Encrypt UDP packet
+    function encryptPacket(plainPacket) {
+        if (obj.multicastKey == null) { return plainPacket; }
+        const iv = parent.crypto.randomBytes(16), aes = parent.crypto.createCipheriv('aes-256-cbc', obj.multicastKey, iv);
+        var ciphertext = aes.update(plainPacket);
+        return Buffer.concat([iv, ciphertext, aes.final()]);
+    }
+
+    // Decrypt UDP packet
+    function decryptPacket(packet) {
+        if (obj.multicastKey == null) { return packet; }
+        if (packet.length < 17) { return null; }
+        try {
+            const iv = packet.slice(0, 16), data = packet.slice(16);
+            const aes = parent.crypto.createDecipheriv('aes-256-cbc', obj.multicastKey, iv);
+            var plaintextBytes = Buffer.from(aes.update(data));
+            return Buffer.concat([plaintextBytes, aes.final()]);
+        } catch (ex) { return null; }
+    }
 
     // Get a list of IPv4 and IPv6 interface addresses
     function getInterfaceList() {
@@ -64,14 +89,14 @@ module.exports.CreateMeshScanner = function (parent) {
                     server4.xxclear = false;
                     server4.xxtype = 4;
                     server4.xxlocal = localAddress;
-                    server4.on('error', function (err) { if (this.xxlocal == '*') { console.log("ERROR: Server port 16989 not available, check if server is running twice."); } this.close(); delete obj.servers6[this.xxlocal]; });
+                    server4.on('error', function (err) { /*if (this.xxlocal == '*') { console.log("ERROR: Server port 16989 not available, check if server is running twice."); } this.close(); delete obj.servers6[this.xxlocal];*/ });
                     bindOptions = { port: 16989, exclusive: true };
                     if (server4.xxlocal != '*') { bindOptions.address = server4.xxlocal; }
                     server4.bind(bindOptions, function () {
                         try {
                             var doscan = true;
-                            try { this.setBroadcast(true); this.setMulticastTTL(128); this.addMembership(membershipIPv4); } catch (e) { doscan = false; }
-                            this.on('error', function (error) { console.log('Error: ' + error); });
+                            try { this.setBroadcast(true); this.setMulticastTTL(128); this.addMembership(membershipIPv4, this.xxlocal); } catch (e) { doscan = false; }
+                            this.on('error', function (error) { /*console.log('Error: ' + error);*/ });
                             this.on('message', function (msg, info) { onUdpPacket(msg, info, this); });
                             if (doscan == true) { obj.performScan(this); obj.performScan(this); }
                         } catch (e) { console.log(e); }
@@ -95,13 +120,13 @@ module.exports.CreateMeshScanner = function (parent) {
                     server6.xxclear = false;
                     server6.xxtype = 6;
                     server6.xxlocal = localAddress;
-                    server6.on('error', function (err) { this.close(); delete obj.servers6[this.xxlocal]; });
+                    server6.on('error', function (err) { /*this.close(); delete obj.servers6[this.xxlocal];*/ });
                     bindOptions = { port: 16989, exclusive: true };
                     if (server6.xxlocal != '*') { bindOptions.address = server6.xxlocal; }
                     server6.bind(bindOptions, function () {
                         try {
                             var doscan = true;
-                            try { this.setBroadcast(true); this.setMulticastTTL(128); this.addMembership(membershipIPv6); } catch (e) { doscan = false; }
+                            try { this.setBroadcast(true); this.setMulticastTTL(128); this.addMembership(membershipIPv6, this.xxlocal); } catch (e) { doscan = false; }
                             this.on('error', function (error) { console.log('Error: ' + error); });
                             this.on('message', function (msg, info) { onUdpPacket(msg, info, this); });
                             if (doscan == true) { obj.performScan(this); obj.performScan(this); }
@@ -131,22 +156,34 @@ module.exports.CreateMeshScanner = function (parent) {
 
         // Setup the local discovery values
         var name = 'MeshCentral';
-        try { name = obj.parent.config.domains[''].title; } catch (ex) { }
-        try { name = obj.parent.args.localdiscovery.name; } catch (ex) { }
-        var info = 'Beta2';
-        try { info = obj.parent.config.domains[''].title2; } catch (ex) { }
-        try { info = obj.parent.args.localdiscovery.info; } catch (ex) { }
+        var info = '';
+        try {
+            if ((typeof obj.parent.config.domains[''].title == 'string') && (obj.parent.config.domains[''].title.length > 0)) {
+                name = obj.parent.config.domains[''].title; info = '';
+                try { if ((typeof obj.parent.config.domains[''].title2 == 'string') && (obj.parent.config.domains[''].title2.length > 0)) { info = obj.parent.config.domains[''].title2; } } catch (ex) { }
+            }
+        } catch (ex) { }
+        try {
+            if ((typeof obj.parent.args.localdiscovery.name == 'string') && (obj.parent.args.localdiscovery.name.length > 0)) {
+                name = obj.parent.args.localdiscovery.name; info = '';
+                try { if ((typeof obj.parent.args.localdiscovery.info == 'string') && (obj.parent.args.localdiscovery.info.length > 0)) { info = obj.parent.args.localdiscovery.info; } } catch (ex) { }
+            }
+        } catch (ex) { }
+        if (info == '') { info = parent.certificates.CommonName; }
+
+        // Figure out the correct websocket port
+        var port = (parent.args.aliasport)?parent.args.aliasport:parent.args.port;
 
         // Build the IPv4 response
-        var url = (parent.args.notls ? 'ws' : 'wss') + '://%s:' + parent.args.port + '/agent.ashx';
+        var url = 'wss://%s:' + port + '/agent.ashx';
         obj.multicastPacket4 = Buffer.from("MeshCentral2|" + obj.agentCertificateHashHex + '|' + url, 'ascii');
-        if (parent.certificates.CommonName != "un-configured") { url = (parent.args.notls ? 'ws' : 'wss') + '://' + parent.certificates.CommonName + ':' + parent.args.port + '/agent.ashx'; }
+        if (parent.certificates.CommonName.indexOf('.') != -1) { url = 'wss://' + parent.certificates.CommonName + ':' + port + '/agent.ashx'; }
         obj.multicastPacket4x = Buffer.from("MeshCentral2|" + obj.agentCertificateHashHex + '|' + url + '|' + name + '|' + info, 'ascii');
 
         // Build the IPv6 response
-        url = (parent.args.notls ? 'ws' : 'wss') + '://[%s]:' + parent.args.port + '/agent.ashx';
+        url = 'wss://[%s]:' + port + '/agent.ashx';
         obj.multicastPacket6 = Buffer.from("MeshCentral2|" + obj.agentCertificateHashHex + '|' + url, 'ascii');
-        if (parent.certificates.CommonName != "un-configured") { url = (parent.args.notls ? 'ws' : 'wss') + '://' + parent.certificates.CommonName + ':' + parent.args.port + '/agent.ashx'; }
+        if (parent.certificates.CommonName.indexOf('.') != -1) { url = 'wss://' + parent.certificates.CommonName + ':' + port + '/agent.ashx'; }
         obj.multicastPacket6x = Buffer.from("MeshCentral2|" + obj.agentCertificateHashHex + '|' + url + '|' + name + '|' + info, 'ascii');
 
         setupServers();
@@ -164,50 +201,60 @@ module.exports.CreateMeshScanner = function (parent) {
     obj.performScan = function (server) {
         var i;
         if (server != null) {
-            if (server.xxtype == 4) { try { server.send(obj.multicastPacket4, 0, obj.multicastPacket4.length, 16990, membershipIPv4); } catch (e) { } }
-            if (server.xxtype == 6) { try { server.send(obj.multicastPacket6, 0, obj.multicastPacket6.length, 16990, membershipIPv6); } catch (e) { } }
-            if ((server.xxtype == 4) && (server.xxlocal == '*')) { try { server.send(obj.multicastPacket4, 0, obj.multicastPacket4.length, 16990, '127.0.0.1'); } catch (e) { } try { server.send(obj.multicastPacket4, 0, obj.multicastPacket4.length, 16990, '255.255.255.255'); } catch (e) { } }
-            if ((server.xxtype == 6) && (server.xxlocal == '*')) { try { server.send(obj.multicastPacket6, 0, obj.multicastPacket6.length, 16990, '::1'); } catch (e) { } }
+            if (server.xxtype == 4) { var p = encryptPacket(obj.multicastPacket4); try { server.send(p, 0, p.length, 16990, membershipIPv4); } catch (e) { } }
+            if (server.xxtype == 6) { var p = encryptPacket(obj.multicastPacket6); try { server.send(p, 0, p.length, 16990, membershipIPv6); } catch (e) { } }
+            if ((server.xxtype == 4) && (server.xxlocal == '*')) { var p = encryptPacket(obj.multicastPacket4); try { server.send(p, 0, p.length, 16990, '127.0.0.1'); } catch (e) { } try { server.send(p, 0, p.length, 16990, '255.255.255.255'); } catch (e) { } }
+            if ((server.xxtype == 6) && (server.xxlocal == '*')) { var p = encryptPacket(obj.multicastPacket6); try { server.send(p, 0, p.length, 16990, '::1'); } catch (e) { } }
         } else {
-            for (i in obj.servers4) { try { obj.servers4[i].send(obj.multicastPacket4, 0, obj.multicastPacket4.length, 16990, membershipIPv4); } catch (e) { } }
-            for (i in obj.servers6) { try { obj.servers6[i].send(obj.multicastPacket6, 0, obj.multicastPacket6.length, 16990, membershipIPv6); } catch (e) { } }
+            for (i in obj.servers4) { var p = encryptPacket(obj.multicastPacket4); try { obj.servers4[i].send(p, 0, p.length, 16990, membershipIPv4); } catch (e) { } }
+            for (i in obj.servers6) { var p = encryptPacket(obj.multicastPacket6); try { obj.servers6[i].send(p, 0, p.length, 16990, membershipIPv6); } catch (e) { } }
             setupServers(); // Check if any network interfaces where added or removed
         }
     };
 
     // Called when a UDP packet is received from an agent.
     function onUdpPacket(msg, info, server) {
+        // Decrypt the packet if needed
+        if ((msg = decryptPacket(msg)) == null) return;
+
         //console.log('Received ' + msg.length + ' bytes from ' + info.address + ':' + info.port + ', on interface: ' + server.xxlocal + '.');
         if ((msg.length == 96) && (msg.toString('ascii') == obj.agentCertificateHashHex)) {
-            if (server.xxtype == 4) { try { server.send(obj.multicastPacket4, 0, obj.multicastPacket4.length, info.port, info.address); } catch (e) { } }
-            if (server.xxtype == 6) { try { server.send(obj.multicastPacket6, 0, obj.multicastPacket6.length, info.port, info.address); } catch (e) { } }
+            if (server.xxtype == 4) { var p = encryptPacket(obj.multicastPacket4); try { server.send(p, 0, p.length, info.port, info.address); } catch (e) { } }
+            if (server.xxtype == 6) { var p = encryptPacket(obj.multicastPacket6); try { server.send(p, 0, p.length, info.port, info.address); } catch (e) { } }
         } else if (msg.toString('ascii') == 'MeshServerScan') {
-            if (server.xxtype == 4) { try { server.send(obj.multicastPacket4x, 0, obj.multicastPacket4x.length, info.port, info.address); } catch (e) { } }
-            if (server.xxtype == 6) { try { server.send(obj.multicastPacket6x, 0, obj.multicastPacket6x.length, info.port, info.address); } catch (e) { } }
+            if (server.xxtype == 4) { var p = encryptPacket(obj.multicastPacket4x); try { server.send(p, 0, p.length, info.port, info.address); } catch (e) { } }
+            if (server.xxtype == 6) { var p = encryptPacket(obj.multicastPacket6x); try { server.send(p, 0, p.length, info.port, info.address); } catch (e) { } }
         }
     }
 
     // As a side job, we also send server wake-on-lan packets
-    obj.wakeOnLan = function (macs) {
+    obj.wakeOnLan = function (macs, host) {
         var i, j;
         for (i in macs) {
-            var mac = macs[i];
+            var mac = macs[i].split(':').join('');
             var hexpacket = 'FFFFFFFFFFFF';
             for (j = 0; j < 16; j++) { hexpacket += mac; }
             var wakepacket = Buffer.from(hexpacket, 'hex');
             //console.log(wakepacket.toString('hex'));
 
-            // Send the wake packet 3 times with small time intervals
-            for (j in obj.servers4) { obj.servers4[j].send(wakepacket, 0, wakepacket.length, 7, "255.255.255.255"); obj.servers4[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv4); }
-            for (j in obj.servers6) { obj.servers6[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv6); }
-            setTimeout(function () {
-                for (j in obj.servers4) { obj.servers4[j].send(wakepacket, 0, wakepacket.length, 7, "255.255.255.255"); obj.servers4[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv4); }
-                for (j in obj.servers6) { obj.servers6[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv6); }
-            }, 200);
-            setTimeout(function () {
-                for (j in obj.servers4) { obj.servers4[j].send(wakepacket, 0, wakepacket.length, 7, "255.255.255.255"); obj.servers4[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv4); }
-                for (j in obj.servers6) { obj.servers6[j].send(wakepacket, 0, wakepacket.length, 16990, membershipIPv6); }
-            }, 500);
+            // Setup the wake function
+            const func = function wakeFunc() {
+                for (j in obj.servers4) {
+                    obj.servers4[j].send(wakeFunc.wakepacket, 0, wakeFunc.wakepacket.length, 7, '255.255.255.255');
+                    obj.servers4[j].send(wakeFunc.wakepacket, 0, wakeFunc.wakepacket.length, 16990, membershipIPv4);
+                    if (wakeFunc.host != null) { obj.servers4[j].send(wakeFunc.wakepacket, 0, wakeFunc.wakepacket.length, 7, wakeFunc.host); }
+                }
+                for (j in obj.servers6) {
+                    obj.servers6[j].send(wakeFunc.wakepacket, 0, wakeFunc.wakepacket.length, 16990, membershipIPv6);
+                }
+            }
+            func.wakepacket = wakepacket;
+            func.host = host;
+
+            // Call the wake function 3 times with small time intervals
+            func();
+            setTimeout(func, 200);
+            setTimeout(func, 500);
         }
     };
 

@@ -132,7 +132,29 @@ function windows_terminal() {
         this._kernel32.SetConsoleWindowInfo(this._stdoutput, 1, rect);
     }
     
-    this.Start = function Start(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT) {
+    this.PowerShellCapable = function()
+    {
+        if (require('os').arch() == 'x64')
+        {
+            return (require('fs').existsSync(process.env['windir'] + '\\SysWow64\\WindowsPowerShell\\v1.0\\powershell.exe'));
+        }
+        else
+        {
+            return (require('fs').existsSync(process.env['windir'] + '\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'));
+        }
+    }
+
+    this.StartEx = function Start(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT, terminalTarget)
+    {
+        // The older windows terminal does not support 
+        CONSOLE_SCREEN_WIDTH = 80;
+        CONSOLE_SCREEN_HEIGHT = 25;
+
+        if (this._stream != null)
+        {
+            throw ('Concurrent terminal sessions are not supported on Windows.');
+        }
+        this.stopping = null;
         if (this._kernel32.GetConsoleWindow().Val == 0) {
             if (this._kernel32.AllocConsole().Val == 0) {
                 throw ('AllocConsole failed with: ' + this._kernel32.GetLastError().Val);
@@ -156,63 +178,107 @@ function windows_terminal() {
         if (this._kernel32.SetConsoleScreenBufferSize(this._stdoutput, coordScreen.Deref(0, 4).toBuffer().readUInt32LE()).Val == 0) {
             throw ('Failed to set Console Buffer Size');
         }
+
+        // Hide the console window
+        this._user32.ShowWindow(this._kernel32.GetConsoleWindow().Val, SW_HIDE);
+
         this.ClearScreen();
-        this._hookThread().then(function () {
+        this._hookThread(terminalTarget).then(function ()
+        {
             // Hook Ready
-            this.terminal.StartCommand();
+            this.terminal.StartCommand(this.userArgs[0]);
         }, console.log);
-        this._stream = new duplex({
-            'write': function (chunk, flush) {
-                if (!this.terminal.connected) {
-                    //console.log('_write: ' + chunk);
-                    if (!this._promise.chunk) {
-                        this._promise.chunk = [];
-                    }
-                    if (typeof (chunk) == 'string') {
-                        this._promise.chunk.push(chunk);
-                    } else {
-                        this._promise.chunk.push(Buffer.alloc(chunk.length));
-                        chunk.copy(this._promise.chunk.peek());
-                    }
-                    this._promise.chunk.peek().flush = flush;
-                    this._promise.then(function () {
-                        var buf;
-                        while (this.chunk.length > 0) {
-                            buf = this.chunk.shift();
-                            this.terminal._WriteBuffer(buf);
-                            buf.flush();
+        this._stream = new duplex(
+            {
+                'write': function (chunk, flush)
+                {
+                    if (!this.terminal.connected)
+                    {
+                        //console.log('_write: ' + chunk);
+                        if (!this._promise.chunk)
+                        {
+                            this._promise.chunk = [];
                         }
-                    });
+                        if (typeof (chunk) == 'string')
+                        {
+                            this._promise.chunk.push(chunk);
+                        } else
+                        {
+                            this._promise.chunk.push(Buffer.alloc(chunk.length));
+                            chunk.copy(this._promise.chunk.peek());
+                        }
+                        this._promise.chunk.peek().flush = flush;
+                        this._promise.then(function ()
+                        {
+                            var buf;
+                            while (this.chunk.length > 0)
+                            {
+                                buf = this.chunk.shift();
+                                this.terminal._WriteBuffer(buf);
+                                buf.flush();
+                            }
+                        });
+                    }
+                    else
+                    {
+                        //console.log('writeNOW: ' + chunk);
+                        this.terminal._WriteBuffer(chunk);
+                        flush();
+                    }
+                    return (true);
+                },
+                'final': function (flush)
+                {
+                    var p = this.terminal._stop();
+                    p.__flush = flush;
+                    p.then(function () { this.__flush(); });
                 }
-                else {
-                    //console.log('writeNOW: ' + chunk);
-                    this.terminal._WriteBuffer(chunk);
-                    flush();
-                }
-            },
-            'final': function (flush) {
-                var p = this.terminal._stop();
-                p.__flush = flush;
-                p.then(function () { this.__flush(); });
-            }
-        });
+            });
         this._stream.terminal = this;
         this._stream._promise = new promise(function (res, rej) { this._res = res; this._rej = rej; });
         this._stream._promise.terminal = this;
+        this._stream.prependOnceListener('end', function ()
+        {
+            this.terminal._stream = null;
+        });
         return (this._stream);
     };
+    this.Start = function Start(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT)
+    {
+        return (this.StartEx(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT, process.env['windir'] + '\\System32\\cmd.exe'));
+    }
+    this.StartPowerShell = function StartPowerShell(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT)
+    {
+        if (require('os').arch() == 'x64')
+        {
+            return (this.StartEx(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT, process.env['windir'] + '\\SysWow64\\WindowsPowerShell\\v1.0\\powershell.exe'));
+        }
+        else
+        {
+            return (this.StartEx(CONSOLE_SCREEN_WIDTH, CONSOLE_SCREEN_HEIGHT, process.env['windir'] + '\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'));
+        }
+    }
+
     this._stop = function () {
         if (this.stopping) { return (this.stopping); }
-        console.log('Stopping Terminal...');
+        //console.log('Stopping Terminal...');
+        this._ConsoleWinEventProc.removeAllListeners('GlobalCallback');
         this.stopping = new promise(function (res, rej) { this._res = res; this._rej = rej; });
         
         var threadID = this._kernel32.GetThreadId(this._user32.SetWinEventHook.async.thread()).Val;
         this._user32.PostThreadMessageA(threadID, WM_QUIT, 0, 0);
+        this._stream.emit('end');
         return (this.stopping);
     }
     
-    this._hookThread = function () {
+    this._hookThread = function ()
+    {
         var ret = new promise(function (res, rej) { this._res = res; this._rej = rej; });
+        ret.userArgs = [];
+        for (var a in arguments)
+        {
+            ret.userArgs.push(arguments[a]);
+        }
         ret.terminal = this;
         this._ConsoleWinEventProc = GM.GetGenericGlobalCallback(7);
         this._ConsoleWinEventProc.terminal = this;
@@ -267,8 +333,10 @@ function windows_terminal() {
                     //SendConsoleEvent(dwEvent, idObject, idChild);
                     break;
                 case EVENT_CONSOLE_END_APPLICATION:
-                    if (idObject.Val == this.terminal._hProcessID) {
+                    if (idObject.Val == this.terminal._hProcessID)
+                    {
                         //console.log('END APPLICATION: [PID: ' + idObject.Val + ' CID: ' + idChild.Val + ']');
+                        this.terminal._hProcess = null;
                         this.terminal._stop().then(function () { console.log('STOPPED'); });
                     }
                     break;
@@ -301,18 +369,23 @@ function windows_terminal() {
                         }, console.log);
                     }, console.log);
                 }
-            } else {
+            } else
+            {
                 this.nativeProxy.UnhookWinEvent.async(this.nativeProxy.terminal._user32.SetWinEventHook.async, this.nativeProxy.terminal.hwinEventHook)
-                    .then(function () {
-                    this.nativeProxy.terminal.stopping._res();
-                    if (this.nativeProxy.terminal._kernel32.TerminateProcess(this.nativeProxy.terminal._hProcess, 1067).Val == 0) {
-                        var e = this.nativeProxy.terminal._kernel32.GetLastError().Val;
-                        console.log('Unable to kill Terminal Process, error: ' + e);
-                    }
-                    this.nativeProxy.terminal.stopping = null;
-                }, function (err) {
-                    console.log('REJECTED_UnhookWinEvent: ' + err);
-                });
+                    .then(function ()
+                    {
+                        if (this.nativeProxy.terminal._hProcess == null) { return; }
+
+                        this.nativeProxy.terminal.stopping._res();
+                        if (this.nativeProxy.terminal._kernel32.TerminateProcess(this.nativeProxy.terminal._hProcess, 1067).Val == 0) {
+                            var e = this.nativeProxy.terminal._kernel32.GetLastError().Val;
+                            console.log('Unable to kill Terminal Process, error: ' + e);
+                        }
+                        this.nativeProxy.terminal.stopping = null;
+                    }, function (err)
+                    {
+                        console.log('REJECTED_UnhookWinEvent: ' + err);
+                    });
             }
         }, function (err) {
             // Get Message Failed
@@ -328,7 +401,8 @@ function windows_terminal() {
             }
         }
     }
-    this._WriteCharacter = function (key, bControlKey) {
+    this._WriteCharacter = function (key, bControlKey)
+    {
         var rec = GM.CreateVariable(20);
         rec.Deref(0, 2).toBuffer().writeUInt16LE(KEY_EVENT);                                // rec.EventType 
         rec.Deref(4, 4).toBuffer().writeUInt16LE(1);                                        // rec.Event.KeyEvent.bKeyDown
@@ -337,10 +411,10 @@ function windows_terminal() {
         rec.Deref(8, 2).toBuffer().writeUInt16LE(1);                                        // rec.Event.KeyEvent.wRepeatCount
         rec.Deref(10, 2).toBuffer().writeUInt16LE(this._user32.VkKeyScanA(key).Val);        // rec.Event.KeyEvent.wVirtualKeyCode
         rec.Deref(12, 2).toBuffer().writeUInt16LE(this._user32.MapVirtualKeyA(this._user32.VkKeyScanA(key).Val, MAPVK_VK_TO_VSC).Val);
-        
+
         var dwWritten = GM.CreateVariable(4);
         if (this._kernel32.WriteConsoleInputA(this._stdinput, rec, 1, dwWritten).Val == 0) { return (false); }
-        
+
         rec.Deref(4, 4).toBuffer().writeUInt16LE(0);                                         // rec.Event.KeyEvent.bKeyDown
         return (this._kernel32.WriteConsoleInputA(this._stdinput, rec, 1, dwWritten).Val != 0);
     }
@@ -405,23 +479,28 @@ function windows_terminal() {
         return (retVal);
     }
     
-    this._SendDataBuffer = function (data) {
+    this._SendDataBuffer = function (data)
+    {
         // { data, attributes, width, height, x, y }
-        
-        var dy, line, attr;
-        for (dy = 0; dy < data.height; ++dy) {
-            line = data.data[dy];
-            attr = data.attributes[dy];
-            line.s = line.toString();
-            
-            //line = data.data.slice(data.width * dy, (data.width * dy) + data.width);
-            //attr = data.attributes.slice(data.width * dy, (data.width * dy) + data.width);
-            this._stream.push(TranslateLine(data.x + 1, data.y + dy + 1, line, attr));
+        if (this._stream != null)
+        {
+            var dy, line, attr;
+            for (dy = 0; dy < data.height; ++dy)
+            {
+                line = data.data[dy];
+                attr = data.attributes[dy];
+                line.s = line.toString();
+
+                //line = data.data.slice(data.width * dy, (data.width * dy) + data.width);
+                //attr = data.attributes.slice(data.width * dy, (data.width * dy) + data.width);
+                this._stream.push(TranslateLine(data.x + 1, data.y + dy + 1, line, attr));
+            }
         }
     }
 
-    this._SendScroll = function _SendScroll(dx, dy) {
-        if (this._scrollTimer) { return; }
+    this._SendScroll = function _SendScroll(dx, dy)
+    {
+        if (this._scrollTimer || this._stream == null) { return; }
         
         var info = GM.CreateVariable(22);
         if (this._kernel32.GetConsoleScreenBufferInfo(this._stdoutput, info).Val == 0) { throw ('Error getting screen buffer info'); }
@@ -442,8 +521,9 @@ function windows_terminal() {
         }, 250, this, nWidth, nHeight);
     }
     
-    this.StartCommand = function StartCommand() {
-        if (this._kernel32.CreateProcessA(GM.CreateVariable(process.env['windir'] + '\\system32\\cmd.exe'), 0, 0, 0, 1, CREATE_NEW_PROCESS_GROUP, 0, 0, si, pi).Val == 0) {
+    this.StartCommand = function StartCommand(target) {
+        if (this._kernel32.CreateProcessA(GM.CreateVariable(target), 0, 0, 0, 1, CREATE_NEW_PROCESS_GROUP, 0, 0, si, pi).Val == 0)
+        {
             console.log('Error Spawning CMD');
             return;
         }
@@ -458,7 +538,7 @@ function windows_terminal() {
 function LOWORD(val) { return (val & 0xFFFF); }
 function HIWORD(val) { return ((val >> 16) & 0xFFFF); }
 function GetEsc(op, args) { return (Buffer.from('\x1B[' + args.join(';') + op)); }
-//function MeshConsole(msg) { require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": JSON.stringify(msg) }); }
+function MeshConsole(msg) { require('MeshAgent').SendCommand({ "action": "msg", "type": "console", "value": JSON.stringify(msg) }); }
 function TranslateLine(x, y, data, attributes) {
     var i, fcolor, bcolor, rcolor, fbright, bbright, lastAttr, fc, bc, rc, fb, bb, esc = [], output = [GetEsc('H', [y, x])];
     if (typeof attributes == 'number') { attributes = [ attributes ]; } // If we get a single attribute, turn it into an array.

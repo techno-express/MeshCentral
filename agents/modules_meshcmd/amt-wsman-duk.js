@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2018 Intel Corporation
+Copyright 2018-2020 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ limitations under the License.
 */
 
 // Construct a WSMAN communication object
-function CreateWsmanComm(/*host, port, user, pass, tls, extra*/)
-{
+function CreateWsmanComm(/*host, port, user, pass, tls, extra*/) {
     var obj = {};
     obj.PendingAjax = [];               // List of pending AJAX calls. When one frees up, another will start.
     obj.ActiveAjaxCount = 0;            // Number of currently active AJAX calls
@@ -31,15 +30,13 @@ function CreateWsmanComm(/*host, port, user, pass, tls, extra*/)
     obj.digest = null;
     obj.RequestCount = 0;
 
-    if (arguments.length == 1 && typeof(arguments[0] == 'object'))
-    {
+    if (arguments.length == 1 && typeof (arguments[0] == 'object')) {
         obj.host = arguments[0].host;
         obj.port = arguments[0].port;
         obj.authToken = arguments[0].authToken;
         obj.tls = arguments[0].tls;
     }
-    else
-    {
+    else {
         obj.host = arguments[0];
         obj.port = arguments[1];
         obj.user = arguments[2];
@@ -72,17 +69,13 @@ function CreateWsmanComm(/*host, port, user, pass, tls, extra*/)
     obj.PerformAjaxEx = function (postdata, callback, tag, url, action) {
         if (obj.FailAllError != 0) { if (obj.FailAllError != 999) { obj.gotNextMessagesError({ status: obj.FailAllError }, 'error', null, [postdata, callback, tag]); } return; }
         if (!postdata) postdata = "";
-        //console.log("SEND: " + postdata); // DEBUG
+        if (globalDebugFlags & 1) { console.log("SEND: " + postdata + "\r\n\r\n"); } // DEBUG
 
         // We are in a DukTape environement
-        if (obj.digest == null)
-        {
-            if (obj.authToken)
-            {
+        if (obj.digest == null) {
+            if (obj.authToken) {
                 obj.digest = require('http-digest').create({ authToken: obj.authToken });
-            }
-            else
-            {
+            } else {
                 obj.digest = require('http-digest').create(obj.user, obj.pass);
             }
             obj.digest.http = require('http');
@@ -92,9 +85,9 @@ function CreateWsmanComm(/*host, port, user, pass, tls, extra*/)
         //console.log('Request ' + (obj.RequestCount++));
         req.on('error', function (e) { obj.gotNextMessagesError({ status: 600 }, 'error', null, [postdata, callback, tag]); });
         req.on('response', function (response) {
-            //console.log('Response: ' + response.statusCode);
+            if (globalDebugFlags & 1) { console.log('Response: ' + response.statusCode); }
             if (response.statusCode != 200) {
-                //console.log('ERR:' + JSON.stringify(response));
+                if (globalDebugFlags & 1) { console.log('ERR:' + JSON.stringify(response)); }
                 obj.gotNextMessagesError({ status: response.statusCode }, 'error', null, [postdata, callback, tag]);
             } else {
                 response.acc = '';
@@ -116,7 +109,7 @@ function CreateWsmanComm(/*host, port, user, pass, tls, extra*/)
     obj.gotNextMessages = function (data, status, request, callArgs) {
         obj.ActiveAjaxCount--;
         if (obj.FailAllError == 999) return;
-        //console.log("RECV: " + data); // DEBUG
+        if (globalDebugFlags & 1) { console.log("RECV: " + data + "\r\n\r\n"); } // DEBUG
         if (obj.FailAllError != 0) { callArgs[1](null, obj.FailAllError, callArgs[2]); return; }
         if (request.status != 200) { callArgs[1](null, request.status, callArgs[2]); return; }
         callArgs[1](data, 200, callArgs[2]);

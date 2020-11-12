@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Intel Corporation
+Copyright 2018-2020 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -613,7 +613,7 @@ function AmtStackCreateService(wsmanStack) {
         1611: 'TLS Trusted Root Certificate Removed',
         1612: 'TLS Preshared Key Set',
         1613: 'Kerberos Settings Modified',
-        1614: 'Kerberos Master Key Modified',
+        1614: 'Kerberos Main Key Modified',
         1615: 'Flash Wear out Counters Reset',
         1616: 'Power Package Modified',
         1617: 'Set Realm Authentication Mode',
@@ -720,7 +720,7 @@ function AmtStackCreateService(wsmanStack) {
 
     function _GetAuditLog0(stack, name, responses, status, tag) {
         if (status != 200) { tag[0](obj, [], status); return; }
-        var ptr, i, e, es, x, r = tag[1], t = new Date(), TimeStamp;
+        var ptr, i, e, x, r = tag[1], t = new Date(), TimeStamp;
 
         if (responses.Body['RecordsReturned'] > 0) {
             responses.Body['EventRecords'] = MakeToArray(responses.Body['EventRecords']);
@@ -728,8 +728,7 @@ function AmtStackCreateService(wsmanStack) {
             for (i in responses.Body['EventRecords']) {
                 e = null;
                 try {
-                    es = atob(responses.Body['EventRecords'][i]);
-                    e = new Buffer(es);
+                    e = Buffer.from(responses.Body['EventRecords'][i], 'base64');
                 } catch (ex) {
                     console.log(ex + " " + responses.Body['EventRecords'][i])
                 }

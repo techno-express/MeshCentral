@@ -77,7 +77,8 @@ function SMBiosTables()
         var SMData;
         var structcount = 0;
 
-        while (SMData && i < SMData.length) {
+        while (SMData && i < SMData.length)
+        {
             var SMtype = SMData[i];
             var SMlength = SMData[i + 1];
 
@@ -88,12 +89,20 @@ function SMBiosTables()
 
             ret[SMtype].peek()._strings = [];
 
-            while (SMData[i] != 0) {
+            while (SMData[i] != 0 && i <= SMData.length)
+            {
                 var strstart = i;
 
                 // Start of String, find end of string
-                while (SMData[i++] != 0);
-                ret[SMtype].peek()._strings.push(SMData.slice(strstart, i).toString().trim());
+                while (SMData[i++] != 0 && i <= SMData.length);
+                try
+                {
+                    ret[SMtype].peek()._strings.push(SMData.slice(strstart, i).toString().trim());
+                }
+                catch (ee)
+                {
+                    console.log('oops');
+                }
             }
             i += (ret[SMtype].peek()._strings.length == 0) ? 2 : 1;
             ++structcount;
@@ -267,10 +276,10 @@ function SMBiosTables()
                     var settings = data[131].peek();
                     if (settings[0] & 0x04) { retVal.TXT = (settings[0] & 0x08) ? true : false; }
                     if (settings[0] & 0x10) { retVal.VMX = (settings[0] & 0x20) ? true : false; }
-                    retVal.MEBX = settings.readUInt16LE(10).toString() + '.' + settings.readUInt16LE(8).toString() + '.' + settings.readUInt16LE(6).toString() + '.' + settings.readUInt16LE(4).toString();
+                    retVal.MEBX = settings.readUInt16LE(4).toString() + '.' + settings.readUInt16LE(6).toString() + '.' + settings.readUInt16LE(8).toString() + '.' + settings.readUInt16LE(10).toString();
 
                     var mecap = settings.slice(20, 32);
-                    retVal.ManagementEngine = mecap.readUInt16LE(6).toString() + '.' + mecap.readUInt16LE(4).toString() + '.' + mecap.readUInt16LE(2).toString() + '.' + mecap.readUInt16LE(0).toString();
+                    retVal.ManagementEngine = mecap.readUInt16LE(6).toString() + '.' + mecap.readUInt16LE(4).toString() + '.' + mecap.readUInt16LE(10).toString() + '.' + mecap.readUInt16LE(8).toString();
 
                     //var lan = settings.slice(36, 48);
                     //console.log(lan.toString('hex'));

@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Intel Corporation
+Copyright 2018-2020 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ function lme_heci(options) {
     emitterUtils.createEvent('notify');
     emitterUtils.createEvent('bind');
     
+    this.on('newListener', function (name, func) { if (name == 'connect' && this._LME._connected == true) { func.call(this);} });
     if ((options != null) && (options.debug == true)) { lme_port_offset = -100; } // LMS debug mode
 
     var heci = require('heci');
@@ -124,10 +125,14 @@ function lme_heci(options) {
     
     this._ObjectID = "lme";
     this._LME = heci.create();
+    this._LME._connected = false;
+    this._LME.descriptorMetadata = "amt-lme";
     this._LME._binded = {};
     this._LME.LMS = this;
     this._LME.on('error', function (e) { this.LMS.emit('error', e); });
-    this._LME.on('connect', function () {
+    this._LME.on('connect', function ()
+    {
+        this._connected = true;
         this.on('data', function (chunk) {
             // this = HECI
             var cmd = chunk.readUInt8(0);
@@ -169,20 +174,24 @@ function lme_heci(options) {
                                 }
                             }
                             if (this[name][port] == null)
-                            { // Bind a new server socket if not already present
-                                this[name][port] = require('net').createServer();
-                                this[name][port].HECI = this;
-                                if (lme_port_offset == 0) {
-                                    this[name][port].listen({ port: port, host: '127.0.0.1' }); // Normal mode
-                                } else {
-                                    this[name][port].listen({ port: (port + lme_port_offset) }); // Debug mode
-                                }
-                                this[name][port].on('connection', function (socket) {
-                                    //console.log('New [' + socket.remoteFamily + '] TCP Connection on: ' + socket.remoteAddress + ' :' + socket.localPort);
-                                    this.HECI.LMS.bindDuplexStream(socket, socket.remoteFamily, socket.localPort - lme_port_offset);
-                                });
-                                this._binded[port] = true;
-                                this.LMS.emit('bind', this._binded);
+                            {
+                                try {
+                                    // Bind a new server socket if not already present
+                                    this[name][port] = require('net').createServer();
+                                    this[name][port].descriptorMetadata = 'amt-lme (port: ' + port + ')';
+                                    this[name][port].HECI = this;
+                                    if (lme_port_offset == 0) {
+                                        this[name][port].listen({ port: port, host: '127.0.0.1' }); // Normal mode
+                                    } else {
+                                        this[name][port].listen({ port: (port + lme_port_offset) }); // Debug mode
+                                    }
+                                    this[name][port].on('connection', function (socket) {
+                                        //console.log('New [' + socket.remoteFamily + '] TCP Connection on: ' + socket.remoteAddress + ' :' + socket.localPort);
+                                        this.HECI.LMS.bindDuplexStream(socket, socket.remoteFamily, socket.localPort - lme_port_offset);
+                                    });
+                                    this._binded[port] = true;
+                                    this.LMS.emit('bind', this._binded);
+                                } catch (ex) { console.log(ex, 'Port ' + port); }
                             }
                             var outBuffer = Buffer.alloc(5);
                             outBuffer.writeUInt8(81, 0);

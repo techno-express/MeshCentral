@@ -27,6 +27,8 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
     // Private method
     //obj.Debug = function (msg) { console.log(msg); }
 
+    function arrToStr(arr) { return String.fromCharCode.apply(null, arr); }
+
     // Private method
     //   pri = priority, if set to 1, the call is high priority and put on top of the stack.
     obj.PerformAjax = function (postdata, callback, tag, pri, url, action) {
@@ -80,12 +82,12 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
 
     // Websocket relay specific private method (Content Length Encoding)
     obj.sendRequest = function (postdata, url, action) {
-        url = url ? url : "/wsman";
-        action = action ? action : "POST";
-        var h = action + " " + url + " HTTP/1.1\r\n";
+        url = url ? url : '/wsman';
+        action = action ? action : 'POST';
+        var h = action + ' ' + url + ' HTTP/1.1\r\n';
         if (obj.challengeParams != null) {
-            var response = hex_md5(hex_md5(obj.user + ':' + obj.challengeParams["realm"] + ':' + obj.pass) + ':' + obj.challengeParams["nonce"] + ':' + obj.noncecounter + ':' + obj.cnonce + ':' + obj.challengeParams["qop"] + ':' + hex_md5(action + ':' + url));
-            h += 'Authorization: ' + obj.renderDigest({ "username": obj.user, "realm": obj.challengeParams["realm"], "nonce": obj.challengeParams["nonce"], "uri": url, "qop": obj.challengeParams["qop"], "response": response, "nc": obj.noncecounter++, "cnonce": obj.cnonce }) + '\r\n';
+            var response = hex_md5(hex_md5(obj.user + ':' + obj.challengeParams['realm'] + ':' + obj.pass) + ':' + obj.challengeParams['nonce'] + ':' + obj.noncecounter + ':' + obj.cnonce + ':' + obj.challengeParams['qop'] + ':' + hex_md5(action + ':' + url + ((obj.challengeParams['qop'] == 'auth-int') ? (':' + hex_md5(postdata)) : '')));
+            h += 'Authorization: ' + obj.renderDigest({ 'username': obj.user, 'realm': obj.challengeParams['realm'], 'nonce': obj.challengeParams['nonce'], 'uri': url, 'qop': obj.challengeParams['qop'], 'response': response, 'nc': obj.noncecounter++, 'cnonce': obj.cnonce }) + '\r\n';
         }
         //h += 'Host: ' + obj.host + ':' + obj.port + '\r\nContent-Length: ' + postdata.length + '\r\n\r\n' + postdata; // Use Content-Length
         h += 'Host: ' + obj.host + ':' + obj.port + '\r\nTransfer-Encoding: chunked\r\n\r\n' + postdata.length.toString(16).toUpperCase() + '\r\n' + postdata + '\r\n0\r\n\r\n'; // Use Chunked-Encoding
@@ -93,12 +95,11 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
         //obj.Debug("SEND: " + h); // Display send packet
     }
 
-    // Websocket relay specific private method
-    obj.parseDigest = function (header) {
-        var t = header.substring(7).split(',');
-        for (i in t) t[i] = t[i].trim();
-        return t.reduce(function (obj, s) { var parts = s.split('='); obj[parts[0]] = parts[1].replace(/"/g, ''); return obj; }, {})
-    }
+    // Parse the HTTP digest header and return a list of key & values.
+    obj.parseDigest = function (header) { return correctedQuoteSplit(header.substring(7)).reduce(function (obj, s) { var parts = s.trim().split('='); obj[parts[0]] = parts[1].replace(new RegExp('\"', 'g'), ''); return obj; }, {}) }
+
+    // Split a string on quotes but do not do it when in quotes
+    function correctedQuoteSplit(str) { return str.split(',').reduce(function (a, c) { if (a.ic) { a.st[a.st.length - 1] += ',' + c } else { a.st.push(c) } if (c.split('"').length % 2 == 0) { a.ic = !a.ic } return a; }, { st: [], ic: false }).st }
 
     // Websocket relay specific private method
     obj.renderDigest = function (params) {
@@ -115,9 +116,8 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
         obj.socketHeader = null;
         obj.socketData = '';
         obj.socketState = 1;
-
-        console.log(obj.tlsv1only);
-        obj.socket = new WebSocket(window.location.protocol.replace("http", "ws") + "//" + window.location.host + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/webrelay.ashx?p=1&host=" + obj.host + "&port=" + obj.port + "&tls=" + obj.tls + "&tlsv1only=" + obj.tlsv1only + ((user == '*') ? "&serverauth=1" : "") + ((typeof pass === "undefined") ? ("&serverauth=1&user=" + user) : "")); // The "p=1" indicates to the relay that this is a WSMAN session
+        obj.socket = new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + window.location.host + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/webrelay.ashx?p=1&host=' + obj.host + '&port=' + obj.port + '&tls=' + obj.tls + '&tlsv1only=' + obj.tlsv1only + ((user == '*') ? '&serverauth=1' : '') + ((typeof pass === 'undefined') ? ('&serverauth=1&user=' + user) : '')); // The "p=1" indicates to the relay that this is a WSMAN session
+        obj.socket.binaryType = 'arraybuffer';
         obj.socket.onopen = _OnSocketConnected;
         obj.socket.onmessage = _OnMessage;
         obj.socket.onclose = _OnSocketClosed;
@@ -130,52 +130,17 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
         for (i in obj.pendingAjaxCall) { obj.sendRequest(obj.pendingAjaxCall[i][0], obj.pendingAjaxCall[i][3], obj.pendingAjaxCall[i][4]); }
     }
 
-    function _OnMessage(e) {
-        if (typeof e.data == 'object') {
-            var f = new FileReader();
-            if (f.readAsBinaryString) {
-                // Chrome & Firefox (Draft)
-                f.onload = function (e) { _OnSocketData(e.target.result); }
-                f.readAsBinaryString(new Blob([e.data]));
-            } else if (f.readAsArrayBuffer) {
-                // Chrome & Firefox (Spec)
-                f.onloadend = function (e) { _OnSocketData(e.target.result); }
-                f.readAsArrayBuffer(e.data);
-            } else {
-                // IE10, readAsBinaryString does not exist, use an alternative.
-                var binary = "";
-                var bytes = new Uint8Array(e.data);
-                var length = bytes.byteLength;
-                for (var i = 0; i < length; i++) { binary += String.fromCharCode(bytes[i]); }
-                _OnSocketData(binary);
-            }
-        } else if (typeof e.data == 'string') {
-            // We got a string object
-            _OnSocketData(e.data);
-        }
-    };
-
     // Websocket relay specific private method
-    function _OnSocketData(data) {
-        //obj.Debug("_OnSocketData (" + data.length + "): " + data);
-
-        if (typeof data === 'object') {
-            // This is an ArrayBuffer, convert it to a string array (used in IE)
-            var binary = "", bytes = new Uint8Array(data), length = bytes.byteLength;
-            for (var i = 0; i < length; i++) { binary += String.fromCharCode(bytes[i]); }
-            data = binary;
-        }
-        else if (typeof data !== 'string') return;
-
-        //console.log("RECV: " + data); // DEBUG
-
-        obj.socketAccumulator += data;
+    function _OnMessage(e) {
+        //obj.Debug("_OnSocketData (" + data.byteLength + "): " + data);
+        obj.socketAccumulator += arrToStr(new Uint8Array(e.data));
         while (true) {
             if (obj.socketParseState == 0) {
-                var headersize = obj.socketAccumulator.indexOf("\r\n\r\n");
+                var headersize = obj.socketAccumulator.indexOf('\r\n\r\n');
                 if (headersize < 0) return;
                 //obj.Debug(obj.socketAccumulator.substring(0, headersize)); // Display received HTTP header
-                obj.socketHeader = obj.socketAccumulator.substring(0, headersize).split("\r\n");
+                obj.socketHeader = obj.socketAccumulator.substring(0, headersize).split('\r\n');
+                if (obj.amtVersion == null) { for (var i in obj.socketHeader) { if (obj.socketHeader[i].indexOf('Server: Intel(R) Active Management Technology ') == 0) { obj.amtVersion = obj.socketHeader[i].substring(46); } } }
                 obj.socketAccumulator = obj.socketAccumulator.substring(headersize + 4);
                 obj.socketParseState = 1;
                 obj.socketData = '';
@@ -189,12 +154,12 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
             }
             if (obj.socketParseState == 1) {
                 var csize = -1;
-                if ((obj.socketXHeader["connection"] != undefined) && (obj.socketXHeader["connection"].toLowerCase() == 'close') && ((obj.socketXHeader["transfer-encoding"] == undefined) || (obj.socketXHeader["transfer-encoding"].toLowerCase() != 'chunked'))) {
+                if ((obj.socketXHeader['connection'] != undefined) && (obj.socketXHeader['connection'].toLowerCase() == 'close') && ((obj.socketXHeader["transfer-encoding"] == undefined) || (obj.socketXHeader["transfer-encoding"].toLowerCase() != 'chunked'))) {
                     // The body ends with a close, in this case, we will only process the header
                     csize = 0;
-                } else if (obj.socketXHeader["content-length"] != undefined) {
+                } else if (obj.socketXHeader['content-length'] != undefined) {
                     // The body length is specified by the content-length
-                    csize = parseInt(obj.socketXHeader["content-length"]);
+                    csize = parseInt(obj.socketXHeader['content-length']);
                     if (obj.socketAccumulator.length < csize) return;
                     var data = obj.socketAccumulator.substring(0, csize);
                     obj.socketAccumulator = obj.socketAccumulator.substring(csize);
@@ -231,6 +196,11 @@ var CreateWsmanComm = function (host, port, user, pass, tls) {
         if (isNaN(s)) s = 602;
         if (s == 401 && ++(obj.authcounter) < 3) {
             obj.challengeParams = obj.parseDigest(header['www-authenticate']); // Set the digest parameters, after this, the socket will close and we will auto-retry
+            if (obj.challengeParams['qop'] != null) {
+                var qopList = obj.challengeParams['qop'].split(',');
+                for (var i in qopList) { qopList[i] = qopList[i].trim(); }
+                if (qopList.indexOf('auth-int') >= 0) { obj.challengeParams['qop'] = 'auth-int'; } else { obj.challengeParams['qop'] = 'auth'; }
+            }
         } else {
             var r = obj.pendingAjaxCall.shift();
             // if (s != 200) { obj.Debug("Error, status=" + s + "\r\n\r\nreq=" + r[0] + "\r\n\r\nresp=" + data); } // Debug: Display the request & response if something did not work.

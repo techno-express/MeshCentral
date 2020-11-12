@@ -1,29 +1,32 @@
 ﻿<!DOCTYPE html>
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv=X-UA-Compatible content="IE=edge" />
     <meta content="text/html;charset=utf-8" http-equiv=Content-Type />
     <meta name=viewport content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
     <meta name=apple-mobile-web-app-capable content=yes />
     <meta name=format-detection content="telephone=no" />
+    <meta name="robots" content="noindex,nofollow">
     <link type=text/css href="/styles/style.css" media="screen" rel="stylesheet" title="CSS" />
-    <title>MeshCentral - Download</title>
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <title>{{{title1}}} - Download</title>
 </head>
 <body>
     <div id=container style=max-height:100vh>
         <div id=mastheadx></div>
-        <div id=masthead style="background:url(/images/logoback.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
-            <div style=float:left;height:66px;color:#c8c8c8;padding-left:20px;padding-top:8px>
-                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif">{{{title}}}</font></strong>
+        <div id=masthead style="background:url(logo.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
+            <div style="float:left;text-shadow: 1px 1px 2px #000">{{{titlehtml}}}</div>
+            <div style=float:left;height:66px;color:#c8c8c8;padding-left:14px;padding-top:7px>
+                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title1}}}</font></strong>
             </div>
             <div style=float:left;height:66px;color:#c8c8c8;padding-left:5px;padding-top:14px>
-                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif">{{{title2}}}</font></strong>
+                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title2}}}</font></strong>
             </div>
         </div>
         <div id=page_content style=max-height:calc(100vh-138px)>
             <div id=column_l>
                 <h1>Download</h1>
-                <p style=margin-left:20px>{{{message}}}</p>
+                <p id="message" style=margin-left:20px></p>
                 <br />
             </div>
             <div id=footer>
@@ -39,5 +42,29 @@
             </div>
         </div>
     </div>
+    <script>
+        var messageid = parseInt('{{{messageid}}}');
+        var fileurl = '{{{fileurl}}}';
+        var filename = '{{{filename}}}';
+        var filesize = parseInt('{{{filesize}}}');
+
+        // Quick UI functions, a bit of a replacement for jQuery
+        function Q(x) { return document.getElementById(x); }                            // "Q"
+        function QS(x) { try { return Q(x).style; } catch (x) { } }                     // "Q" style
+        function QE(x, y) { try { Q(x).disabled = !y; } catch (x) { } }                 // "Q" enable
+        function QV(x, y) { try { QS(x).display = (y ? '' : 'none'); } catch (x) { } }  // "Q" visible
+        function QA(x, y) { Q(x).innerHTML += y; }                                      // "Q" append
+        function QH(x, y) { Q(x).innerHTML = y; }                                       // "Q" html
+        function QC(x) { try { return Q(x).classList; } catch (x) { } }                 // "Q" class
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+        function EscapeHtml(x) { if (typeof x == 'string') return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;'); if (typeof x == 'boolean') return x; if (typeof x == 'number') return x; }
+
+        if (messageid == 1) {
+            var lenstr = (filesize == 1)?format("1 byte"):format("{0} bytes", filesize);
+            QH('message', '<a href="' + fileurl + '">' + EscapeHtml(filename) + '</a>, ' + lenstr);
+        } else if (messageid == 2) {
+            QH('message', "Invalid file link");
+        }
+    </script>
 </body>
 </html>

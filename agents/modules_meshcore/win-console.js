@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Intel Corporation
+Copyright 2018-2020 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -145,7 +145,6 @@ function WindowsConsole()
                         this.TrayIcon.remove();
                         handled = true;
                     }
-                    if (!handled) { console.log(msg); }
                 }
             });
             retVal.remove = function remove()

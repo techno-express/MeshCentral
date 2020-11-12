@@ -1,13 +1,25 @@
 ﻿<!DOCTYPE html>
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
-<head>
+<head lang="en">
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
     <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
-    <script type="text/javascript" src="scripts/common-0.0.1.js"></script>
-    <title>MeshCentral - Login</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="manifest" href="{{{domainurl}}}manifest.json">
+    <link rel="shortcut icon" href="{{{domainurl}}}favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{{domainurl}}}favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{{domainurl}}}favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
+    <meta name="apple-mobile-web-app-title" content="{{{title}}}">
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/u2f-api{{min}}.js"></script>
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="theme-color" content="#ffffff">
+    <title>{{{title}}} - Login</title>
     <style>
         a {
            color: #036;
@@ -28,7 +40,7 @@
 <body onload="if (typeof(startup) !== 'undefined') startup();" style="overflow-y:hidden;margin:0;padding:0;border:0;color:black;font-size:13px;font-family:\'Trebuchet MS\', Arial, Helvetica, sans-serif">
     <div id=container>
         <div id=mastheadx></div>
-        <div id=masthead style="background-color:#036;background-repeat:no-repeat;height:50px;width:100%;overflow:hidden">
+        <div id=masthead style="background:url(logo.png) 0px 0px;background-size:341px 50px;background-color:#036;background-repeat:no-repeat;height:50px;width:100%;overflow:hidden">
             <div style="float:left;height:66px;color:#c8c8c8;padding-left:10px;padding-top:6px">
                 <strong><font style="font-size:36px;font-family:Arial,Helvetica,sans-serif">{{{title}}}</font></strong>
             </div>
@@ -42,21 +54,20 @@
                     <tr>
                         <td align=center>
                             <div id=loginpanel style="background-color:#979797;border-radius:16px;width:260px;padding:16px;text-align:center;clear:both;display:none">
-                                <form action="login" method=post>
-                                    <div id=message1>
-                                        {{{message}}}
-                                    </div>
+                                <form method=post>
+                                    <input type=hidden name=action value=login />
+                                    <div id=message1></div>
                                     <div>
                                         <b>Log In</b>
                                     </div>
                                     <table>
                                         <tr>
-                                            <td align=right width=100>Username:</td>
-                                            <td><input id=username type=text maxlength=64 name=username onchange=validateLogin(1) onkeyup=validateLogin(1,event) /></td>
+                                            <td id=loginusername align=right width=100>Username:</td>
+                                            <td><input id=username type=text autocomplete="username" maxlength=64 name=username onchange=validateLogin(1) onkeyup=validateLogin(1,event) /></td>
                                         </tr>
                                         <tr>
                                             <td align=right>Password:</td>
-                                            <td><input id=password type=password maxlength=256 name=password autocomplete=off onchange=validateLogin(2) onkeyup=validateLogin(2,event) /></td>
+                                            <td><input id=password type=password autocomplete="current-password" maxlength=256 name=password autocomplete=off onchange=validateLogin(2) onkeyup=validateLogin(2,event) /></td>
                                         </tr>
                                         <tr>
                                             <td><div id=showPassHintLink style=display:none><a onclick=showPassHint() style="cursor:pointer">Show Hint</a></div></td>
@@ -65,40 +76,53 @@
                                     </table>
                                     <div id="hrAccountDiv" style="display:none"><hr /></div>
                                     <div id="resetAccountDiv" style="display:none;padding:2px">
-                                        Forgot user/password? <a onclick=xgo(3) style=cursor:pointer>Reset account</a>.
+                                        <span id="resetAccountSpan">Forgot user/password?</span> <a onclick=xgo(3) style=cursor:pointer>Reset account</a>.
                                     </div>
                                     <div id="newAccountDiv" style="display:none;padding:2px">
                                         Don&#39;t have an account? <a onclick=xgo(2) style=cursor:pointer>Create one</a>.
                                     </div>
+                                    <input id=loginformargs name="urlargs" type="hidden" value="" />
+                                    <div id="authStrategies" style="display:none">
+                                        <hr />
+                                        <div style="margin-bottom:8px">Log in using an existing account</div>
+                                        <a id="auth-twitter" href="auth-twitter" style="display:none"><img src="images/login/twitter32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Twitter" /></a>
+                                        <a id="auth-google" href="auth-google" style="display:none"><img src="images/login/google32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Google" /></a>
+                                        <a id="auth-github" href="auth-github" style="display:none"><img src="images/login/github32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using GitHub" /></a>
+                                        <a id="auth-reddit" href="auth-reddit" style="display:none"><img src="images/login/reddit32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Reddit" /></a>
+                                        <a id="auth-azure" href="auth-azure" style="display:none"><img src="images/login/azure32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Azure" /></a>
+                                        <a id="auth-jumpcloud" href="auth-jumpcloud" style="display:none"><img src="images/login/jumpcloud32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using JumpCloud" /></a>
+                                        <a id="auth-intel" href="auth-intel" style="display:none"><img src="images/login/intel32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Intel" /></a>
+                                        <a id="auth-saml" href="auth-saml" style="display:none"><img src="images/login/generic32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Single Sign-in" /></a>
+                                    </div>
                                 </form>
                             </div>
                             <div id=createpanel style="display:none">
-                                <div style="background-color: #979797;border-radius:16px;width:260px;padding:16px;text-align:center;clear:both">
-                                    <form action=createaccount method=post>
-                                        <div id=message2>
-                                            {{{message}}}
-                                        </div>
+                                <div style="background-color:#979797;border-radius:16px;width:260px;padding:16px;text-align:center;clear:both;position:relative">
+                                    <form method=post>
+                                        <input type=hidden name=action value=createaccount />
+                                        <div id=message2></div>
                                         <div>
                                             <b>Account Creation</b>
                                         </div>
+                                        <div id="passwordPolicyCallout" style="left:-5px;top:10px;width:100px;position:absolute;background-color:#FFC;border-radius:5px;padding:5px;box-shadow:0px 0px 15px #666;font-size:10px"></div>
                                         <table>
-                                            <tr>
+                                            <tr id="nuUserRow">
                                                 <td align=right width=100>Username:</td>
-                                                <td><input id=ausername type=text name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
+                                                <td><input id=ausername type=text autocomplete="username" name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
                                             </tr>
                                             <tr>
                                                 <td align=right width=100>Email:</td>
-                                                <td><input id=aemail type=text name=email onchange=validateCreate(2) maxlength=256 onkeydown=haltReturn(event) onkeyup=validateCreate(2,event) /></td>
+                                                <td><input id=aemail type=text autocomplete="email" inputmode="email" name=email onchange=validateCreate(2) maxlength=256 onkeydown=haltReturn(event) onkeyup=validateCreate(2,event) /></td>
                                             </tr>
                                             <tr>
                                                 <td align=right>Password:</td>
-                                                <td><input id=apassword1 type=password name=password1 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(3) onkeyup=validateCreate(3,event) /></td>
+                                                <td><input id=apassword1 type=password autocomplete="current-password" name=password1 maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(3) onkeyup=validateCreate(3,event) /></td>
                                             </tr>
                                             <tr>
                                                 <td align=right>Password:</td>
-                                                <td><input id=apassword2 type=password name=password2 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(4) onkeyup=validateCreate(4,event) /></td>
+                                                <td><input id=apassword2 type=password autocomplete="current-password" name=password2 maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(4) onkeyup=validateCreate(4,event) /></td>
                                             </tr>
-                                            <tr>
+                                            <tr id="createPanelHint" style="display:none">
                                                 <td align=right>Pass Hint:</td>
                                                 <td><input id=apasswordhint type=text name=apasswordhint autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(5) onkeyup=validateCreate(5,event) /></td>
                                             </tr>
@@ -114,21 +138,21 @@
                                             </tr>
                                         </table>
                                         <hr /><a onclick=xgo(1) style=cursor:pointer>Back to login</a>
+                                        <input id=createformargs name="urlargs" type="hidden" value="" />
                                     </form>
                                 </div>
                             </div>
-                            <div id=resetpanel style="background-color: #979797;border-radius:16px;width:260px;padding:16px;text-align:center;display:none;clear:both">
-                                <form action=resetaccount method=post>
-                                    <div id=message3>
-                                        {{{message}}}
-                                    </div>
+                            <div id=resetpanel style="background-color:#979797;border-radius:16px;width:260px;padding:16px;text-align:center;display:none;clear:both">
+                                <form method=post>
+                                    <input type=hidden name=action value=resetaccount />
+                                    <div id=message3></div>
                                     <div>
                                         <b>Account Reset</b>
                                     </div>
                                     <table>
                                         <tr>
                                             <td align=right width=100>Email:</td>
-                                            <td><input id=remail type=text name=email maxlength=256 onchange=validateReset() onkeyup=validateReset(event) /></td>
+                                            <td><input id=remail type=text inputmode="email" autocomplete="email" name=email maxlength=256 onchange=validateReset() onkeyup=validateReset(event) /></td>
                                         </tr>
                                         <tr>
                                             <td colspan=2>
@@ -138,8 +162,119 @@
                                         </tr>
                                     </table>
                                     <hr /><a onclick=xgo(1) style=cursor:pointer>Back to login</a>
+                                    <input id=resetformargs name="urlargs" type="hidden" value="" />
                                 </form>
                             </div>
+                            <div id=tokenpanel style="background-color:#979797;border-radius:16px;width:260px;padding:16px;text-align:center;display:none;clear:both">
+                                <form method=post autocomplete=off>
+                                    <input type=hidden name=action value=tokenlogin />
+                                    <input type=hidden name=hwstate value="{{{hwstate}}}" />
+                                    <div id=message4></div>
+                                    <table>
+                                        <tr>
+                                            <td align=right width=100>Login token:</td>
+                                            <td>
+                                                <input id=tokenInput type=text autocomplete="one-time-code" inputmode="numeric" name=token maxlength=50 onchange=checkToken(event) onkeyup=checkToken(event) onkeydown=checkToken(event) onfocus=checkTokenTimer(1) onblur=checkTokenTimer(0) />
+                                                <input id=hwtokenInput type=text name=hwtoken style="display:none" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="align-content:center">
+                                                <label id=tokenInputRememberLabel><input id=tokenInputRemember name=remembertoken type=checkbox /><span id=tokenInputRememberSpan></span></label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=2>
+                                                <div style=float:right><input id=tokenOkButton type=submit value="Login" disabled="disabled" /></div>
+                                                <div style=float:right>
+                                                    <input style="display:none;float:right" id=securityKeyButton type=button value="Use Security Key" onclick="useSecurityKey()" />
+                                                    <input style="display:none;float:right" id=emailKeyButton type=button value="Email" onclick="useEmailToken()" />
+                                                    <input style="display:none;float:right" id=smsKeyButton type=button value="SMS" onclick="useSMSToken()" />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <hr /><a onclick=xgo(1) style=cursor:pointer>Back to login</a>
+                                    <input id=tokenformargs name="urlargs" type="hidden" value="" />
+                                </form>
+                            </div>
+                            <div id=resettokenpanel style="background-color:#979797;border-radius:16px;width:260px;padding:16px;text-align:center;display:none;clear:both">
+                                <form method=post autocomplete=off>
+                                    <input type=hidden name=action value=resetaccount />
+                                    <div id=message5></div>
+                                    <table>
+                                        <tr>
+                                            <td align=right width=100>Login token:</td>
+                                            <td>
+                                                <input id=resetTokenInput type=text name=token maxlength=50 onchange=resetCheckToken(event) onpaste=resetCheckToken(event) onkeyup=resetCheckToken(event) onkeydown=resetCheckToken(event) />
+                                                <input id=resetHwtokenInput type=text name=hwtoken style="display:none" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=2>
+                                                <div style=float:right><input id=resetTokenOkButton type=submit value="Login" disabled="disabled" /></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <hr /><a onclick=xgo(1) style=cursor:pointer>Back to login</a>
+                                    <input id=resettokenformargs name="urlargs" type="hidden" value="" />
+                                </form>
+                            </div>
+                            <div id=resetpasswordpanel style="position:relative;background-color:#979797;border-radius:16px;width:300px;padding:16px;text-align:center;display:none">
+                                <form method=post>
+                                    <input type=hidden name=action value=resetpassword />
+                                    <div id=message6></div>
+                                    <div id="rpasswordPolicyCallout" style="left:-10px;width:100px;display:none;position:absolute;background-color:#FFC;border-radius:5px;padding:5px;box-shadow:0px 0px 15px #666;font-size:10px"></div>
+                                    <table>
+                                        <tr>
+                                            <td id="rnuPass1" width=100 align=right>Password:</td>
+                                            <td><input id=rapassword1 type=password name=rpassword1 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(3,event) onkeyup=validatePassReset(3,event) /></td>
+                                        </tr>
+                                        <tr>
+                                            <td id="rnuPass2" align=right>Password:</td>
+                                            <td><input id=rapassword2 type=password name=rpassword2 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(4,event) onkeyup=validatePassReset(4,event) /></td>
+                                        </tr>
+                                        <tr id="resetpasswordpanelHint" style="display:none">
+                                            <td id="rnuHint" align=right>Password Hint:</td>
+                                            <td><input id=rapasswordhint type=text name=rpasswordhint autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(5,event) onkeyup=validatePassReset(5,event) /></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=2>
+                                                <div style=float:right><input id=resetPassButton type=submit value="Reset Password" disabled="disabled" /></div>
+                                                <div id=rpassWarning style="padding-top:6px"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <hr /><a onclick=xgo(1) style=cursor:pointer>Back to login</a>
+                                    <input id=resetpasswordformargs name="urlargs" type="hidden" value="" />
+                                </form>
+                            </div>
+                            <div id=checkemailpanel style="position:relative;background-color:#979797;border-radius:16px;width:300px;padding:16px;text-align:center;display:none">
+                                <form method=post>
+                                    <input type=hidden name=action value=checkemail />
+                                    <div id=message7></div>
+                                    <table id="checkCheckOperations" style="width:100%;display:none">
+                                        <tr>
+                                            <td>
+                                                <div id="unconfirmedEmail"></div><br />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <input id=changeEmailButton type=button value="Change Email Address" onclick="changeEmailAddress()" />
+                                                    <input id=checkEmailButton2 type=button value="Resend Confirmation Email" onclick="resentEmailConfirmation()" />
+                                                    <input id=checkEmailButton type=submit style="display:none" />
+                                                    <input id=checkEmailVal name=email type="hidden" value="" />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <hr /><a onclick="return xgo(1,event);" href="#" style=cursor:pointer>Back to login</a>
+                                    <input id=checkemailformargs name="urlargs" type="hidden" value="" />
+                                </form>
+                            </div>
+
                         </td>
                     </tr>
                 </table>
@@ -154,7 +289,7 @@
             </table>
         </div>
     </div>
-    <div id=dialog style="z-index:1000;background-color:#EEE;box-shadow:0px 0px 15px #666;font-family:Arial,Helvetica,sans-serif;border-radius:5px;position:fixed;top:180px;width:400px;display:none">
+    <div id=dialog style="z-index:1000;background-color:#EEE;box-shadow:0px 0px 15px #666;font-family:Arial,Helvetica,sans-serif;border-radius:5px;position:fixed;top:180px;width:300px;display:none">
         <div style="width:100%;background-color:#003366;color:#FFF;border-radius:5px 5px 0 0">
             <div id=id_dialogclose style=float:right;padding:5px;cursor:pointer onclick=setDialogMode()><b>X</b></div>
             <div id=id_dialogtitle style=padding:5px></div>
@@ -175,10 +310,55 @@
     </div>
     <script>
         'use strict';
-        var passhint = "{{{passhint}}}";
+        var loginMode = '{{{loginmode}}}';
+        var newAccount = '{{{newAccount}}}';
+        var passhint = '{{{passhint}}}';
         var newAccountPass = parseInt('{{{newAccountPass}}}');
-        var emailCheck = ('{{{emailcheck}}}' == 'true');
+        var emailCheck = '{{{emailcheck}}}';
         var features = parseInt('{{{features}}}');
+        var passRequirements = '{{{passRequirements}}}';
+        if (passRequirements != '') { passRequirements = JSON.parse(decodeURIComponent(passRequirements)); } else { passRequirements = {}; }
+        var passRequirementsEx = ((passRequirements.min != null) || (passRequirements.max != null) || (passRequirements.upper != null) || (passRequirements.lower != null) || (passRequirements.numeric != null) || (passRequirements.nonalpha != null));
+        var hardwareKeyChallenge = decodeURIComponent('{{{hkey}}}');
+        var publicKeyCredentialRequestOptions = null;
+        var currentpanel = 0;
+        var otpemail = ('{{{otpemail}}}' === 'true');
+        var otpsms = ('{{{otpsms}}}' === 'true');
+        var twoFactorCookieDays = parseInt('{{{twoFactorCookieDays}}}');
+        var authStrategies = '{{{authStrategies}}}'.split(',');
+
+        // Display the right server message
+        var messageid = parseInt('{{{messageid}}}');
+        var okmessages = ['', "If valid, reset mail sent.", "Email sent.", "Email verification required, check your mailbox and click the confirmation link.", "SMS sent."];
+        var failmessages = ["Unable to create account.", "Account limit reached.", "Existing account with this email address.", "Invalid account creation token.", "Username already exists.", "Password rejected, use a different one.", "Invalid email.", "Account not found.", "Invalid token, try again.", "Unable to sent email.", "Account locked.", "Access denied.", "Login failed, check username and password.", "Password change requested.", "IP address blocked, try again later."];
+        if (messageid > 0) {
+            var msg = '';
+            if ((messageid < 100) && (messageid < okmessages.length)) { msg = okmessages[messageid]; }
+            else if ((messageid >= 100) && ((messageid - 100) < failmessages.length)) { msg = failmessages[messageid - 100]; }
+            if (msg != '') {
+                if (messageid >= 100) { msg = ('<span class="msg error"><b style=color:#8C001A>' + msg + '<b></span><br /><br />'); } else { msg = ('<span class="msg success"><b>' + msg + '</b></span><br /><br />'); }
+                for (var i = 1; i < 8; i++) { QH('message' + i, msg); }
+            }
+        }
+
+        // If URL arguments are provided, add them to form posts
+        if (window.location.href.indexOf('?') > 0) {
+            var urlargs = window.location.href.substring(window.location.href.indexOf('?'));
+            Q('loginformargs').value = urlargs;
+            Q('createformargs').value = urlargs;
+            Q('resetformargs').value = urlargs;
+            Q('tokenformargs').value = urlargs;
+            Q('resettokenformargs').value = urlargs;
+            Q('resetpasswordformargs').value = urlargs;
+        }
+
+        // Setup two factor cookie time
+        if (twoFactorCookieDays > 0) {
+            QV('tokenInputRememberLabel', true);
+            QH('tokenInputRememberSpan', format("Remember this device for {0} days.", twoFactorCookieDays));
+        } else {
+            QV('tokenInputRememberLabel', false);
+        }
 
         function startup() {
             if ((features & 32) == 0) {
@@ -188,37 +368,170 @@
                 if (top != self && (loc == null || top.active == false)) { top.location = self.location; return; }
             }
 
+            if (features & 0x200000) { // Email is username
+                QH('loginusername', "Email:");
+                QH('resetAccountSpan', "Forgot password?");
+                QV('nuUserRow', false);
+            }
+
+            QV('createPanelHint', passRequirements.hint === true);
+            QV('resetpasswordpanelHint', passRequirements.hint === true);
+
+            // Setup authentication strategies
+            if (authStrategies != '') {
+                QV('authStrategies', true);
+                if (authStrategies.indexOf('twitter') >= 0) { QV('auth-twitter', true); }
+                if (authStrategies.indexOf('google') >= 0) { QV('auth-google', true); }
+                if (authStrategies.indexOf('github') >= 0) { QV('auth-github', true); }
+                if (authStrategies.indexOf('reddit') >= 0) { QV('auth-reddit', true); }
+                if (authStrategies.indexOf('azure') >= 0) { QV('auth-azure', true); }
+                if (authStrategies.indexOf('jumpcloud') >= 0) { QV('auth-jumpcloud', true); }
+                if (authStrategies.indexOf('intel') >= 0) { QV('auth-intel', true); }
+                if (authStrategies.indexOf('saml') >= 0) { QV('auth-saml', true); }
+            }
+
             window.onresize = center;
             center();
             validateLogin();
             validateCreate();
-            if ('{{loginmode}}' != '') { go(parseInt('{{loginmode}}')); } else { go(1); }
-            QV('newAccountDiv', ('{{{newAccount}}}' != '0') && ('{{{newAccount}}}' != 'false')); // If new accounts are not allowed, don't display the new account link.
-            if ((passhint != null) && (passhint.length > 0)) { QV("showPassHintLink", true); }
-            QV("newAccountPass", (newAccountPass == 1));
-            QV("resetAccountDiv", (emailCheck == true));
-            QV("hrAccountDiv", (emailCheck == true) || (newAccountPass == 1));
+            if (loginMode.length != 0) { go(parseInt(loginMode)); } else { go(1); }
+            QV('newAccountDiv', (newAccount === '1') || (newAccount === 'true')); // If new accounts are not allowed, don't display the new account link.
+            if ((passRequirements.hint === true) && (passhint != null) && (passhint.length > 0)) { QV('showPassHintLink', true); }
+            QV('newAccountPass', (newAccountPass == 1));
+            QV('resetAccountDiv', (emailCheck == 'true'));
+            QV('hrAccountDiv', (emailCheck == 'true') || (newAccountPass == 1));
+
+            if (loginMode == '4') {
+                try { if (hardwareKeyChallenge.length > 0) { hardwareKeyChallenge = JSON.parse(hardwareKeyChallenge); } else { hardwareKeyChallenge = null; } } catch (ex) { hardwareKeyChallenge = null }
+                QV('securityKeyButton', (hardwareKeyChallenge != null) && (hardwareKeyChallenge.type == 'webAuthn'));
+                QV('emailKeyButton', otpemail && (messageid != 2) && (messageid != 4));
+                QV('smsKeyButton', otpsms && (messageid != 2) && (messageid != 4));
+            }
+
+            if (loginMode == '5') {
+                try { if (hardwareKeyChallenge.length > 0) { hardwareKeyChallenge = JSON.parse(hardwareKeyChallenge); } else { hardwareKeyChallenge = null; } } catch (ex) { hardwareKeyChallenge = null }
+                if ((hardwareKeyChallenge != null) && (hardwareKeyChallenge.type == 'webAuthn')) {
+                    if (typeof hardwareKeyChallenge.challenge == 'string') { hardwareKeyChallenge.challenge = Uint8Array.from(atob(hardwareKeyChallenge.challenge), function (c) { return c.charCodeAt(0) }).buffer; }
+
+                    publicKeyCredentialRequestOptions = { challenge: hardwareKeyChallenge.challenge, allowCredentials: [], timeout: hardwareKeyChallenge.timeout }
+                    for (var i = 0; i < hardwareKeyChallenge.keyIds.length; i++) {
+                        publicKeyCredentialRequestOptions.allowCredentials.push(
+                            { id: Uint8Array.from(atob(hardwareKeyChallenge.keyIds[i]), function (c) { return c.charCodeAt(0) }), type: 'public-key', transports: ['usb', 'ble', 'nfc', 'internal'], }
+                        );
+                    }
+
+                    // New WebAuthn hardware keys
+                    navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions }).then(
+                        function (rawAssertion) {
+                            var assertion = {
+                                id: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.rawId))),
+                                clientDataJSON: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.clientDataJSON))),
+                                userHandle: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.userHandle))),
+                                signature: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.signature))),
+                                authenticatorData: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.authenticatorData))),
+                            };
+                            Q('resetHwtokenInput').value = JSON.stringify(assertion);
+                            QE('resetTokenOkButton', true);
+                            Q('resetTokenOkButton').click();
+                        },
+                        function (error) { console.log('credentials-get error', error); }
+                    );
+                }
+            }
+        }
+        
+        // Use a hardware security key
+        function useSecurityKey() {
+            if (xxdialogMode) return;
+            if ((hardwareKeyChallenge != null) && (hardwareKeyChallenge.type == 'webAuthn')) {
+                if (typeof hardwareKeyChallenge.challenge == 'string') { hardwareKeyChallenge.challenge = Uint8Array.from(atob(hardwareKeyChallenge.challenge), function (c) { return c.charCodeAt(0) }).buffer; }
+
+                publicKeyCredentialRequestOptions = { challenge: hardwareKeyChallenge.challenge, allowCredentials: [], timeout: hardwareKeyChallenge.timeout }
+                for (var i = 0; i < hardwareKeyChallenge.keyIds.length; i++) {
+                    publicKeyCredentialRequestOptions.allowCredentials.push(
+                        { id: Uint8Array.from(atob(hardwareKeyChallenge.keyIds[i]), function (c) { return c.charCodeAt(0) }), type: 'public-key', transports: ['usb', 'ble', 'nfc', 'internal'], }
+                    );
+                }
+
+                // New WebAuthn hardware keys
+                navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions }).then(
+                    function (rawAssertion) {
+                        var assertion = {
+                            id: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.rawId))),
+                            clientDataJSON: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.clientDataJSON))),
+                            userHandle: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.userHandle))),
+                            signature: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.signature))),
+                            authenticatorData: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.authenticatorData))),
+                        };
+                        Q('hwtokenInput').value = JSON.stringify(assertion);
+                        QE('tokenOkButton', true);
+                        Q('tokenOkButton').click();
+                    },
+                    function (error) { console.log('credentials-get error', error); }
+                );
+            }
+        }
+
+        function useEmailToken() {
+            if (xxdialogMode) return;
+            if (otpemail != true) return;
+            setDialogMode(1, "Secure Login", 3, useEmailKeyEx, "Send token to registed email address?");
+        }
+
+        function useEmailKeyEx() {
+            Q('hwtokenInput').value = '**email**';
+            QE('tokenOkButton', true);
+            Q('tokenOkButton').click();
+        }
+
+        function useSMSToken() {
+            if (otpsms != true) return;
+            setDialogMode(1, "Secure Login", 3, useSMSTokenEx, "Send token to registed phone number?");
+        }
+
+        function useSMSTokenEx() {
+            Q('hwtokenInput').value = '**sms**';
+            QE('tokenOkButton', true);
+            Q('tokenOkButton').click();
         }
 
         function showPassHint() {
-            messagebox("Password Hint", passhint);
+            if (passRequirements.hint === true) { messagebox("Password Hint", passhint); }
         }
 
         function xgo(x) {
             QV('message1', false);
             QV('message2', false);
+            QV('message3', false);
+            QV('message4', false);
+            QV('message5', false);
+            QV('message6', false);
+            QV('message7', false);
             go(x);
         }
 
         function go(x) {
+            currentpanel = x;
             setDialogMode(0);
-            QV("showPassHintLink", false);
+            QV('showPassHintLink', false);
             QV('loginpanel', x == 1);
             QV('createpanel', x == 2);
             QV('resetpanel', x == 3);
+            QV('tokenpanel', x == 4);
+            QV('resettokenpanel', x == 5);
+            QV('resetpasswordpanel', x == 6);
+            QV('checkemailpanel', x == 7);
             if (x == 1) { Q('username').focus(); }
-            if (x == 2) { Q('ausername').focus(); }
+            if (x == 2) { if (features & 0x200000) { Q('aemail').focus(); } else { Q('ausername').focus(); } } // Email is username
             if (x == 3) { Q('remail').focus(); }
+            if (x == 4) { Q('tokenInput').focus(); }
+            if (x == 5) { Q('resetTokenInput').focus(); }
+            if (x == 6) { Q('rapassword1').focus(); }
+            if (x == 7) {
+                QH('unconfirmedEmail', passhint);
+                QV('checkCheckOperations', Q('unconfirmedEmail').innerHTML != '');
+                QH('checkEmailVal', passhint);
+            }
         }
 
         function validateLogin(box, e) {
@@ -231,17 +544,37 @@
 
         function validateCreate(box,e) {
             setDialogMode(0);
-            var ok = ((Q('ausername').value.length > 0) && (Q('ausername').value.indexOf(' ') == -1) && (validateEmail(Q('aemail').value) == true) && (Q('apassword1').value.length > 0) && (Q('apassword2').value == Q('apassword1').value));
+            var ok = false;
+            if (features & 0x200000) { ok = true; } else { ok = (Q('ausername').value.length > 0) && (Q('ausername').value.indexOf(' ') == -1) && (Q('ausername').value.indexOf('"') == -1) && (Q('ausername').value.indexOf(',') == -1); }
+            ok &= ((validateEmail(Q('aemail').value) == true) && (Q('apassword1').value.length > 0) && (Q('apassword2').value == Q('apassword1').value));
             if ((newAccountPass == 1) && (Q('anewaccountpass').value.length == 0)) { ok = false; }
-            QE('createButton', ok);
             if (Q('apassword1').value == '') {
                 QH('passWarning', '');
+                QV('passwordPolicyCallout', false);
             } else {
-                var passStrength = checkPasswordStrength(Q('apassword1').value);
-                if (passStrength >= 80) { QH('passWarning', '<span style=color:green><b>Strong Password</b><span>'); }
-                else if (passStrength >= 60) { QH('passWarning', '<span style=color:blue><b>Good Password</b><span>'); }
-                else { QH('passWarning', '<span style=color:red><b>Weak Password</b><span>'); }
+                if (!passRequirementsEx) {
+                    // No password requirements, display password strength
+                    var passStrength = checkPasswordStrength(Q('apassword1').value);
+                    if (passStrength >= 80) { QH('passWarning', '<span style=color:green><b>' + "Strong Password" + '</b><span>'); }
+                    else if (passStrength >= 60) { QH('passWarning', '<span style=color:blue><b>' + "Good Password" + '</b><span>'); }
+                    else { QH('passWarning', '<span style=color:red><b>' + "Weak Password" + '</b><span>'); }
+                } else {
+                    // Password requirements provided, use that
+                    var passReq = checkPasswordRequirements(Q('apassword1').value, passRequirements);
+                    if (passReq == false) {
+                        ok = false;
+                        //QS('nuPass1').color = '#7b241c';
+                        //QS('nuPass2').color = '#7b241c';
+                        QH('passWarning', '<span style=color:red><b>' + "Password Policy" + '</b><span>'); // TODO: Display problem hint
+                        QV('passwordPolicyCallout', true);
+                        QH('passwordPolicyCallout', passwordPolicyText(Q('apassword1').value));
+                    } else {
+                        QH('passWarning', '');
+                        QV('passwordPolicyCallout', false);
+                    }
+                }
             }
+            QE('createButton', ok);
             if ((e != null) && (e.keyCode == 13)) {
                 if (box == 1) { Q('aemail').focus(); }
                 if (box == 2) { Q('apassword1').focus(); }
@@ -253,14 +586,71 @@
             if (e != null) { haltEvent(e); }
         }
 
+        function validatePassReset(box, e) {
+            setDialogMode(0);
+            var pass1ok = (Q('rapassword1').value.length > 0);
+            var pass2ok = (Q('rapassword2').value.length > 0) && (Q('rapassword2').value == Q('rapassword1').value);
+            var ok = (pass1ok && pass2ok);
+
+            // Color the fields
+            QS('rnuPass1').color = pass1ok ? 'black' : '#7b241c';
+            QS('rnuPass2').color = pass2ok ? 'black' : '#7b241c';
+
+            if (Q('rapassword1').value == '') {
+                QH('rpassWarning', '');
+                QV('rpasswordPolicyCallout', false);
+            } else {
+                if (!passRequirementsEx) {
+                    // No password requirements, display password strength
+                    var passStrength = checkPasswordStrength(Q('rapassword1').value);
+                    if (passStrength >= 80) { QH('rpassWarning', '<span style=color:green><b>' + "Strong Password" + '</b><span>'); }
+                    else if (passStrength >= 60) { QH('rpassWarning', '<span style=color:blue><b>' + "Good Password" + '</b><span>'); }
+                    else { QH('rpassWarning', '<span style=color:red><b>' + "Weak Password" + '</b><span>'); }
+                } else {
+                    // Password requirements provided, use that
+                    var passReq = checkPasswordRequirements(Q('rapassword1').value, passRequirements);
+                    if (passReq == false) {
+                        ok = false;
+                        QS('rnuPass1').color = '#7b241c';
+                        QS('rnuPass2').color = '#7b241c';
+                        QH('rpassWarning', '<div style=color:red;cursor:pointer onclick=showPasswordPolicy()><b>' + "Password Policy" + '</b><div>'); // This is also a link to the password policy
+                        QV('rpasswordPolicyCallout', true);
+                        QH('rpasswordPolicyCallout', passwordPolicyText(Q('rapassword1').value));
+                    } else {
+                        QH('rpassWarning', '');
+                        QV('rpasswordPolicyCallout', false);
+                    }
+                }
+            }
+            if ((e != null) && (e.keyCode == 13)) {
+                if (box == 2) { Q('rapassword1').focus(); }
+                if (box == 3) { Q('rapassword2').focus(); }
+                if (box == 4) { Q('rapasswordhint').focus(); }
+                if (box == 6) { Q('resetPassButton').click(); }
+            }
+            if (e != null) { haltEvent(e); }
+            QE('resetPassButton', ok);
+        }
+
         function validateReset(e) {
             setDialogMode(0);
             var x = validateEmail(Q('remail').value);
             QE('eresetButton', x);
-            if ((e != null) && (e.keyCode == 13) && (x == true)) {
-                Q('eresetButton').click();
-            }
+            if ((e != null) && (e.keyCode == 13) && (x == true)) { Q('eresetButton').click(); }
             if (e != null) { haltEvent(e); }
+        }
+
+        function passwordPolicyText(pass) {
+            var policy = '<div style=text-align:left>';
+            var counts = strCount(pass);
+            if (passRequirements.min && ((pass == null) || (pass.length < passRequirements.min))) { policy += format("Minimum length of {0}", passRequirements.min) + '<br />'; }
+            if (passRequirements.max && ((pass == null) || (pass.length > passRequirements.max))) { policy += format("Maximum length of {0}", passRequirements.max) + '<br />'; }
+            if (passRequirements.upper && ((pass == null) || (counts.upper < passRequirements.upper))) { policy += format("{0} upper case", passRequirements.upper) + '<br />'; }
+            if (passRequirements.lower && ((pass == null) || (counts.lower < passRequirements.lower))) { policy += format("{0} lower case", passRequirements.lower) + '<br />'; }
+            if (passRequirements.numeric && ((pass == null) || (counts.numeric < passRequirements.numeric))) { policy += format("{0} numeric", passRequirements.numeric) + '<br />'; }
+            if (passRequirements.nonalpha && ((pass == null) || (counts.nonalpha < passRequirements.nonalpha))) { policy += format("{0} non-alphanumeric", passRequirements.nonalpha) + '<br />'; }
+            policy += '</div>';
+            return policy;
         }
 
         // Return a password strength score
@@ -272,7 +662,71 @@
             return parseInt(r + (varCount - 1) * 10);
         }
 
-        
+        // Check password requirements
+        function checkPasswordRequirements(password, requirements) {
+            if ((requirements == null) || (requirements == '') || (typeof requirements != 'object')) return true;
+            if (requirements.min) { if (password.length < requirements.min) return false; }
+            if (requirements.max) { if (password.length > requirements.max) return false; }
+            var counts = strCount(password);
+            if (requirements.numeric && (counts.numeric < requirements.numeric)) return false;
+            if (requirements.lower && (counts.lower < requirements.lower)) return false;
+            if (requirements.upper && (counts.upper < requirements.upper)) return false;
+            if (requirements.nonalpha && (counts.nonalpha < requirements.nonalpha)) return false;
+            return true;
+        }
+
+        function strCount(password) {
+            var counts = { numeric: 0, lower: 0, upper: 0, nonalpha: 0 };
+            if (typeof password != 'string') return counts;
+            for (var i = 0; i < password.length; i++) {
+                if (/\d/.test(password[i])) { counts.numeric++; }
+                if (/[a-z]/.test(password[i])) { counts.lower++; }
+                if (/[A-Z]/.test(password[i])) { counts.upper++; }
+                if (/\W/.test(password[i])) { counts.nonalpha++; }
+            }
+            return counts;
+        }
+
+        var xcheckTokenTimer = null;
+        function checkTokenTimer(enter) {
+            if ((enter == 0) && (xcheckTokenTimer != null)) { clearInterval(xcheckTokenTimer); xcheckTokenTimer = null; }
+            if ((enter == 1) && (xcheckTokenTimer == null)) { xcheckTokenTimer = setInterval(checkToken, 200); }
+        }
+
+        function checkToken() {
+            var t1 = Q('tokenInput').value, t2 = t1.split(' ').join('');
+            if (t1 != t2) { Q('tokenInput').value = t2; }
+            QE('tokenOkButton', (Q('tokenInput').value.length == 6) || (Q('tokenInput').value.length == 8) || (Q('tokenInput').value.length == 44));
+        }
+
+        function resetCheckToken() {
+            var t1 = Q('resetTokenInput').value, t2 = t1.split(' ').join('');
+            if (t1 != t2) { Q('resetTokenInput').value = t2; }
+            QE('resetTokenOkButton', (Q('resetTokenInput').value.length == 6) || (Q('resetTokenInput').value.length == 8) || (Q('resetTokenInput').value.length == 44));
+        }
+
+        function changeEmailAddress() {
+            var email = Q('unconfirmedEmail').innerHTML;
+            var x = addHtmlValue("Email", '<input id=dp1email style=width:230px maxlength=256 value="' + email + '" autocomplete=off onchange=validateEmailAddress() onkeyup=validateEmailAddress() />');
+            setDialogMode(1, "Email Confirmation", 3, changeEmailAddressEx, x);
+            validateEmailAddress();
+        }
+
+        function validateEmailAddress() {
+            QE('idx_dlgOkButton', (validateEmail(Q('dp1email').value) == true));
+        }
+
+        function changeEmailAddressEx() {
+            Q('checkEmailVal').value = Q('dp1email').value;
+            QH('unconfirmedEmail', Q('dp1email').value);
+            Q('checkEmailButton').click();
+        }
+
+        function resentEmailConfirmation() {
+            Q('checkEmailVal').value = Q('unconfirmedEmail').innerHTML;
+            Q('checkEmailButton').click();
+        }
+
         //
         // POPUP DIALOG
         //
@@ -310,13 +764,15 @@
             if (((b & 8) || x) && f) f(x, t);
         }
 
-        function center() { QS('dialog').left = ((((getDocWidth() - 400) / 2)) + "px"); }
+        function center() { QS('dialog').left = ((((getDocWidth() - 300) / 2)) + 'px'); }
         function messagebox(t, m) { QH('id_dialogMessage', m); setDialogMode(1, t, 1); }
         function statusbox(t, m) { QH('id_dialogMessage', m); setDialogMode(1, t); }
         function getDocWidth() { if (window.innerWidth) return window.innerWidth; if (document.documentElement && document.documentElement.clientWidth && document.documentElement.clientWidth != 0) return document.documentElement.clientWidth; return document.getElementsByTagName('body')[0].clientWidth; }
         function haltEvent(e) { if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
         function haltReturn(e) { if (e.keyCode == 13) { haltEvent(e); } }
         function validateEmail(v) { var emailReg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; return emailReg.test(v); } // New version
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+        function addHtmlValue(t, v) { return '<table><td style=text-align:left>' + t + '<td><b>' + v + '</b></table>'; }
 
     </script>
 </body>

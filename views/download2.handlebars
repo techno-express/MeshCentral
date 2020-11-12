@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv=X-UA-Compatible content="IE=edge" />
+    <meta content="text/html;charset=utf-8" http-equiv=Content-Type />
+    <meta name=viewport content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
+    <meta name=apple-mobile-web-app-capable content=yes />
+    <meta name=format-detection content="telephone=no" />
+    <meta name="robots" content="noindex,nofollow">
+    <link type=text/css href="/styles/style.css" media="screen" rel="stylesheet" title="CSS" />
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <title>{{{title1}}} - Download</title>
+        <style>
+        body {
+            background-color: cadetblue;
+            background: linear-gradient(to bottom right, #369, #036);
+            height:100%;
+            overflow:hidden;
+        }
+
+        a:link { color: #c8c8c8; }
+        a:visited { color: #c8c8c8; }
+        a:hover { color: #c8c8c8; }
+        a:active { color: #c8c8c8; }
+    </style>
+</head>
+<body>
+    <img style="position:absolute;left:0;bottom:0;z-index:-1;height:60%;opacity:0.1" src="../../images/login/back.png" />
+    <table id="centralTable" class="container" style="height:100%;z-index:1">
+        <tr>
+            <td style="width:100%;text-align:center">
+                <div id="message" style="display:none;color:#c8c8c8;font-size:20px"></div>
+                <table id="filetable" style="margin: 0 auto;color:#c8c8c8">
+                    <tr>
+                        <td>
+                            <a id=fileimagelink>
+                                <img id=fileimage src="../../images/login/file48.png" title="File" loading="lazy" width="48" height="48" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF;margin-right:8px" />
+                            </a>
+                        </td>
+                        <td style="text-align:left">
+                            <div id="flink" style="font-size:22px">
+                                <a id="filelink"></a>
+                            </div>
+                            <div id="filesize" style="font-size:16px"></div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr style="height:20px">
+            <td>
+                <div>
+                    <div id="flink" style="margin-left:4px">{{{footer}}}</div>
+                    <div id="flink" style="float:right;margin-right:4px">{{{rootCertLink}}}&nbsp;<a href=../../terms>Terms &amp; Privacy</a></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script>
+        var messageid = parseInt('{{{messageid}}}');
+        var fileurl = '{{{fileurl}}}';
+        var filename = '{{{filename}}}';
+        var filesize = parseInt('{{{filesize}}}');
+
+        // Quick UI functions, a bit of a replacement for jQuery
+        function Q(x) { return document.getElementById(x); }                            // "Q"
+        function QS(x) { try { return Q(x).style; } catch (x) { } }                     // "Q" style
+        function QE(x, y) { try { Q(x).disabled = !y; } catch (x) { } }                 // "Q" enable
+        function QV(x, y) { try { QS(x).display = (y ? '' : 'none'); } catch (x) { } }  // "Q" visible
+        function QA(x, y) { Q(x).innerHTML += y; }                                      // "Q" append
+        function QH(x, y) { Q(x).innerHTML = y; }                                       // "Q" html
+        function QC(x) { try { return Q(x).classList; } catch (x) { } }                 // "Q" class
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+        function EscapeHtml(x) { if (typeof x == 'string') return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;'); if (typeof x == 'boolean') return x; if (typeof x == 'number') return x; }
+
+        QV('filetable', messageid == 1);
+        QV('message', messageid == 2);
+
+        if (messageid == 1) {
+            QH('filelink', EscapeHtml(filename));
+            Q('filelink').href = fileurl;
+            Q('fileimagelink').href = fileurl;
+            if (filesize == 1) { QH('filesize', format("1 byte")); } else { QH('filesize', format("{0} bytes", filesize)); }
+        } else if (messageid == 2) {
+            QH('message', "Invalid file link");
+        }
+    </script>
+</body>
+</html>

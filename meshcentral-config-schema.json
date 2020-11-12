@@ -1,0 +1,573 @@
+{
+  "id": "http://info.meshcentral.com/download/meshcentral-config-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "MeshCentral configuration file schema",
+  "type": "object",
+  "properties": {
+    "settings": {
+      "type": "object",
+      "properties": {
+        "cert": { "type": "string", "description": "Set this to the primary DNS name of this MeshCentral server." },
+        "mongoDb": { "type": "string" },
+        "mongoDbName": { "type": "string" },
+        "mongoDbChangeStream": { "type": "boolean" },
+        "mongoDumpPath": { "type": "string" },
+        "WANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral WAN features are enabled and agents will connect to the server using a well known DNS name." },
+        "LANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral LAN features are enabled and agents will find the server using multicast LAN packets." },
+        "sessionTime": { "type": "integer" },
+        "sessionKey": { "type": "string" },
+        "sessionSameSite": { "type": "string" },
+        "dbEncryptKey": { "type": "string" },
+        "dbRecordsEncryptKey": { "type": "string", "default": null },
+        "dbRecordsDecryptKey": { "type": "string", "default": null },
+        "dbExpire": {
+          "type": "object",
+          "properties": {
+            "events": { "type": "integer", "default": 1728000, "description": "Amount of time in seconds that events are kept in the database." },
+            "powerevents": { "type": "integer", "default": 864000, "description": "Amount of time in seconds that device power events are kept in the database." },
+            "statsevents": { "type": "integer", "default": 2592000, "description": "Amount of time in seconds that server statistics are kept in the database." }
+          }
+        },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "portBind": { "type": "string", "description": "When set, bind the HTTPS main port to a specific network address." },
+        "aliasPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "redirPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "redirPortBind": { "type": "string", "description": "When set, bind the HTTP redirection port to a specific network address." },
+        "redirAliasPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "agentPort": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "When set, enabled a new HTTPS server port that only accepts agent connections." },
+        "agentPortBind": { "type": "string", "description": "When set, binds the agent port to a specific network interface." },
+        "agentAliasPort": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "When set, indicates the actual publically visible agent-only port. If not set, the AgentPort value is used." },
+        "agentAliasDNS": { "type": "string", "format": "hostname", "description": "When set, specified the DNS name used by agents to connect to the agent-only port." },
+        "agentPortTls": { "type": "boolean", "default": true, "description": "Indicates if the agent-only port must perform TLS, this should be set to false if TLS is performed in front of this server." },
+        "agentCoreDump": { "type": "boolean", "default": false, "description": "Automatically activates and transfers any agent crash dump files to the server in meshcentral-data/coredumps." },
+        "agentCoreDumpUsers": { "type": "array", "description": "List of non-administrator users that have access to mesh agent crash dumps." },
+        "ignoreAgentHashCheck": { "type": "boolean", "default": false, "description": "When true, the agent no longer checked the TLS certificate of the server. This should be used for debugging only." },
+        "exactPorts": { "type": "boolean", "default": false },
+        "allowLoginToken": { "type": "boolean", "default": false },
+        "allowFraming": { "type": "boolean", "default": false, "description": "When enabled, the MeshCentral web site can be embedded within another website's iframe." },
+        "cookieIpCheck": { "type": "boolean" },
+        "cookieEncoding": { "type": "string", "enum": [ "hex", "base64" ], "default": "base64", "description": "Encoding format of cookies in the HTTP headers, this is typically Base64 but some reverse proxies will require HEX." },
+        "webRTC": { "type": "boolean", "default": false, "description": "When enabled, allows use of WebRTC to allow direct network traffic between the agent and browser." },
+        "nice404": { "type": "boolean", "default": true, "description": "By default, a nice looking 404 error page is displayed when needed. Set this to false to disable it." },
+        "selfUpdate": { "type": "boolean", "default": false, "description": "When true, this server will attempt to self-update everyday after midnight." },
+        "browserPing": { "type": "integer", "minimum": 1, "description": "When specified, sends data to the browser at x seconds interval and expects a response from the browser." },
+        "browserPong": { "type": "integer", "minimum": 1, "description": "When specified, sends data to the browser at x seconds interval." },
+        "agentsInRam": { "type": "boolean", "default": false, "description": "Loads all agent binaries in RAM for faster agent updates." },
+        "agentPing": { "type": "integer", "minimum": 1, "description": "When specified, sends data to the agent at x seconds interval and expects a response from the agent." },
+        "agentPong": { "type": "integer", "minimum": 1, "description": "When specified, sends data to the agent at x seconds interval." },
+        "amtmanager": { "type": "boolean", "default": true, "description": "When enabled, MeshCentral will automatically monitor and manage Intel AMT devices." },
+        "orphanAgentUser": { "type": "string", "default": null, "description": "If an agent attempts to connect to a unknown device group, automatically create a new device group and grant access to the specified user. Example: admin" },
+        "agentIdleTimeout": { "type": "integer", "minimum": 1 },
+        "compression": { "type": "boolean", "default": true, "description": "Enables GZIP compression for web requests." },
+        "wscompression": { "type": "boolean", "default": false, "description": "Enables server-side, websocket per-message deflate compression." },
+        "agentwscompression": { "type": "boolean", "default": true, "description": "Enables agent-side, websocket per-message deflate compression. wscompression must also be true for this to work." },
+        "meshErrorLogPath": { "type": "string" },
+        "npmPath": { "type": "string" },
+        "npmProxy": { "type": "string", "format": "uri" },
+        "allowHighQualityDesktop": { "type": "boolean", "default": true },
+        "desktopMultiplex": { "type": "boolean", "default": false },
+        "userAllowedIP": { "type": [ "string", "array" ] },
+        "userBlockedIP": { "type": [ "string", "array" ] },
+        "agentAllowedIP": { "type": [ "string", "array" ] },
+        "agentBlockedIP": { "type": [ "string", "array" ] },
+        "authLog": { "type": "string", "default": null, "description": "File path and name of the authentication log to be created. This log can be parsed by Fail2ban." },
+        "manageAllDeviceGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "manageCrossDomain": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "localDiscovery": {
+          "type": "object",
+          "description": "When this server is in LAN mode, you may discover this server using a multicast discovery tool. When discovery happens, the name and info fields are sent back to the discovery tool.",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "info": { "type": "string" },
+            "key": { "type": "string", "description": "When set, encrypts all LAN discovery traffic to agents and tools using this key. This is only useful in LAN/Hybrid mode when agents and tools user multicast to find the server." }
+          },
+          "required": [ "name", "info" ]
+        },
+        "tlsOffload": { "type": [ "string", "boolean" ], "default": false },
+        "trustedProxy": { "type": "string" },
+        "mpsPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "mpsPortBind": { "type": "string" },
+        "mpsAliasPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "mpsAliasHost": { "type": "string" },
+        "mpsTlsOffload": { "type": "boolean", "default": false },
+        "no2FactorAuth": { "type": "boolean", "default": false },
+        "log": { "type": "string" },
+        "syslog": { "type": "string" },
+        "syslogauth": { "type": "string" },
+        "syslogjson": { "type": "string" },
+        "webrtcConfig": {
+          "type": "object",
+          "properties": {
+            "iceServers": { "type": "array", "uniqueItems": true, "items": { "type": "object", "properties": { "urls": { "type": "string" } }, "required": [ "urls" ] } }
+          },
+          "required": [ "iceServers" ]
+        },
+        "autoBackup": {
+          "type": "object",
+          "properties": {
+            "backupIntervalHours": { "type": "integer" },
+            "keepLastDaysBackup": { "type": "integer" },
+            "zipPassword": { "type": "string" },
+            "backupPath": { "type": "string" },
+            "googleDrive": {
+              "type": "object",
+              "description": "Enabled automated upload of the server backups to a Google Drive account, once enabled you need to go in \"My Server\" tab as administrator to associate the account.",
+              "properties": {
+                "folderName": { "type": "integer", "default": "MeshCentral-Backups", "description": "The name of the folder to create in the Google Drive account." },
+                "maxFiles": { "type": "string", "default": null, "description": "The maximum number of files to keep in the Google Drive folder, older files will be removed if needed." }
+              }
+            },
+            "webDAV": {
+              "type": "object",
+              "description": "Enabled automated upload of the server backups to a WebDAV account.",
+              "properties": {
+                "url": { "type": "string", "description": "WebDAV account URL." },
+                "username": { "type": "string", "description": "WebDAV account username." },
+                "password": { "type": "string", "description": "WebDAV account password." },
+                "folderName": { "type": "integer", "default": "MeshCentral-Backups", "description": "The name of the folder to create in the WebDAV account." },
+                "maxFiles": { "type": "string", "default": null, "description": "The maximum number of files to keep in the WebDAV folder, older files will be removed if needed." }
+              }
+            }
+          }
+        },
+        "redirects": { "type": "object" },
+        "maxInvalidLogin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "time": { "type": "integer" },
+            "count": { "type": "integer" },
+            "coolofftime": { "type": "integer" }
+          }
+        },
+        "plugins": {
+          "type": "object",
+          "properties": { "enabled": { "type": "boolean" } },
+          "required": [ "enabled" ]
+        }
+      }
+    },
+    "domaindefaults": { "$ref": "#/properties/domains/items" },
+    "domains": {
+      "type": "object",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siteStyle": { "type": "integer", "default": 1, "description": "Valid numbers are 1 and 2, changes the style of the login page and some secondary pages." },
+          "title": { "type": "string", "default": "MeshCentral", "description": "The title of this web site. All web pages will have this title." },
+          "title2": { "type": "string", "default": null, "description": "Secondary title text that is placed on the upper right on the title on many web pages." },
+          "titlePicture": { "type": "string", "default": null, "description": "Web site .png logo file that is 450x66 in size placed in meshcentral-data that is used on the top of many pages." },
+          "loginPicture": { "type": "string", "default": null, "description": "Web site .png logo file placed in meshcentral-data that used on the login page when sitestyle is 2." },
+          "userQuota": { "type": "integer" },
+          "meshQuota": { "type": "integer" },
+          "minify": { "type": "boolean", "default": false, "description": "When enabled, the server will send reduced sided web pages." },
+          "newAccounts": { "type": "boolean" },
+          "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "userNameIsEmail": { "type": "boolean", "default": false, "description": "When enabled, the username of each account is also the email address of the account." },
+          "newAccountEmailDomains": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "newAccountsRights": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "welcomeText": { "type": "string", "description": "Text that will be shown on the login screen." },
+          "welcomePicture": { "type": "string", "description": "Name of the PNG or JPEG file that will be shown on the login screen. Put this file in the meshcentral-data folder and place the file name here." },
+          "hide": { "type": "integer", "default": 0 },
+          "footer": { "type": "string", "default": null },
+          "certUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "https url when to get the TLS certificate that MeshAgent's will see when connecting to this server. This setting is used when a reverse proxy like NGINX is used in front of MeshCentral."
+          },
+          "myServer": {
+            "type": [ "object", "boolean" ],
+            "additionalProperties": false,
+            "properties": {
+              "Backup": { "type": "boolean", "default": true, "description": "Allows administrators to backup the server from the My Server tab." },
+              "Restore": { "type": "boolean", "default": true, "description": "Allows administrators to restore the server from the My Server tab." },
+              "Upgrade": { "type": "boolean", "default": true, "description": "Allows administrators to update the server from the My Server tab." },
+              "ShowLog": { "type": "boolean", "default": true, "description": "Allows administrators to see the server crash log the server from the My Server tab." },
+              "Console": { "type": "boolean", "default": true, "description": "Allows administrators to access the server console from the My Server tab." },
+              "Trace": { "type": "boolean", "default": true, "description": "Allows administrators to access the server trace tab from from the My Server tab." }
+            }
+          },
+          "passwordRequirements": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "integer", "description": "Minimum number of characters allowed for the account password." },
+              "max": { "type": "integer", "description": "Maximum number of characters allowed for the account password." },
+              "upper": { "type": "integer", "description": "Minimum number of upper case characters required in the password." },
+              "lower": { "type": "integer", "description": "Minimum number of lower case characters required in the password." },
+              "numeric": { "type": "integer", "description": "Minimum number of numeric characters required in the password." },
+              "nonalpha": { "type": "integer", "description": "Minimum number of non-alpha-numeric characters required in the password." },
+              "reset": { "type": "integer", "description": "Number of days after which the user is required to change the account password." },
+              "force2factor": { "type": "boolean", "description": "Requires that all accounts setup 2FA." },
+              "skip2factor": { "type": "string", "description": "IP addresses where 2FA login is skipped, for example: 127.0.0.1,192.168.2.0/24" },
+              "oldPasswordBan": { "type": "integer", "description": "Number of old passwords the server should remember and not allow the user to switch back to." },
+              "banCommonPasswords": { "type": "boolean", "description": "Uses WildLeek to block use of the 10000 most commonly used passwords." }
+            }
+          },
+          "twoFactorCookieDurationDays": { "type": "integer", "default": 30, "description": "Number of days that a user is allowed to remember this device for when completing 2FA. Set this to 0 to remove this option." },
+          "auth": { "type": "string", "default": null, "enum": [null, "sspi", "ldap"], "description": "Type of user authentication to use, this can be SSPI on Windows or LDAP. If not set, username/password is used." },
+          "ldapUserKey": { "type": "string" },
+          "ldapUserName": { "type": "string" },
+          "ldapUserEmail": { "type": "string" },
+          "ldapUserRealName": { "type": "string" },
+          "ldapUserPhoneNumber": { "type": "string" },
+          "ldapOptions": { "type": "object", "description": "LDAP options passed to ldapauth-fork" },
+          "agentInviteCodes": { "type": "boolean", "default": false, "description": "Enabled a feature where you can set one or more invitation codes in a device group. You can then give a invitation link to users who can use it to download the agent." },
+          "agentNoProxy": { "type": "boolean", "default": false, "description": "When enabled, all newly installed MeshAgents will be instructed to no use a HTTP/HTTPS proxy even if one is configured on the remote system" },
+          "agentTag": {
+            "type": "object",
+            "description": "This section is used to indicate if parts of the meshagent.tag file should be used to set server-side device properties.",
+            "additionalProperties": false,
+            "properties": {
+              "ServerName": { "type": "integer", "default": 0, "description": "Action taken if one of the lines in meshagent.tag contains ~ServerName:name. 0=Ignore, 1=Set." },
+              "ServerDesc": { "type": "integer", "default": 0, "description": "Action taken if one of the lines in meshagent.tag contains ~ServerDesc:desc. 0=Ignore, 1=Set, 2=SetIfEmpty." },
+              "ServerTags": { "type": "integer", "default": 0, "description": "Action taken if one of the lines in meshagent.tag contains ~ServerTags:tag1,tag2,tag3. 0=Ignore, 1=Set, 2=SetIfEmpty, 3=Append." }
+            }
+          },
+          "geoLocation": { "type": "boolean", "default": false, "description": "Enables the geo-location feature and device location map in the user interface, this feature is not being worked on." },
+          "novnc": { "type": "boolean", "default": true, "description": "When enabled, activates the built-in web-based noVNC client." },
+          "mstsc": { "type": "boolean", "default": false, "description": "When enabled, activates the built-in web-based RDP client." },
+          "webEmailsPath": { "type": "string", "description": "Path where to find custom email templates for this domain." },
+          "customUI": { "type": "object" },
+          "consentMessages": {
+            "type": "object",
+            "description": "This section is used to customize user consent prompts, these show up when asking if a remote session is allowed or not.",
+            "additionalProperties": false,
+            "properties": {
+              "Title": { "type": "string" },
+              "Desktop": { "type": "string" },
+              "Terminal": { "type": "string" },
+              "Files": { "type": "string" }
+            }
+          },
+          "notificationMessages": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "This section is user to customize user notifications when a remote desktop, terminal or file session is connected to a remote system.",
+            "properties": {
+              "Title": { "type": "string" },
+              "Desktop": { "type": "string" },
+              "Terminal": { "type": "string" },
+              "Files": { "type": "string" }
+            }
+          },
+          "agentCustomization": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Use this section to customize the agent branding.",
+            "properties": {
+              "displayName": { "type": "string", "default": "MeshCentral Agent", "description": "The name of the agent as displayed to the user." },
+              "description": { "type": "string", "default": "Mesh Agent background service", "description": "The description of the agent as displayed to the user." },
+              "companyName": { "type": "string", "default": "Mesh Agent", "description": "This will be used as the path to install the agent, by default this is 'Mesh Agent' in Windows and 'meshagent' in other OS's." },
+              "serviceName": { "type": "string", "default": "Mesh Agent", "description": "The name of the background service, by default this is 'Mesh Agent' in Windows and 'meshagent' in other OS's but should be set to an all lower case, no space string." }
+            }
+          },
+          "userAllowedIP": { "type": "string" },
+          "userBlockedIP": { "type": "string" },
+          "agentAllowedIP": { "type": "string" },
+          "agentBlockedIP": { "type": "string" },
+          "userSessionIdleTimeout": { "type": "integer" },
+          "userConsentFlags": { "type": "integer" },
+          "urlSwitching": { "type": "boolean" },
+          "desktopPrivacyBarText": { "type": "string" },
+          "limits": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "MaxDevices": { "type": "integer" },
+              "MaxUserAccounts": { "type": "integer" },
+              "MaxUserSessions": { "type": "integer" },
+              "MaxAgentSessions": { "type": "integer" },
+              "MaxSingleUserSessions": { "type": "integer" }
+            }
+          },
+          "amtManager": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information passed to the AMT manager module that impacts all Intel AMT device managed within this domain.",
+            "properties": {
+              "AdminAccounts": {
+                "description": "List of username and passwords to try when connecting to Intel AMT.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [ "pass" ],
+                  "properties": {
+                    "user": {
+                      "description": "Intel AMT administrator username.",
+                      "type": "string",
+                      "default": "admin"
+                    },
+                    "pass": {
+                      "description": "Intel AMT administrator password.",
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "EnvironmentDetection": {
+                "description": "List of up to 4 domain suffixes to configure in Intel AMT when activating CIRA.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "uniqueItems": true
+                }
+              },
+              "WifiProfiles": {
+                "description": "List of WIFI profiles to setup in any managed Intel AMT device with a WIFI network interface.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [ "ssid", "password" ],
+                  "properties": {
+                    "name": {
+                      "description": "WIFI profile name, if not specified the SSID is used.",
+                      "type": "string"
+                    },
+                    "ssid": {
+                      "description": "SSID of the WIFI station.",
+                      "type": "string"
+                    },
+                    "authentication": {
+                      "description": "WIFI authentication.",
+                      "type": "string",
+                      "enum": [ "wpa2-psk", "wpa-psk" ],
+                      "default": "wpa2-psk"
+                    },
+                    "encryption": {
+                      "description": "WIFI encryption.",
+                      "type": "string",
+                      "enum": [ "ccmp-aes", "tkip-rc4" ],
+                      "default": "ccmp-aes"
+                    },
+                    "password": {
+                      "description": "Password on the WIFI station",
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 63
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "amtAcmActivation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "log": { "type": "string" },
+              "certs": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "certfiles": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                    "keyfile": { "type": "string" }
+                  },
+                  "required": [ "certfiles", "keyfile" ]
+                }
+              }
+            },
+            "required": [ "certs" ]
+          },
+          "redirects": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "yubikey": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "secret": { "type": "string" },
+              "proxy": { "type": "string", "format": "uri" }
+            },
+            "required": [ "id", "secret" ]
+          },
+          "httpHeaders": { "type": "object", "additionalProperties": { "type": "string" } },
+          "agentConfig": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "sessionRecording": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "onlySelectedDeviceGroups": { "type": "boolean", "default": false, "description": "When enabled, only device groups with the session recording feature turned on will be recorded. When false, all devices are recorded." },
+              "filepath": { "type": "string" },
+              "index": { "type": "boolean", "default": false },
+              "maxRecordings": { "type": "integer" },
+              "maxRecordingSizeMegabytes": { "type": "integer" },
+              "protocols": { "type": "array", "uniqueItems": true, "items": { "type": "integer" } }
+            },
+            "required": [ "protocols" ]
+          },
+          "authStrategies": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "twitter": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "clientid": { "type": "string" },
+                  "clientsecret": { "type": "string" }
+                },
+                "required": [ "clientid", "clientsecret" ]
+              },
+              "google": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "clientid": { "type": "string" },
+                  "clientsecret": { "type": "string" }
+                },
+                "required": [ "clientid", "clientsecret" ]
+              },
+              "github": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "clientid": { "type": "string" },
+                  "clientsecret": { "type": "string" }
+                },
+                "required": [ "clientid", "clientsecret" ]
+              },
+              "reddit": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "clientid": { "type": "string" },
+                  "clientsecret": { "type": "string" }
+                },
+                "required": [ "clientid", "clientsecret" ]
+              },
+              "azure": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "clientid": { "type": "string" },
+                  "clientsecret": { "type": "string" },
+                  "tenantid": { "type": "string" }
+                },
+                "required": [ "clientid", "clientsecret", "tenantid" ]
+              },
+              "jumpcloud": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "entityid": { "type": "string" },
+                  "idpurl": { "type": "string", "format": "uri" },
+                  "cert": { "type": "string" }
+                },
+                "required": [ "entityid", "idpurl", "cert" ]
+              },
+              "saml": {
+                "type": "object",
+                "properties": {
+                  "callbackurl": { "type": "string", "format": "uri" },
+                  "disableRequestedAuthnContext": { "type": "boolean" },
+                  "newAccounts": { "type": "boolean", "default": false },
+                  "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "newAccountsRights": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                  "entityid": { "type": "string" },
+                  "idpurl": { "type": "string", "format": "uri" },
+                  "cert": { "type": "string" }
+                },
+                "required": [ "entityid", "idpurl", "cert" ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "letsEncrypt": {
+      "title" : "Built-in Let's Encrypt support",
+      "description": "If your server has a proper DNS name and it public facing on the Internet with a public facing HTTP server on port 80, you can get a free TLS certificate.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Email address of the administrator of this server. Make sure this is a valid email address otherwise the certificate request will fail." },
+        "names": { "type": "string" },
+        "production": { "type": "boolean", "default": false, "description": "By default a test certificate will be obtained from Let's Encrypt. Always start by getting a test certificate and make sure that works before setting this to true and obtaining a production certificaite. Making too many bad requests for a production certificate will get you banned for a long period of time." }
+      },
+      "required": [ "email", "names" ]
+    },
+    "peers": {
+      "title" : "Server peering",
+      "description": "Setup peer server for load-balancing between many servers.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+      "additionalProperties": false,
+      "properties": {
+        "serverId": { "type": "string" },
+        "servers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": { "url": { "type": "string", "format": "uri" } },
+            "required": [ "url" ]
+          }
+        }
+      },
+      "required": [ "serverId", "servers" ]
+    },
+    "smtp": {
+      "title" : "Email server",
+      "description": "Connects MeshCentral to a email server, allows MeshCentral to send email messages for 2FA or user notification.",
+      "type": "object",
+      "properties": {
+        "host": { "type": "string", "format": "hostname" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "from": { "type": "string", "format": "email" },
+        "tls": { "type": "boolean" },
+        "tlscertcheck": { "type": "boolean" },
+        "tlsstrict": { "type": "boolean" }
+      },
+      "required": [ "host", "port", "from", "tls" ]
+    },
+    "sms": {
+      "title" : "SMS provider",
+      "description": "Connects MeshCentral to a SMS text messaging provider, allows MeshCentral to send SMS messages for 2FA or user notification.",
+      "oneOf": [
+        {
+          "type": "object", 
+          "properties": {
+            "provider": { "type": "string", "enum": [ "twilio" ] },
+            "sid": { "type": "string" },
+            "auth": { "type": "string" },
+            "from": { "type": "string" }
+          },
+          "required": [ "provider", "sid", "auth", "from" ]
+        },
+        {
+          "type": "object", 
+          "properties": {
+            "provider": { "type": "string", "enum": [ "plivo" ] },
+            "id": { "type": "string" },
+            "token": { "type": "string" },
+            "from": { "type": "string" }
+          },
+          "required": [ "provider", "id", "token", "from" ]
+        }
+      ]
+    }
+  },
+  "required": [ "settings", "domains" ]
+}
