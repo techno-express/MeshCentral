@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
 Copyright 2020 Intel Corporation
+=======
+Copyright 2020-2021 Intel Corporation
+>>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +44,11 @@ var CreateAmtSetupBinStack = function () {
     //   - Setup.bin should always start with "CurrentMEBx Pwd", "newMebx Pwd", "manageability selection" (if present).
 
     // Intel(R) AMT variable identifiers
+<<<<<<< HEAD
     // Type: 0 = Binar Stringy, 1 = Char, 2 = Short, 3 = Int
+=======
+    // Type: 0 = Binar String, 1 = Char, 2 = Short, 3 = Int
+>>>>>>> upstream/master
     var AmtSetupBinVarIds =
         {
             1: {
@@ -94,7 +102,11 @@ var CreateAmtSetupBinStack = function () {
                     { 0: "Disabled", 1: "KVM", 255: "All" }],
                 27: [1, "Opt-in Remote IT Consent Policy",         // 0 = Disabled, 1 = Enabled. Allows user consent to be configured remotely.
                     { 0: "Disabled", 1: "Enabled" }],
+<<<<<<< HEAD
                 28: [1, "ME Provision Halt Active",                // 0 = Stop, 1 = Start. The "ME provisioning Halt/Activate" command must appear in the file only after "PKIDNSSuffix", "ConfigServerFQDN" and "Provisioning Server Address"
+=======
+                28: [1, "ME Provision Halt/Active",                // 0 = Stop, 1 = Start. The "ME provisioning Halt/Activate" command must appear in the file only after "PKIDNSSuffix", "ConfigServerFQDN" and "Provisioning Server Address"
+>>>>>>> upstream/master
                     { 0: "Stop", 1: "Start" }],
                 29: [1, "Manual Setup and Configuration",          // 0 = Automated, 1 = Manual
                     { 0: "Automated", 1: "Manual" }],
@@ -127,7 +139,10 @@ var CreateAmtSetupBinStack = function () {
 
     // Parse the Setup.bin file
     o.AmtSetupBinDecode = function (file) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
         // Format of the setup file header:
         // FileTypeUUID(16)         - uniquely identifies the file type. This identifier will remain valid and constant across all versions of the file type.
         // RecordChunkCount(2)      - indicates the number of 512-byte chunks occupied by this record, including all header, body, and reserved fields.
@@ -135,9 +150,17 @@ var CreateAmtSetupBinStack = function () {
         // RecordNumber(4)          - uniquely identifies the record among all records in the file. The field contains a non-negative ordinal value. The value of this field is always zero in the Local Provisioning File Header Record.
         // MajorVersion(1)          - identifies the major version of the file format specification. This is a positive integer that is greater than or equal to 1. The Major Version number is incremented to indicate that changes have been introduced that will cause code written against a lower Major Version number to fail.
         // MinorVersion(1)          - identifies the minor version of the file format specification. This is an integer that is greater than or equal to 0. The Minor Version number is incremented to indicate that changes have been introduced that will not cause code written against the same Major Version and a lower Minor Version number to fail. The purpose of this behavior is to allow a single local provisioning file to be used for multiple generations of Intel® AMT platform.
+<<<<<<< HEAD
         // DataRecordCount(4)       - indicates the total number of data records written in the file when it was created.
         // DataRecordsConsumed(4)   - is a counter value that begins at 0 and is incremented by 1 by each platform BIOS when it consumes a data record from the file. This value is used to determine the offset of the next data record in the file.
         // DataRecordChunkCount(2)  - contains the number of 512-byte chunks in each data record. All data records are the same length.
+=======
+        // Flags (2)                - file Flags,  1 = Do not consume records
+        // DataRecordCount(4)       - indicates the total number of data records written in the file when it was created.
+        // DataRecordsConsumed(4)   - is a counter value that begins at 0 and is incremented by 1 by each platform BIOS when it consumes a data record from the file. This value is used to determine the offset of the next data record in the file.
+        // DataRecordChunkCount(2)  - contains the number of 512-byte chunks in each data record. All data records are the same length.
+        // Reserved (2)             - reserved
+>>>>>>> upstream/master
         // ModuleList               - contains a list of module identifiers. A module’s identifier appears in the list if and only if the data records contain entries for that module. Each module identifier is two bytes in length. The list is terminated by an identifier value of 0. 
 
         var obj = {}, UUID = file.substring(0, 16);
@@ -216,14 +239,29 @@ var CreateAmtSetupBinStack = function () {
     o.AmtSetupBinEncode = function (obj) {
         if (obj.fileType < 1 && obj.fileType > AmtSetupBinSetupGuids.length) return null;
         var out = [], r = AmtSetupBinSetupGuids[obj.fileType - 1], reccount = 0;
+<<<<<<< HEAD
         r += ShortToStrX(obj.recordChunkCount);
         r += ShortToStrX(obj.recordHeaderByteCount);
+=======
+
+        // Get the list of modules used
+        var modulesInUse = [];
+        for (var i in obj.records) { var rec = obj.records[i]; for (var j in rec.variables) { var v = rec.variables[j]; if (modulesInUse.indexOf(v.moduleid) == -1) { modulesInUse.push(v.moduleid); } } }
+
+        r += ShortToStrX(obj.recordChunkCount);
+        r += ShortToStrX(42 + (modulesInUse.length * 2)); // Header is 42 bytes long + 2 bytes for each additional modules in use.
+>>>>>>> upstream/master
         r += IntToStrX(obj.recordNumber);
         r += String.fromCharCode(obj.majorVersion, obj.minorVersion);
         r += ShortToStrX(obj.flags); // Flags: 1 = Do not consume records
         r += IntToStrX(obj.records.length);
         r += IntToStrX(obj.dataRecordsConsumed);
         r += ShortToStrX(obj.dataRecordChunkCount);
+<<<<<<< HEAD
+=======
+        r += ShortToStrX(0); // Reserved
+        for (var i in modulesInUse) { r += ShortToStrX(modulesInUse[i]); } // Write each module in use. Needs to be null terminated, but the padding that follows will do that.
+>>>>>>> upstream/master
         while (r.length < 512) { r += '\0'; } // Pad the header
         out.push(r);
 

@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "http://info.meshcentral.com/download/meshcentral-config-schema.json",
+=======
+  "id": "https://info.meshcentral.com/downloads/meshcentral-config-schema.json",
+>>>>>>> upstream/master
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "MeshCentral configuration file schema",
   "type": "object",
@@ -8,6 +12,7 @@
       "type": "object",
       "properties": {
         "cert": { "type": "string", "description": "Set this to the primary DNS name of this MeshCentral server." },
+<<<<<<< HEAD
         "mongoDb": { "type": "string" },
         "mongoDbName": { "type": "string" },
         "mongoDbChangeStream": { "type": "boolean" },
@@ -15,6 +20,37 @@
         "WANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral WAN features are enabled and agents will connect to the server using a well known DNS name." },
         "LANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral LAN features are enabled and agents will find the server using multicast LAN packets." },
         "sessionTime": { "type": "integer" },
+=======
+        "mongoDb": { "type": "string", "default": null },
+        "mongoDbName": { "type": "string" },
+        "mongoDbChangeStream": { "type": "boolean", "default": false },
+        "mongoDbBulkOperations": { "type": "boolean", "default": false },
+        "mariaDB": {
+          "type": "object",
+          "description": "Add this section to connect MeshCentral to a MariaDB database instance.",
+          "properties": {
+            "host": { "type": "string", "description": "MariaDB hostname" },
+            "user": { "type": "string", "description": "MariaDB username" },
+            "port": { "type": "number", "description": "MariaDB port number" },
+            "password": { "type": "string", "description": "MariaDB password" },
+            "connectionLimit": { "type": "number", "description": "MariaDB connection limit" }
+          }
+        },
+        "mySQL": {
+          "type": "object",
+          "description": "Add this section to connect MeshCentral to a MySQL database instance.",
+          "properties": {
+            "host": { "type": "string", "description": "MySQL hostname" },
+            "port": { "type": "number", "description": "MySQL port number" },
+            "user": { "type": "string", "description": "MySQL username" },
+            "password": { "type": "string", "description": "MySQL password" }
+          }
+        },
+        "WANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral WAN features are enabled and agents will connect to the server using a well known DNS name." },
+        "LANonly": { "type": "boolean", "default": false, "description": "When enabled, only MeshCentral LAN features are enabled and agents will find the server using multicast LAN packets." },
+        "maintenanceMode": { "type": "boolean", "default": false, "description": "When enabled the server is in maintenance mode, only administrators can login. Use the maintenance command in server console to change." },
+        "sessionTime": { "type": "integer", "default": 60, "description": "Duration of a session cookie in minutes. Changing this affects how often the session needs to be automatically refreshed." },
+>>>>>>> upstream/master
         "sessionKey": { "type": "string" },
         "sessionSameSite": { "type": "string" },
         "dbEncryptKey": { "type": "string" },
@@ -41,7 +77,11 @@
         "agentPortTls": { "type": "boolean", "default": true, "description": "Indicates if the agent-only port must perform TLS, this should be set to false if TLS is performed in front of this server." },
         "agentCoreDump": { "type": "boolean", "default": false, "description": "Automatically activates and transfers any agent crash dump files to the server in meshcentral-data/coredumps." },
         "agentCoreDumpUsers": { "type": "array", "description": "List of non-administrator users that have access to mesh agent crash dumps." },
+<<<<<<< HEAD
         "ignoreAgentHashCheck": { "type": "boolean", "default": false, "description": "When true, the agent no longer checked the TLS certificate of the server. This should be used for debugging only." },
+=======
+        "ignoreAgentHashCheck": { "type": [ "boolean", "string" ], "default": false, "description": "When true, the agent no longer checked the TLS certificate of the server. This should be used for debugging only. You can also set this to a comma seperated list of IP addresses to ignore, for example: \"192.168.2.100,192.168.1.0/24\"." },
+>>>>>>> upstream/master
         "exactPorts": { "type": "boolean", "default": false },
         "allowLoginToken": { "type": "boolean", "default": false },
         "allowFraming": { "type": "boolean", "default": false, "description": "When enabled, the MeshCentral web site can be embedded within another website's iframe." },
@@ -65,7 +105,21 @@
         "npmPath": { "type": "string" },
         "npmProxy": { "type": "string", "format": "uri" },
         "allowHighQualityDesktop": { "type": "boolean", "default": true },
+<<<<<<< HEAD
         "desktopMultiplex": { "type": "boolean", "default": false },
+=======
+        "webPush": {
+          "type": "object",
+          "description": "When set with a valid email address, enables the MeshCentral web push notification feature. Allows administrators to send browser notifications to users even if they are not looking at the MeshCentral web site.",
+          "additionalProperties": false,
+          "properties": {
+            "email": { "type": "string", "description": "Server administrator email given to the FireFox and Chrome push notification services." }
+          },
+          "required": [ "email" ]
+        },
+        "publicPushNotifications": { "type": "boolean", "default": false, "description": "When true, this server uses MeshCentral.com a push notification relay for Android notifications. Push notifications work even if the Android app is not open." },
+        "desktopMultiplex": { "type": "boolean", "default": false, "description": "When true, enabled a server modules that efficiently splits a remote desktop stream to multiple browsers. Also allows slow browsers to not slow down the session for fast ones, this comes at the cost of extra server memory and processing for all remote desktop sessions." },
+>>>>>>> upstream/master
         "userAllowedIP": { "type": [ "string", "array" ] },
         "userBlockedIP": { "type": [ "string", "array" ] },
         "agentAllowedIP": { "type": [ "string", "array" ] },
@@ -84,7 +138,11 @@
           },
           "required": [ "name", "info" ]
         },
+<<<<<<< HEAD
         "tlsOffload": { "type": [ "string", "boolean" ], "default": false },
+=======
+        "tlsOffload": { "type": [ "boolean", "string" ], "default": false, "description": "When true, indicates that a TLS offloader is in front of the MeshCentral server. More typically, set this to the IP address of the reverse proxy or TLS offloader so that IP forwarding headers will be trusted. For example: \"127.0.0.1,192.168.1.100\"." },
+>>>>>>> upstream/master
         "trustedProxy": { "type": "string" },
         "mpsPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
         "mpsPortBind": { "type": "string" },
@@ -98,14 +156,25 @@
         "syslogjson": { "type": "string" },
         "webrtcConfig": {
           "type": "object",
+<<<<<<< HEAD
           "properties": {
             "iceServers": { "type": "array", "uniqueItems": true, "items": { "type": "object", "properties": { "urls": { "type": "string" } }, "required": [ "urls" ] } }
+=======
+          "additionalProperties": false,
+          "description": "The STUN servers used for WebRTC, if not specified the Google and Mozilla servers and used when the server is not in LAN mode.",
+          "properties": {
+            "iceServers": { "type": "array", "uniqueItems": true, "items": { "type": "object", "additionalProperties": false, "properties": { "urls": { "type": "string" } }, "required": [ "urls" ] } }
+>>>>>>> upstream/master
           },
           "required": [ "iceServers" ]
         },
         "autoBackup": {
           "type": "object",
           "properties": {
+<<<<<<< HEAD
+=======
+            "mongoDumpPath": { "type": "string" },
+>>>>>>> upstream/master
             "backupIntervalHours": { "type": "integer" },
             "keepLastDaysBackup": { "type": "integer" },
             "zipPassword": { "type": "string" },
@@ -114,19 +183,57 @@
               "type": "object",
               "description": "Enabled automated upload of the server backups to a Google Drive account, once enabled you need to go in \"My Server\" tab as administrator to associate the account.",
               "properties": {
+<<<<<<< HEAD
                 "folderName": { "type": "integer", "default": "MeshCentral-Backups", "description": "The name of the folder to create in the Google Drive account." },
                 "maxFiles": { "type": "string", "default": null, "description": "The maximum number of files to keep in the Google Drive folder, older files will be removed if needed." }
+=======
+                "folderName": {
+                  "type": "integer",
+                  "default": "MeshCentral-Backups",
+                  "description": "The name of the folder to create in the Google Drive account."
+                },
+                "maxFiles": {
+                  "type": "string",
+                  "default": null,
+                  "description": "The maximum number of files to keep in the Google Drive folder, older files will be removed if needed."
+                }
+>>>>>>> upstream/master
               }
             },
             "webDAV": {
               "type": "object",
               "description": "Enabled automated upload of the server backups to a WebDAV account.",
               "properties": {
+<<<<<<< HEAD
                 "url": { "type": "string", "description": "WebDAV account URL." },
                 "username": { "type": "string", "description": "WebDAV account username." },
                 "password": { "type": "string", "description": "WebDAV account password." },
                 "folderName": { "type": "integer", "default": "MeshCentral-Backups", "description": "The name of the folder to create in the WebDAV account." },
                 "maxFiles": { "type": "string", "default": null, "description": "The maximum number of files to keep in the WebDAV folder, older files will be removed if needed." }
+=======
+                "url": {
+                  "type": "string",
+                  "description": "WebDAV account URL."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "WebDAV account username."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "WebDAV account password."
+                },
+                "folderName": {
+                  "type": "integer",
+                  "default": "MeshCentral-Backups",
+                  "description": "The name of the folder to create in the WebDAV account."
+                },
+                "maxFiles": {
+                  "type": "string",
+                  "default": null,
+                  "description": "The maximum number of files to keep in the WebDAV folder, older files will be removed if needed."
+                }
+>>>>>>> upstream/master
               }
             }
           }
@@ -141,6 +248,38 @@
             "coolofftime": { "type": "integer" }
           }
         },
+<<<<<<< HEAD
+=======
+        "amtProvisioningServer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [ "deviceGroup", "newMebxPassword", "trustedFqdn", "ip" ],
+          "description": "When present, this section will enable the Intel AMT provisioning server on the local network. This is used for Intel AMT bare-metal ACM activation.",
+          "properties": {
+            "port": {
+              "type": "number",
+              "default": 9971,
+              "description": "Port number that provisioning server will listen to."
+            },
+            "deviceGroup": {
+              "type": "string",
+              "description": "The agent-less device group to add Intel AMT devices to once they are activated. Must be of format: mesh/domain/id"
+            },
+            "newMebxPassword": {
+              "type": "string",
+              "description": "The MEBX password to set during activation. This password must be at least 8 characters long and have 1 lower, 1 upper, 1 alpha-numeric and 1 non-alpha numeric character."
+            },
+            "trustedFqdn": {
+              "type": "string",
+              "description": "The trusted FQDN or provisioning server value the remote device will have. This can be set in MEBx or using the DHCP server option 15 on the local network."
+            },
+            "ip": {
+              "type": "string",
+              "description": "The IP address of this server. This address will be used when creating the USB setup.bin file to indicate what IP address to send the hello data to."
+            }
+          }
+        },
+>>>>>>> upstream/master
         "plugins": {
           "type": "object",
           "properties": { "enabled": { "type": "boolean" } },
@@ -154,23 +293,90 @@
       "items": {
         "type": "object",
         "properties": {
+<<<<<<< HEAD
           "siteStyle": { "type": "integer", "default": 1, "description": "Valid numbers are 1 and 2, changes the style of the login page and some secondary pages." },
+=======
+          "siteStyle": { "type": "integer", "default": 2, "description": "Valid numbers are 1 and 2, changes the style of the login page and some secondary pages." },
+>>>>>>> upstream/master
           "title": { "type": "string", "default": "MeshCentral", "description": "The title of this web site. All web pages will have this title." },
           "title2": { "type": "string", "default": null, "description": "Secondary title text that is placed on the upper right on the title on many web pages." },
           "titlePicture": { "type": "string", "default": null, "description": "Web site .png logo file that is 450x66 in size placed in meshcentral-data that is used on the top of many pages." },
           "loginPicture": { "type": "string", "default": null, "description": "Web site .png logo file placed in meshcentral-data that used on the login page when sitestyle is 2." },
+<<<<<<< HEAD
           "userQuota": { "type": "integer" },
           "meshQuota": { "type": "integer" },
           "minify": { "type": "boolean", "default": false, "description": "When enabled, the server will send reduced sided web pages." },
           "newAccounts": { "type": "boolean" },
+=======
+          "rootRedirect": { "type": "string", "default": null, "description": "Redirects HTTP root requests to this URL. When in use, direct users to /login to see the normal login page." },
+          "userQuota": { "type": "integer" },
+          "meshQuota": { "type": "integer" },
+          "loginKey": { "type": [ "string", "array" ], "items": { "type": "string" }, "default": null, "description": "Requires that users add the value ?key=xxx in the URL in order to see the web site." },
+          "minify": { "type": "boolean", "default": false, "description": "When enabled, the server will send reduced sided web pages." },
+          "newAccounts": { "type": "boolean", "default": false, "description": "When set to true, allow new user accounts to be created from the login page." },
+>>>>>>> upstream/master
           "newAccountsUserGroups": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
           "userNameIsEmail": { "type": "boolean", "default": false, "description": "When enabled, the username of each account is also the email address of the account." },
           "newAccountEmailDomains": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
           "newAccountsRights": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
           "welcomeText": { "type": "string", "description": "Text that will be shown on the login screen." },
           "welcomePicture": { "type": "string", "description": "Name of the PNG or JPEG file that will be shown on the login screen. Put this file in the meshcentral-data folder and place the file name here." },
+<<<<<<< HEAD
           "hide": { "type": "integer", "default": 0 },
           "footer": { "type": "string", "default": null },
+=======
+          "meshMessengerTitle": { "type": "string", "default": "MeshMessenger", "description": "Text that will be displayed on the top of the messenger window when no username or device name is displayed." },
+          "meshMessengerPicture": { "type": "string", "default": null, "description": "Name of a .png image file that is placed in meshcentral-data that is displayed on the top of the messenger web page. When null, the default image is displayed." },
+          "hide": { "type": "integer", "default": 0 },
+          "footer": { "type": "string", "default": null, "description": "This is a HTML string displayed at the bottom of the web page when a user is logged in." },
+          "loginfooter": { "type": "string", "default": null, "description": "This is a HTML string displayed at the bottom of the web page when a user is not logged in." },
+          "guestDeviceSharing": { "type": "boolean", "default": true, "description": "When set to false, the desktop/terminal sharing link feature is not available." },
+          "altMessenging": { 
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "description": "Name of the alternative messaging service, for example: \"Jitsi\" " },
+              "url": { "type": "string", "description": "URL to the alternative messaging services, for example: \"https://meet.jit.si/myserver-{0}\"" }
+            },
+            "additionalProperties": false,
+            "required": [ "name", "url" ]
+          },
+          "deviceMeshRouterLinks": {
+            "rdp": { "type": "boolean", "default": true, "description": "Display a RDP link in the device tab when supported." },
+            "ssh": { "type": "boolean", "default": true, "description": "Display a SSH link in the device tab when supported." },
+            "scp": { "type": "boolean", "default": true, "description": "Display a SCP link in the device tab when supported." },
+            "extralinks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [ "name", "protocol", "port" ],
+                "properties": {
+                  "name": {
+                    "description": "Name of the link to be displayed on the web site.",
+                    "type": "string"
+                  },
+                  "protocol": {
+                    "description": "Protocol. Valid values are: custom,http,https,rdp,ssh,scp.",
+                    "type": "string"
+                  },
+                  "port": {
+                    "description": "The port on the remote device.",
+                    "type": "number"
+                  },
+                  "ip": {
+                    "description": "Target IP address. If not specified, the target of the connection is the remote device running the MeshAgent.",
+                    "type": "string"
+                  },
+                  "filter": {
+                    "description": "Array of node/<domain>/<id> or mesh/<domain>/<id> or tag:<tag> strings. When set, the link will only show up for the specified devices, device groups or device tag.",
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+>>>>>>> upstream/master
           "certUrl": {
             "type": "string",
             "format": "uri",
@@ -259,26 +465,70 @@
               "displayName": { "type": "string", "default": "MeshCentral Agent", "description": "The name of the agent as displayed to the user." },
               "description": { "type": "string", "default": "Mesh Agent background service", "description": "The description of the agent as displayed to the user." },
               "companyName": { "type": "string", "default": "Mesh Agent", "description": "This will be used as the path to install the agent, by default this is 'Mesh Agent' in Windows and 'meshagent' in other OS's." },
+<<<<<<< HEAD
               "serviceName": { "type": "string", "default": "Mesh Agent", "description": "The name of the background service, by default this is 'Mesh Agent' in Windows and 'meshagent' in other OS's but should be set to an all lower case, no space string." }
+=======
+              "serviceName": { "type": "string", "default": "Mesh Agent", "description": "The name of the background service, by default this is 'Mesh Agent' in Windows and 'meshagent' in other OS's but should be set to an all lower case, no space string." },
+              "fileName": { "type": "string", "default": "meshagent", "description": "The agent filename." }
+>>>>>>> upstream/master
             }
           },
           "userAllowedIP": { "type": "string" },
           "userBlockedIP": { "type": "string" },
           "agentAllowedIP": { "type": "string" },
           "agentBlockedIP": { "type": "string" },
+<<<<<<< HEAD
           "userSessionIdleTimeout": { "type": "integer" },
           "userConsentFlags": { "type": "integer" },
           "urlSwitching": { "type": "boolean" },
           "desktopPrivacyBarText": { "type": "string" },
+=======
+          "userSessionIdleTimeout": { "type": "integer", "default": null, "description": "When set, idle users will be disconnected after a set amounts of minutes." },
+          "userConsentFlags": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Use this section to require user consent for this domain.",
+            "properties": {
+              "desktopnotify": { "type": "boolean", "default": false, "description": "Enable desktop notification for this domain." },
+              "terminalnotify": { "type": "boolean", "default": false, "description": "Enable terminal notification for this domain." },
+              "filenotify": { "type": "boolean", "default": false, "description": "Enable files notification for this domain." },
+              "desktopprompt": { "type": "boolean", "default": false, "description": "Enable desktop prompt for this domain." },
+              "terminalprompt": { "type": "boolean", "default": false, "description": "Enable terminal user prompt for this domain." },
+              "fileprompt": { "type": "boolean", "default": false, "description": "Enable files prompt for this domain." },
+              "desktopprivacybar": { "type": "boolean", "default": false, "description": "Enable remote desktop privacy bar for this domain." }
+            }
+          },
+          "urlSwitching": { "type": "boolean", "default": true, "description": "When users navigate thru the web interface, the URL on top will change to point to the current screen. This allows a user to refresh or bookmark the URL and come back to the correct screen. Setting false here will disable this feature." },
+          "desktopPrivacyBarText": { "type": "string", "description": "This is the text that will be shown in the remote desktop privacy bar. You can use {0} to display the account realname or {1} to display the account identifier in the string." },
+>>>>>>> upstream/master
           "limits": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
+<<<<<<< HEAD
               "MaxDevices": { "type": "integer" },
               "MaxUserAccounts": { "type": "integer" },
               "MaxUserSessions": { "type": "integer" },
               "MaxAgentSessions": { "type": "integer" },
               "MaxSingleUserSessions": { "type": "integer" }
+=======
+              "MaxDevices": { "type": "integer", "default": null, "description": "Maximum number of devices in this domain." },
+              "MaxUserAccounts": { "type": "integer", "default": null, "description": "Maximum number of devices in this domain." },
+              "MaxUserSessions": { "type": "integer", "default": null, "description": "Maximum number of user sessions that can connect to this server for this domain." },
+              "MaxAgentSessions": { "type": "integer", "default": null, "description": "Maximum number of agents that can connect to this server for this domain." },
+              "MaxSingleUserSessions": { "type": "integer", "default": null, "description": "Maximum number of sessions a single user can have. Each time a user opens a new browser tab or opens a new browser on a different computer, a new user session is created." }
+            }
+          },
+          "terminal": {
+            "type": "object",
+            "description": "Values that affect the terminal feature",
+            "properties": {
+              "linuxshell": {
+                "type": "string",
+                "enum": [ "any", "root", "user", "login" ],
+                "default": "any"
+              }
+>>>>>>> upstream/master
             }
           },
           "amtManager": {
@@ -316,6 +566,31 @@
                   "uniqueItems": true
                 }
               },
+<<<<<<< HEAD
+=======
+              "TlsRootCert": {
+                "description": "Specifies a certificate and private key to use to issue Intel AMT TLS certificates. By default the MeshCentral self-signed root certificate is used.",
+                "type": "object",
+                "properties": {
+                  "certpfx": {
+                    "description": "Name of the certificate file that is in .p12 or .pfx format in meshcentral-data, use this with certpfxpass.",
+                    "type": "string"
+                  },
+                  "certpfxpass": {
+                    "description": "Password for the file specified in certpfx.",
+                    "type": "string"
+                  },
+                  "certfile": {
+                    "description": "Name of the certificate file in PEM format located in meshcentral-data. Using this with keyfile.",
+                    "type": "string"
+                  },
+                  "keyfile": {
+                    "description": "Name of the private key file in PEM format located in meshcentral-data. Using this with certfile.",
+                    "type": "string"
+                  }
+                }
+              },
+>>>>>>> upstream/master
               "WifiProfiles": {
                 "description": "List of WIFI profiles to setup in any managed Intel AMT device with a WIFI network interface.",
                 "type": "array",
@@ -377,7 +652,12 @@
           },
           "redirects": {
             "type": "object",
+<<<<<<< HEAD
             "additionalProperties": { "type": "string" }
+=======
+            "additionalProperties": { "type": "string" },
+            "description": "This is used to create HTTP redirections. For example setting \"redirects\": { \"example\":\"https://example.com\" } will make it so that anyone accessing /example on the server will get redirected to the specified URL."
+>>>>>>> upstream/master
           },
           "yubikey": {
             "type": "object",
@@ -404,6 +684,36 @@
             },
             "required": [ "protocols" ]
           },
+<<<<<<< HEAD
+=======
+          "showPasswordLogin": { "type": "boolean", "default": true, "description": "When set to false, hides the username and password prompt on login screen." },
+          "sendgrid": {
+            "title" : "SendGrid.com Email server",
+            "description": "Connects MeshCentral to the SendGrid email server, allows MeshCentral to send email messages for 2FA or user notification.",
+            "type": "object",
+            "properties": {
+              "from": { "type": "string", "format": "email", "description": "Email address used in the messages from field." },
+              "apikey": { "type": "string", "description": "The SendGrid API key." },
+              "verifyemail": { "type": "boolean", "default": true, "description": "When set to false, the email format and DNS MX record are not checked." }
+            },
+            "required": [ "from", "apikey" ]
+          },
+          "smtp": {
+            "title" : "SMTP email server",
+            "description": "Connects MeshCentral to a SMTP email server, allows MeshCentral to send email messages for 2FA or user notification.",
+            "type": "object",
+            "properties": {
+              "host": { "type": "string", "format": "hostname" },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+              "from": { "type": "string", "format": "email", "description": "Email address used in the messages from field." },
+              "tls": { "type": "boolean" },
+              "tlscertcheck": { "type": "boolean" },
+              "tlsstrict": { "type": "boolean" },
+              "verifyemail": { "type": "boolean", "default": true, "description": "When set to false, the email format and DNS MX record are not checked." }
+            },
+            "required": [ "host", "port", "from", "tls" ]
+          },
+>>>>>>> upstream/master
           "authStrategies": {
             "type": "object",
             "additionalProperties": false,
@@ -528,17 +838,42 @@
       },
       "required": [ "serverId", "servers" ]
     },
+<<<<<<< HEAD
     "smtp": {
       "title" : "Email server",
       "description": "Connects MeshCentral to a email server, allows MeshCentral to send email messages for 2FA or user notification.",
+=======
+    "sendgrid": {
+      "title" : "SendGrid.com Email server",
+      "description": "Connects MeshCentral to the SendGrid email server, allows MeshCentral to send email messages for 2FA or user notification.",
+      "type": "object",
+      "properties": {
+        "from": { "type": "string", "format": "email", "description": "Email address used in the messages from field." },
+        "apikey": { "type": "string", "description": "The SendGrid API key." },
+        "verifyemail": { "type": "boolean", "default": true, "description": "When set to false, the email format and DNS MX record are not checked." }
+      },
+      "required": [ "from", "apikey" ]
+    },
+    "smtp": {
+      "title" : "SMTP email server",
+      "description": "Connects MeshCentral to a SMTP email server, allows MeshCentral to send email messages for 2FA or user notification.",
+>>>>>>> upstream/master
       "type": "object",
       "properties": {
         "host": { "type": "string", "format": "hostname" },
         "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+<<<<<<< HEAD
         "from": { "type": "string", "format": "email" },
         "tls": { "type": "boolean" },
         "tlscertcheck": { "type": "boolean" },
         "tlsstrict": { "type": "boolean" }
+=======
+        "from": { "type": "string", "format": "email", "description": "Email address used in the messages from field." },
+        "tls": { "type": "boolean" },
+        "tlscertcheck": { "type": "boolean" },
+        "tlsstrict": { "type": "boolean" },
+        "verifyemail": { "type": "boolean", "default": true, "description": "When set to false, the email format and DNS MX record are not checked." }
+>>>>>>> upstream/master
       },
       "required": [ "host", "port", "from", "tls" ]
     },

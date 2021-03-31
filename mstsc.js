@@ -1,7 +1,11 @@
 ﻿/**
 * @description MeshCentral MSTSC relay
 * @author Ylian Saint-Hilaire & Bryan Roe
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */

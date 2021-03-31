@@ -1,7 +1,11 @@
 ﻿/**
 * @description MeshCentral Intel(R) AMT Local Scanner
 * @author Ylian Saint-Hilaire & Joko Sastriawan
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -167,7 +171,7 @@ module.exports.CreateAmtScanner = function (parent) {
                     const ciraConnections = obj.parent.mpsserver ? obj.parent.mpsserver.GetConnectionToNode(doc._id, null, true) : null; // See if any OOB connections are present
                     if ((host != '127.0.0.1') && (host != '::1') && (host.toLowerCase() != 'localhost') && (ciraConnections == null)) {
                         var scaninfo = obj.scanTable[doc._id];
-                        if (scaninfo == undefined) {
+                        if (scaninfo == null) {
                             var tag = obj.nextTag++;
                             obj.scanTableTags[tag] = obj.scanTable[doc._id] = scaninfo = { nodeinfo: doc, present: true, tag: tag, state: 0 };
                             //console.log('Scan ' + host + ', state=' + scaninfo.state + ', delta=' + delta);
@@ -210,6 +214,17 @@ module.exports.CreateAmtScanner = function (parent) {
             }
         });
         return true;
+    };
+
+    // Look for all Intel AMT computers that may be locally reachable and poll their presence
+    obj.performSpecificScan = function (node) {
+        var host = node.host.toLowerCase();
+        const ciraConnections = obj.parent.mpsserver ? obj.parent.mpsserver.GetConnectionToNode(node._id, null, true) : null; // See if any OOB connections are present
+        if ((host != '127.0.0.1') && (host != '::1') && (host.toLowerCase() != 'localhost') && (ciraConnections == null)) {
+            obj.checkTcpPresence(host, (node.intelamt.tls == 1) ? 16993 : 16992, { nodeinfo: node }, function (tag, result, version) {
+                if ((result == true) && (obj.parent.amtManager != null)) { obj.parent.amtManager.startAmtManagement(tag.nodeinfo._id, 3, tag.nodeinfo.host); }
+            });
+        }
     };
 
     // Check the presense of a specific Intel AMT computer using RMCP
@@ -276,15 +291,18 @@ module.exports.CreateAmtScanner = function (parent) {
     obj.changeConnectState = function (tag, minorVersion, majorVersion, provisioningState, openPort, dualPorts, rinfo, user) {
         //var provisioningStates = { 0: 'Pre', 1: 'in', 2: 'Post' };
         //var provisioningStateStr = provisioningStates[provisioningState];
-        //console.log('Intel AMT ' + majorVersion + '.' + minorVersion + ', ' + provisioningStateStr + '-Provisioning at ' + rinfo.address + ', Open Ports: [' + openPort + '], tag: ' + tag);
+        //console.log('Intel AMT ' + majorVersion + '.' + minorVersion + ', ' + provisioningStateStr + '-Provisioning at ' + rinfo.address + ', Open Ports: [' + openPort + '], tag: ' + tag + ', dualPorts: ' + dualPorts);
         var scaninfo = obj.scanTableTags[tag];
         if (scaninfo != undefined) {
             scaninfo.lastpong = Date.now();
             if (scaninfo.state == 0) {
                 scaninfo.state = 1;
-                scaninfo.nodeinfo.intelamt.tls = (((openPort == 16993) || (dualPorts == true)) ? 1 : 0);
-                scaninfo.nodeinfo.intelamt.ver = majorVersion + '.' + minorVersion;
-                scaninfo.nodeinfo.intelamt.state = provisioningState;
+                if ((openPort == 16993) || (dualPorts == true)) { scaninfo.nodeinfo.intelamt.tls = 1; }
+                else if (openPort == 16992) { scaninfo.nodeinfo.intelamt.tls = 0; }
+                if (majorVersion > 0) { // Older versions of Intel AMT report the AMT version.
+                    scaninfo.nodeinfo.intelamt.ver = majorVersion + '.' + minorVersion;
+                    scaninfo.nodeinfo.intelamt.state = provisioningState;
+                }
                 obj.parent.SetConnectivityState(scaninfo.nodeinfo.meshid, scaninfo.nodeinfo._id, scaninfo.lastpong, 4, 7); // Report power state as "present" (7).
                 obj.changeAmtState(scaninfo.nodeinfo._id, scaninfo.nodeinfo.intelamt.ver, provisioningState, scaninfo.nodeinfo.intelamt.tls);
                 if (obj.parent.amtManager != null) { obj.parent.amtManager.startAmtManagement(scaninfo.nodeinfo._id, 3, scaninfo.nodeinfo.host); }

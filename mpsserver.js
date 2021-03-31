@@ -1,7 +1,11 @@
 /**
 * @description MeshCentral Intel(R) AMT MPS server
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -340,6 +344,7 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
         // Setup the CIRA keep alive timer
         socket.setTimeout(MAX_IDLE);
         socket.on('timeout', () => { ciraTimeoutCount++; parent.debug('mps', "CIRA timeout, disconnecting."); try { socket.end(); } catch (e) { } });
+<<<<<<< HEAD
 
         socket.addListener('close', function () {
             socketClosedCount++;
@@ -353,6 +358,21 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
             //console.log("MPS Error: " + socket.remoteAddress);
         });
 
+=======
+
+        socket.addListener('close', function () {
+            socketClosedCount++;
+            parent.debug('mps', 'CIRA connection closed');
+            removeCiraConnection(socket);
+        });
+
+        socket.addListener('error', function (e) {
+            socketErrorCount++;
+            parent.debug('mps', 'CIRA connection error', e);
+            //console.log("MPS Error: " + socket.remoteAddress);
+        });
+
+>>>>>>> upstream/master
         socket.addListener('data', function (data) {
             if (args.mpsdebug) { var buf = Buffer.from(data, 'binary'); console.log("MPS --> (" + buf.length + "):" + buf.toString('hex')); } // Print out received bytes
             socket.tag.accumulator += data;
@@ -440,6 +460,7 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                                             console.log('Too many devices on this domain to accept the CIRA connection. meshid: ' + socket.tag.meshid);
                                             socket.end();
                                         } else {
+<<<<<<< HEAD
                                             // We are under the limit, create the new device.
                                             // Node is not in the database, add it. Credentials will be empty until added by the user.
                                             var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, host: null, domain: domainid, intelamt: { user: '', pass: '', tls: 0, state: 2 } };
@@ -452,10 +473,32 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
 
                                             // Add the connection to the MPS connection list
                                             addCiraConnection(socket);
+=======
+                                            // Attempts reverse DNS loopup on the device IP address
+                                            require('dns').reverse(socket.remoteAddr, function (err, hostnames) {
+                                                var hostname = socket.remoteAddr;
+                                                if ((err == null) && (hostnames != null) && (hostnames.length > 0)) { hostname = hostnames[0]; }
+
+                                                // We are under the limit, create the new device.
+                                                // Node is not in the database, add it. Credentials will be empty until added by the user.
+                                                var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, icon: (socket.tag.meiState.isBatteryPowered) ? 2 : 1, host: hostname, domain: domainid, intelamt: { user: (typeof socket.tag.meiState.amtuser == 'string') ? socket.tag.meiState.amtuser : '', pass: (typeof socket.tag.meiState.amtpass == 'string') ? socket.tag.meiState.amtpass : '', tls: 0, state: 2 } };
+                                                if ((typeof socket.tag.meiState.desc == 'string') && (socket.tag.meiState.desc.length > 0) && (socket.tag.meiState.desc.length < 1024)) { device.desc = socket.tag.meiState.desc; }
+                                                obj.db.Set(device);
+
+                                                // Event the new node
+                                                addedTlsDeviceCount++;
+                                                var change = 'CIRA added device ' + socket.tag.name + ' to mesh ' + mesh.name;
+                                                obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: domainid });
+
+                                                // Add the connection to the MPS connection list
+                                                addCiraConnection(socket);
+                                            });
+>>>>>>> upstream/master
                                         }
                                     });
                                     return;
                                 } else {
+<<<<<<< HEAD
                                     // Node is not in the database, add it. Credentials will be empty until added by the user.
                                     var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, host: null, domain: domainid, intelamt: { user: '', pass: '', tls: 0, state: 2 } };
                                     obj.db.Set(device);
@@ -464,6 +507,23 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                                     addedTlsDeviceCount++;
                                     var change = 'CIRA added device ' + socket.tag.name + ' to mesh ' + mesh.name;
                                     obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: domainid });
+=======
+                                    // Attempts reverse DNS loopup on the device IP address
+                                    require('dns').reverse(socket.remoteAddr, function (err, hostnames) {
+                                        var hostname = socket.remoteAddr;
+                                        if ((err == null) && (hostnames != null) && (hostnames.length > 0)) { hostname = hostnames[0]; }
+
+                                        // Node is not in the database, add it. Credentials will be empty until added by the user.
+                                        var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, icon: (socket.tag.meiState.isBatteryPowered) ? 2 : 1, host: hostname, domain: domainid, intelamt: { user: (typeof socket.tag.meiState.amtuser == 'string') ? socket.tag.meiState.amtuser : '', pass: (typeof socket.tag.meiState.amtpass == 'string') ? socket.tag.meiState.amtpass : '', tls: 0, state: 2 } };
+                                        if ((typeof socket.tag.meiState.desc == 'string') && (socket.tag.meiState.desc.length > 0) && (socket.tag.meiState.desc.length < 1024)) { device.desc = socket.tag.meiState.desc; }
+                                        obj.db.Set(device);
+
+                                        // Event the new node
+                                        addedTlsDeviceCount++;
+                                        var change = 'CIRA added device ' + socket.tag.name + ' to mesh ' + mesh.name;
+                                        obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: domainid });
+                                    });
+>>>>>>> upstream/master
                                 }
                             } else {
                                 // New CIRA connection for unknown node, disconnect.
@@ -569,6 +629,7 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                     if (obj.parent.webserver.meshes) { for (var i in obj.parent.webserver.meshes) { if (obj.parent.webserver.meshes[i]._id.replace(/\@/g, 'X').replace(/\$/g, 'X').indexOf(meshIdStart) > 0) { mesh = obj.parent.webserver.meshes[i]; break; } } }
                     if (mesh == null) { meshNotFoundCount++; parent.debug('mps', 'Device group not found', username, password); SendUserAuthFail(socket); return -1; }
                 }
+<<<<<<< HEAD
 
                 // If this is a agent-less mesh, use the device guid 3 times as ID.
                 if (mesh.mtype == 1) {
@@ -607,10 +668,58 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                                         // Add the connection to the MPS connection list
                                         addCiraConnection(socket);
                                         SendUserAuthSuccess(socket); // Notify the auth success on the CIRA connection
+=======
+
+                // If this is a agent-less mesh, use the device guid 3 times as ID.
+                if (mesh.mtype == 1) {
+                    // Intel AMT GUID (socket.tag.SystemId) will be used as NodeID
+                    var systemid = socket.tag.SystemId.split('-').join('');
+                    var nodeid = Buffer.from(systemid + systemid + systemid, 'hex').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
+                    var domain = obj.parent.config.domains[mesh.domain];
+                    socket.tag.domain = domain;
+                    socket.tag.domainid = mesh.domain;
+                    if (socket.tag.name == null) { socket.tag.name = ''; }
+                    socket.tag.nodeid = 'node/' + mesh.domain + '/' + nodeid; // Turn 16bit systemid guid into 48bit nodeid that is base64 encoded
+                    socket.tag.meshid = mesh._id;
+                    socket.tag.connectTime = Date.now();
+
+                    obj.db.Get(socket.tag.nodeid, function (err, nodes) {
+                        if ((nodes == null) || (nodes.length !== 1)) {
+                            // Check if we already have too many devices for this domain
+                            if (domain.limits && (typeof domain.limits.maxdevices == 'number')) {
+                                db.isMaxType(domain.limits.maxdevices, 'node', mesh.domain, function (ismax, count) {
+                                    if (ismax == true) {
+                                        // Too many devices in this domain.
+                                        maxDomainDevicesReached++;
+                                        console.log('Too many devices on this domain to accept the CIRA connection. meshid: ' + socket.tag.meshid);
+                                        socket.end();
+                                    } else {
+                                        // Attempts reverse DNS loopup on the device IP address
+                                        require('dns').reverse(socket.remoteAddr, function (err, hostnames) {
+                                            var hostname = socket.remoteAddr;
+                                            if ((err == null) && (hostnames != null) && (hostnames.length > 0)) { hostname = hostnames[0]; }
+
+                                            // We are under the limit, create the new device.
+                                            // Node is not in the database, add it. Credentials will be empty until added by the user.
+                                            var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, icon: (socket.tag.meiState.isBatteryPowered) ? 2 : 1, host: hostname, domain: mesh.domain, intelamt: { user: (typeof socket.tag.meiState.amtuser == 'string') ? socket.tag.meiState.amtuser : '', pass: (typeof socket.tag.meiState.amtpass == 'string') ? socket.tag.meiState.amtpass : '', tls: 0, state: 2 } };
+                                            if ((typeof socket.tag.meiState.desc == 'string') && (socket.tag.meiState.desc.length > 0) && (socket.tag.meiState.desc.length < 1024)) { device.desc = socket.tag.meiState.desc; }
+                                            obj.db.Set(device);
+
+                                            // Event the new node
+                                            addedDeviceCount++;
+                                            var change = 'CIRA added device ' + socket.tag.name + ' to group ' + mesh.name;
+                                            obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: mesh.domain });
+
+                                            // Add the connection to the MPS connection list
+                                            addCiraConnection(socket);
+                                            SendUserAuthSuccess(socket); // Notify the auth success on the CIRA connection
+                                        });
+>>>>>>> upstream/master
                                     }
                                 });
                                 return;
                             } else {
+<<<<<<< HEAD
                                 // Node is not in the database, add it. Credentials will be empty until added by the user.
                                 var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, host: null, domain: mesh.domain, intelamt: { user: '', pass: '', tls: 0, state: 2 } };
                                 obj.db.Set(device);
@@ -619,6 +728,23 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                                 addedDeviceCount++;
                                 var change = 'CIRA added device ' + socket.tag.name + ' to group ' + mesh.name;
                                 obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: mesh.domain });
+=======
+                                // Attempts reverse DNS loopup on the device IP address
+                                require('dns').reverse(socket.remoteAddr, function (err, hostnames) {
+                                    var hostname = socket.remoteAddr;
+                                    if ((err == null) && (hostnames != null) && (hostnames.length > 0)) { hostname = hostnames[0]; }
+
+                                    // Node is not in the database, add it. Credentials will be empty until added by the user.
+                                    var device = { type: 'node', mtype: 1, _id: socket.tag.nodeid, meshid: socket.tag.meshid, name: socket.tag.name, icon: (socket.tag.meiState && socket.tag.meiState.isBatteryPowered) ? 2 : 1, host: hostname, domain: mesh.domain, intelamt: { user: ((socket.tag.meiState) && (typeof socket.tag.meiState.amtuser == 'string')) ? socket.tag.meiState.amtuser : '', pass: ((socket.tag.meiState) && (typeof socket.tag.meiState.amtpass == 'string')) ? socket.tag.meiState.amtpass : '', tls: 0, state: 2 } };
+                                    if ((socket.tag.meiState != null) && (typeof socket.tag.meiState.desc == 'string') && (socket.tag.meiState.desc.length > 0) && (socket.tag.meiState.desc.length < 1024)) { device.desc = socket.tag.meiState.desc; }
+                                    obj.db.Set(device);
+
+                                    // Event the new node
+                                    addedDeviceCount++;
+                                    var change = 'CIRA added device ' + socket.tag.name + ' to group ' + mesh.name;
+                                    obj.parent.DispatchEvent(['*', socket.tag.meshid], obj, { etype: 'node', action: 'addnode', node: parent.webserver.CloneSafeNode(device), msg: change, domain: mesh.domain });
+                                });
+>>>>>>> upstream/master
                             }
                         } else {
                             // Node is already present
@@ -633,7 +759,11 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                     });
                 } else if (mesh.mtype == 2) { // If this is a agent mesh, search the mesh for this device UUID
                     // Intel AMT GUID (socket.tag.SystemId) will be used to search the node
+<<<<<<< HEAD
                     obj.db.getAmtUuidNode(socket.tag.SystemId, function (err, nodes) { // TODO: May need to optimize this request with indexes
+=======
+                    obj.db.getAmtUuidMeshNode(mesh._id, socket.tag.SystemId, function (err, nodes) { // TODO: Need to optimize this request with indexes
+>>>>>>> upstream/master
                         if ((nodes == null) || (nodes.length === 0) || (obj.parent.webserver.meshes == null)) {
                             // New CIRA connection for unknown node, disconnect.
                             unknownNodeCount++;
@@ -641,6 +771,7 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                             socket.end();
                             return;
                         }
+<<<<<<< HEAD
 
                         // Looking at nodes that match this UUID, select one in the same domain and mesh type.
                         var node = null;
@@ -651,6 +782,18 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                             }
                         }
 
+=======
+
+                        // Looking at nodes that match this UUID, select one in the same domain and mesh type.
+                        var node = null;
+                        for (var i in nodes) {
+                            if (mesh.domain == nodes[i].domain) {
+                                var nodemesh = obj.parent.webserver.meshes[nodes[i].meshid];
+                                if ((nodemesh != null) && (nodemesh.mtype == 2)) { node = nodes[i]; }
+                            }
+                        }
+
+>>>>>>> upstream/master
                         if (node == null) {
                             // New CIRA connection for unknown node, disconnect.
                             unknownNodeCount++;
@@ -909,6 +1052,10 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                     var jsondata = null, jsondatastr = data.substring(5, 5 + jsondatalen);
                     try { jsondata = JSON.parse(jsondatastr); } catch (ex) { }
                     if ((jsondata == null) || (typeof jsondata.action != 'string')) return;
+<<<<<<< HEAD
+=======
+                    parent.debug('mpscmd', '--> JSON_CONTROL', jsondata.action);
+>>>>>>> upstream/master
                     switch (jsondata.action) {
                         case 'connType':
                             if ((socket.tag.connType != 0) || (socket.tag.SystemId != null)) return; // Once set, the connection type can't be changed.
@@ -919,9 +1066,18 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
                         case 'meiState':
                             if (socket.tag.connType != 2) break; // Only accept MEI state on CIRA-LMS connection
                             socket.tag.meiState = jsondata.value;
+<<<<<<< HEAD
                             if (obj.parent.amtManager != null) { obj.parent.amtManager.mpsControlMessage(socket.tag.nodeid, socket, socket.tag.connType, jsondata); }
                             break;
                         case 'deactivate':
+=======
+                            if (((socket.tag.name == '') || (socket.tag.name == null)) && (typeof jsondata.value.OsHostname == 'string')) { socket.tag.name = jsondata.value.OsHostname; }
+                            if (obj.parent.amtManager != null) { obj.parent.amtManager.mpsControlMessage(socket.tag.nodeid, socket, socket.tag.connType, jsondata); }
+                            break;
+                        case 'deactivate':
+                        case 'startTlsHostConfig':
+                        case 'stopConfiguration':
+>>>>>>> upstream/master
                             if (socket.tag.connType != 2) break; // Only accept MEI state on CIRA-LMS connection
                             if (obj.parent.amtManager != null) { obj.parent.amtManager.mpsControlMessage(socket.tag.nodeid, socket, socket.tag.connType, jsondata); }
                             break;
@@ -951,8 +1107,12 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
 
     obj.SendJsonControl = function(socket, data) {
         if (socket.tag.connType == 0) return; // This command is valid only for connections that are not really CIRA.
+<<<<<<< HEAD
         parent.debug('mpscmd', '<-- JSON_CONTROL');
         if (typeof data == 'object') { data = JSON.stringify(data); }
+=======
+        if (typeof data == 'object') { parent.debug('mpscmd', '<-- JSON_CONTROL', data.action); data = JSON.stringify(data); } else { parent.debug('mpscmd', '<-- JSON_CONTROL'); }
+>>>>>>> upstream/master
         Write(socket, String.fromCharCode(APFProtocol.JSON_CONTROL) + common.IntToStr(data.length) + data);
     }
 
@@ -1154,6 +1314,7 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
         if ((directives.length != 3) || ((directives[0] != 'GET') && (directives[0] != 'HEAD'))) { this.end(); return; }
         //console.log('WebServer, request', directives[0], directives[1]);
         var responseCode = 404, responseType = 'application/octet-stream', responseData = '', r = null;
+<<<<<<< HEAD
         if (obj.httpResponses != null) { r = obj.httpResponses[directives[1]]; }
         if ((r != null) && (r.maxtime != null) && (r.maxtime < Date.now())) { r = null; delete obj.httpResponses[directives[1]]; } // Check if this entry is expired.
         if (r != null) {
@@ -1184,6 +1345,58 @@ module.exports.CreateMpsServer = function (parent, db, args, certificates) {
         } else {
             responseType = 'text/html';
             responseData = 'Invalid request';
+=======
+
+        // Check if this is a cookie request
+        if (directives[1].startsWith('/c/')) {
+            var cookie = obj.parent.decodeCookie(directives[1].substring(3).split('.')[0], obj.parent.loginCookieEncryptionKey, 30); // 30 minute timeout
+            if ((cookie != null) && (cookie.a == 'f') && (typeof cookie.f == 'string')) {
+                // Send the file header and pipe the rest of the file
+                var filestats = null;
+                try { filestats = obj.fs.statSync(cookie.f); } catch (ex) { }
+                if ((filestats == null) || (typeof filestats.size != 'number') || (filestats.size <= 0)) {
+                    responseCode = 404; responseType = 'text/html'; responseData = 'File not found';
+                } else {
+                    this.write('HTTP/1.1 200 OK\r\n' + hostHeader + 'Content-Type: ' + responseType + '\r\nConnection: keep-alive\r\nContent-Length: ' + filestats.size + '\r\n\r\n');
+                    if (directives[0] == 'GET') { obj.fs.createReadStream(cookie.f, { flags: 'r' }).pipe(this); }
+                    delete this.xdata;
+                    return;
+                }
+            }
+        } else {
+            // Check if we have a preset response
+            if (obj.httpResponses != null) { r = obj.httpResponses[directives[1]]; }
+            if ((r != null) && (r.maxtime != null) && (r.maxtime < Date.now())) { r = null; delete obj.httpResponses[directives[1]]; } // Check if this entry is expired.
+            if (r != null) {
+                if (typeof r == 'string') {
+                    responseCode = 200; responseType = 'text/html'; responseData = r;
+                } else if (typeof r == 'object') {
+                    responseCode = 200;
+                    if (r.type) { responseType = r.type; }
+                    if (r.data) { responseData = r.data; }
+                    if (r.shortfile) { try { responseData = obj.fs.readFileSync(r.shortfile); } catch (ex) { responseCode = 404; responseType = 'text/html'; responseData = 'File not found'; } }
+                    if (r.file) {
+                        // Send the file header and pipe the rest of the file
+                        var filestats = null;
+                        try { filestats = obj.fs.statSync(r.file); } catch (ex) { }
+                        if ((filestats == null) || (typeof filestats.size != 'number') || (filestats.size <= 0)) {
+                            responseCode = 404; responseType = 'text/html'; responseData = 'File not found';
+                        } else {
+                            this.write('HTTP/1.1 200 OK\r\n' + hostHeader + 'Content-Type: ' + responseType + '\r\nConnection: keep-alive\r\nContent-Length: ' + filestats.size + '\r\n\r\n');
+                            if (directives[0] == 'GET') {
+                                obj.fs.createReadStream(r.file, { flags: 'r' }).pipe(this);
+                                if (typeof r.maxserve == 'number') { r.maxserve--; if (r.maxserve == 0) { delete obj.httpResponses[directives[1]]; } } // Check if this entry was server the maximum amount of times.
+                            }
+                            delete this.xdata;
+                            return;
+                        }
+                    }
+                }
+            } else {
+                responseType = 'text/html';
+                responseData = 'Invalid request';
+            }
+>>>>>>> upstream/master
         }
         this.write('HTTP/1.1 ' + responseCode + ' OK\r\n' + hostHeader + 'Connection: keep-alive\r\nContent-Type: ' + responseType + '\r\nContent-Length: ' + responseData.length + '\r\n\r\n');
         this.write(responseData);

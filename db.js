@@ -1,7 +1,11 @@
 /** 
 * @description MeshCentral database module
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.2
 */
@@ -38,6 +42,46 @@ module.exports.CreateDB = function (parent, func) {
     obj.dbRecordsDecryptKey = null;
     obj.changeStream = false;
     obj.pluginsActive = ((parent.config) && (parent.config.settings) && (parent.config.settings.plugins != null) && (parent.config.settings.plugins != false) && ((typeof parent.config.settings.plugins != 'object') || (parent.config.settings.plugins.enabled != false)));
+<<<<<<< HEAD
+=======
+    obj.dbCounters = {
+        fileSet: 0,
+        fileRemove: 0,
+        powerSet: 0,
+        eventsSet: 0
+    }
+
+    // MongoDB bulk operations state
+    if (parent.config.settings.mongodbbulkoperations) {
+        // Added counters
+        obj.dbCounters.fileSetPending = 0;
+        obj.dbCounters.fileSetBulk = 0;
+        obj.dbCounters.fileRemovePending = 0;
+        obj.dbCounters.fileRemoveBulk = 0;
+        obj.dbCounters.powerSetPending = 0;
+        obj.dbCounters.powerSetBulk = 0;
+        obj.dbCounters.eventsSetPending = 0;
+        obj.dbCounters.eventsSetBulk = 0;
+
+        /// Added bulk accumulators
+        obj.filePendingGet = null;
+        obj.filePendingGets = null;
+        obj.filePendingRemove = null;
+        obj.filePendingRemoves = null;
+        obj.filePendingSet = false;
+        obj.filePendingSets = null;
+        obj.filePendingCb = null;
+        obj.filePendingCbs = null;
+        obj.powerFilePendingSet = false;
+        obj.powerFilePendingSets = null;
+        obj.powerFilePendingCb = null;
+        obj.powerFilePendingCbs = null;
+        obj.eventsFilePendingSet = false;
+        obj.eventsFilePendingSets = null;
+        obj.eventsFilePendingCb = null;
+        obj.eventsFilePendingCbs = null;
+    }
+>>>>>>> upstream/master
 
     obj.SetupDatabase = function (func) {
         // Check if the database unique identifier is present
@@ -96,6 +140,7 @@ module.exports.CreateDB = function (parent, func) {
             obj.file.remove({ type: 'power' }, { multi: true });
             obj.file.remove({ type: 'smbios' }, { multi: true });
         }
+<<<<<<< HEAD
 
         // Remove all objects that have a "meshid" that no longer points to a valid mesh.
         obj.GetAllType('mesh', function (err, docs) {
@@ -113,6 +158,22 @@ module.exports.CreateDB = function (parent, func) {
                 obj.file.remove({ meshid: { $exists: true, $nin: meshlist } }, { multi: true });
             }
 
+=======
+
+        // List of valid identifiers
+        var validIdentifiers = {}
+
+        // Load all user groups
+        obj.GetAllType('ugrp', function (err, docs) {
+            if (err != null) { parent.debug('db', 'ERROR (GetAll user): ' + err); }
+            if ((err == null) && (docs.length > 0)) {
+                for (var i in docs) {
+                    // Add this as a valid user identifier
+                    validIdentifiers[docs[i]._id] = 1;
+                }
+            }
+            
+>>>>>>> upstream/master
             // Fix all of the creating & login to ticks by seconds, not milliseconds.
             obj.GetAllType('user', function (err, docs) {
                 if (err != null) { parent.debug('db', 'ERROR (GetAll user): ' + err); }
@@ -120,6 +181,12 @@ module.exports.CreateDB = function (parent, func) {
                     for (var i in docs) {
                         var fixed = false;
 
+<<<<<<< HEAD
+=======
+                        // Add this as a valid user identifier
+                        validIdentifiers[docs[i]._id] = 1;
+
+>>>>>>> upstream/master
                         // Fix email address capitalization
                         if (docs[i].email && (docs[i].email != docs[i].email.toLowerCase())) {
                             docs[i].email = docs[i].email.toLowerCase(); fixed = true;
@@ -148,10 +215,68 @@ module.exports.CreateDB = function (parent, func) {
 
                         // Save the user if needed
                         if (fixed) { obj.Set(docs[i]); }
+<<<<<<< HEAD
 
                         // We are done
                         if (func) { func(); }
                     }
+=======
+                    }
+
+                    // Remove all objects that have a "meshid" that no longer points to a valid mesh.
+                    // Fix any incorrectly escaped user identifiers
+                    obj.GetAllType('mesh', function (err, docs) {
+                        if (err != null) { parent.debug('db', 'ERROR (GetAll mesh): ' + err); }
+                        var meshlist = [];
+                        if ((err == null) && (docs.length > 0)) {
+                            for (var i in docs) {
+                                var meshChange = false;
+                                docs[i] = common.unEscapeLinksFieldName(docs[i]);
+                                meshlist.push(docs[i]._id);
+
+                                // Make sure all mesh types are number type, if not, fix it.
+                                if (typeof docs[i].mtype == 'string') { docs[i].mtype = parseInt(docs[i].mtype); meshChange = true; }
+
+                                // Take a look at the links
+                                if (docs[i].links != null) {
+                                    for (var j in docs[i].links) {
+                                        if (validIdentifiers[j] == null) {
+                                            // This identifier is not known, let see if we can fix it.
+                                            var xid = j, xid2 = common.unEscapeFieldName(xid);
+                                            while ((xid != xid2) && (validIdentifiers[xid2] == null)) { xid = xid2; xid2 = common.unEscapeFieldName(xid2); }
+                                            if (validIdentifiers[xid2] == 1) {
+                                                //console.log('Fixing id: ' + j + ' to ' + xid2);
+                                                docs[i].links[xid2] = docs[i].links[j];
+                                                delete docs[i].links[j];
+                                                meshChange = true;
+                                            } else {
+                                                // TODO: here, we may want to clean up links to users and user groups that do not exist anymore.
+                                                //console.log('Unknown id: ' + j);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Save the updated device group if needed
+                                if (meshChange) { obj.Set(docs[i]); }
+                            }
+                        }
+                        if ((obj.databaseType == 4) || (obj.databaseType == 5)) {
+                            // MariaDB
+                            sqlDbQuery('DELETE FROM MeshCentral.Main WHERE (extra LIKE ("mesh/%") AND (extra NOT IN ?)', [meshlist], func);
+                        } else if (obj.databaseType == 3) {
+                            // MongoDB
+                            obj.file.deleteMany({ meshid: { $exists: true, $nin: meshlist } }, { multi: true });
+                        } else {
+                            // NeDB or MongoJS
+                            obj.file.remove({ meshid: { $exists: true, $nin: meshlist } }, { multi: true });
+                        }
+
+                        // We are done
+                        validIdentifiers = null;
+                        if (func) { func(); }
+                    });
+>>>>>>> upstream/master
                 }
             });
         });
@@ -235,6 +360,7 @@ module.exports.CreateDB = function (parent, func) {
     // This is used to rate limit a number of operation per day. Returns a startValue each new days, but you can substract it and save the value in the db.
     obj.getValueOfTheDay = function (id, startValue, func) { obj.Get(id, function (err, docs) { var date = new Date(), t = date.toLocaleDateString(); if ((err == null) && (docs.length == 1)) { var r = docs[0]; if (r.day == t) { func({ _id: id, value: r.value, day: t }); return; } } func({ _id: id, value: startValue, day: t }); }); };
     obj.escapeBase64 = function escapeBase64(val) { return (val.replace(/\+/g, '@').replace(/\//g, '$')); }
+<<<<<<< HEAD
 
     // Encrypt an database object
     obj.performRecordEncryptionRecode = function (func) {
@@ -311,6 +437,84 @@ module.exports.CreateDB = function (parent, func) {
         return ciphertext.toString('base64');
     }
 
+=======
+
+    // Encrypt an database object
+    obj.performRecordEncryptionRecode = function (func) {
+        var count = 0;
+        obj.GetAllType('user', function (err, docs) {
+            if (err != null) { parent.debug('db', 'ERROR (performRecordEncryptionRecode): ' + err); }
+            if (err == null) { for (var i in docs) { count++; obj.Set(docs[i]); } }
+            obj.GetAllType('node', function (err, docs) {
+                if (err == null) { for (var i in docs) { count++; obj.Set(docs[i]); } }
+                obj.GetAllType('mesh', function (err, docs) {
+                    if (err == null) { for (var i in docs) { count++; obj.Set(docs[i]); } }
+                    if (obj.databaseType == 1) { // If we are using NeDB, compact the database.
+                        obj.file.persistence.compactDatafile();
+                        obj.file.on('compaction.done', function () { func(count); }); // It's important to wait for compaction to finish before exit, otherwise NeDB may corrupt.
+                    } else {
+                        func(count); // For all other databases, normal exit.
+                    }
+                });
+            });
+        });
+    }
+
+    // Encrypt an database object
+    function performTypedRecordDecrypt(data) {
+        if ((data == null) || (obj.dbRecordsDecryptKey == null) || (typeof data != 'object')) return data;
+        for (var i in data) {
+            if (data[i] == null) continue;
+            if (data[i].type == 'user') {
+                data[i] = performPartialRecordDecrypt(data[i]);
+            } else if ((data[i].type == 'node') && (data[i].intelamt != null)) {
+                data[i].intelamt = performPartialRecordDecrypt(data[i].intelamt);
+            } else if ((data[i].type == 'mesh') && (data[i].amt != null)) {
+                data[i].amt = performPartialRecordDecrypt(data[i].amt);
+            }
+        }
+        return data;
+    }
+
+    // Encrypt an database object
+    function performTypedRecordEncrypt(data) {
+        if (obj.dbRecordsEncryptKey == null) return data;
+        if (data.type == 'user') { return performPartialRecordEncrypt(Clone(data), ['otpkeys', 'otphkeys', 'otpsecret', 'salt', 'hash', 'oldpasswords']); }
+        else if ((data.type == 'node') && (data.intelamt != null)) { var xdata = Clone(data); xdata.intelamt = performPartialRecordEncrypt(xdata.intelamt, ['user', 'pass', 'mpspass']); return xdata; }
+        else if ((data.type == 'mesh') && (data.amt != null)) { var xdata = Clone(data); xdata.amt = performPartialRecordEncrypt(xdata.amt, ['password']); return xdata; }
+        return data;
+    }
+
+    // Encrypt an object and return a buffer.
+    function performPartialRecordEncrypt(plainobj, encryptNames) {
+        if (typeof plainobj != 'object') return plainobj;
+        var enc = {}, enclen = 0;
+        for (var i in encryptNames) { if (plainobj[encryptNames[i]] != null) { enclen++; enc[encryptNames[i]] = plainobj[encryptNames[i]]; delete plainobj[encryptNames[i]]; } }
+        if (enclen > 0) { plainobj._CRYPT = performRecordEncrypt(enc); } else { delete plainobj._CRYPT; }
+        return plainobj;
+    }
+
+    // Encrypt an object and return a buffer.
+    function performPartialRecordDecrypt(plainobj) {
+        if ((typeof plainobj != 'object') || (plainobj._CRYPT == null)) return plainobj;
+        var enc = performRecordDecrypt(plainobj._CRYPT);
+        if (enc != null) { for (var i in enc) { plainobj[i] = enc[i]; } }
+        delete plainobj._CRYPT;
+        return plainobj;
+    }
+
+    // Encrypt an object and return a base64.
+    function performRecordEncrypt(plainobj) {
+        if (obj.dbRecordsEncryptKey == null) return null;
+        const iv = parent.crypto.randomBytes(12);
+        const aes = parent.crypto.createCipheriv('aes-256-gcm', obj.dbRecordsEncryptKey, iv);
+        var ciphertext = aes.update(JSON.stringify(plainobj));
+        var cipherfinal = aes.final();
+        ciphertext = Buffer.concat([iv, aes.getAuthTag(), ciphertext, cipherfinal]);
+        return ciphertext.toString('base64');
+    }
+
+>>>>>>> upstream/master
     // Takes a base64 and return an object.
     function performRecordDecrypt(ciphertext) {
         if (obj.dbRecordsDecryptKey == null) return null;
@@ -362,8 +566,39 @@ module.exports.CreateDB = function (parent, func) {
         }
         //sqlDbQuery('DROP DATABASE MeshCentral', null, function (err, docs) { console.log('DROP'); }); return;
         sqlDbQuery('USE meshcentral', null, function (err, docs) {
+<<<<<<< HEAD
             if (err != null) { parent.debug('db', 'ERROR: USE meshcentral: ' + err); }
             if (err == null) { setupFunctions(func); } else {
+=======
+            if (err != null) { console.log(err); parent.debug('db', 'ERROR: USE meshcentral: ' + err); }
+            if (err == null) {
+                parent.debug('db', 'Checking tables...');
+                sqlDbBatchExec([
+                    'CREATE TABLE IF NOT EXISTS meshcentral.main (id VARCHAR(256) NOT NULL, type CHAR(32), domain CHAR(64), extra CHAR(255), extraex CHAR(255), doc JSON, PRIMARY KEY(id), CHECK (json_valid(doc)))',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.events(id INT NOT NULL AUTO_INCREMENT, time DATETIME, domain CHAR(64), action CHAR(255), nodeid CHAR(255), userid CHAR(255), doc JSON, PRIMARY KEY(id), CHECK(json_valid(doc)))',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.eventids(fkid INT NOT NULL, target CHAR(255), CONSTRAINT fk_eventid FOREIGN KEY (fkid) REFERENCES events (id) ON DELETE CASCADE ON UPDATE RESTRICT)',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.serverstats (time DATETIME, expire DATETIME, doc JSON, PRIMARY KEY(time), CHECK (json_valid(doc)))',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.power (id INT NOT NULL AUTO_INCREMENT, time DATETIME, nodeid CHAR(255), doc JSON, PRIMARY KEY(id), CHECK (json_valid(doc)))',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.smbios (id CHAR(255), time DATETIME, expire DATETIME, doc JSON, PRIMARY KEY(id), CHECK (json_valid(doc)))',
+                    'CREATE TABLE IF NOT EXISTS meshcentral.plugin (id INT NOT NULL AUTO_INCREMENT, doc JSON, PRIMARY KEY(id), CHECK (json_valid(doc)))'
+                ], function (err) {
+                    parent.debug('db', 'Checking indexes...');
+                    sqlDbExec('CREATE INDEX ndxtypedomainextra ON meshcentral.main (type, domain, extra)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxextra ON meshcentral.main (extra)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxextraex ON meshcentral.main (extraex)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxeventstime ON meshcentral.events(time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxeventsusername ON meshcentral.events(domain, userid, time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxeventsdomainnodeidtime ON meshcentral.events(domain, nodeid, time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxeventids ON meshcentral.eventids(target)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxserverstattime ON meshcentral.serverstats (time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxserverstatexpire ON meshcentral.serverstats (expire)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxpowernodeidtime ON meshcentral.power (nodeid, time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxsmbiostime ON meshcentral.smbios (time)', null, function (err, response) { });
+                    sqlDbExec('CREATE INDEX ndxsmbiosexpire ON meshcentral.smbios (expire)', null, function (err, response) { });
+                    setupFunctions(func);
+                });
+            } else {
+>>>>>>> upstream/master
                 parent.debug('db', 'Creating database...');
                 sqlDbBatchExec([
                     'CREATE DATABASE meshcentral',
@@ -443,12 +678,22 @@ module.exports.CreateDB = function (parent, func) {
 
             // Setup the changeStream on the MongoDB main collection if possible
             if (parent.args.mongodbchangestream == true) {
+<<<<<<< HEAD
+=======
+                obj.dbCounters.changeStream = { change: 0, update: 0, insert: 0, delete: 0 };
+>>>>>>> upstream/master
                 if (typeof obj.file.watch != 'function') {
                     console.log('WARNING: watch() is not a function, MongoDB ChangeStream not supported.');
                 } else {
                     obj.fileChangeStream = obj.file.watch([{ $match: { $or: [{ 'fullDocument.type': { $in: ['node', 'mesh', 'user', 'ugrp'] } }, { 'operationType': 'delete' }] } }], { fullDocument: 'updateLookup' });
                     obj.fileChangeStream.on('change', function (change) {
+<<<<<<< HEAD
                         if (change.operationType == 'update') {
+=======
+                        obj.dbCounters.changeStream.change++;
+                        if ((change.operationType == 'update') || (change.operationType == 'replace')) {
+                            obj.dbCounters.changeStream.update++;
+>>>>>>> upstream/master
                             switch (change.fullDocument.type) {
                                 case 'node': { dbNodeChange(change, false); break; } // A node has changed
                                 case 'mesh': { dbMeshChange(change, false); break; } // A device group has changed
@@ -456,6 +701,10 @@ module.exports.CreateDB = function (parent, func) {
                                 case 'ugrp': { dbUGrpChange(change, false); break; } // A user account has changed
                             }
                         } else if (change.operationType == 'insert') {
+<<<<<<< HEAD
+=======
+                            obj.dbCounters.changeStream.insert++;
+>>>>>>> upstream/master
                             switch (change.fullDocument.type) {
                                 case 'node': { dbNodeChange(change, true); break; } // A node has added
                                 case 'mesh': { dbMeshChange(change, true); break; } // A device group has created
@@ -463,6 +712,11 @@ module.exports.CreateDB = function (parent, func) {
                                 case 'ugrp': { dbUGrpChange(change, true); break; } // A user account has created
                             }
                         } else if (change.operationType == 'delete') {
+<<<<<<< HEAD
+=======
+                            obj.dbCounters.changeStream.delete++;
+                            if ((change.documentKey == null) || (change.documentKey._id == null)) return;
+>>>>>>> upstream/master
                             var splitId = change.documentKey._id.split('/');
                             switch (splitId[0]) {
                                 case 'node': {
@@ -796,7 +1050,11 @@ module.exports.CreateDB = function (parent, func) {
                     }).catch(function (err) { if (func) { try { func(err); } catch (ex) { console.log(ex); } } });
         } else if (obj.databaseType == 5) { // MySQL
             Datastore.query(query, args, function (error, results, fields) {
+<<<<<<< HEAD
                 if (func) try { func(error, results[0]); } catch (ex) { console.log(ex); }
+=======
+                if (func) try { func(error, results?results[0]:null); } catch (ex) { console.log(ex); }
+>>>>>>> upstream/master
             });
         }
     }
@@ -826,6 +1084,10 @@ module.exports.CreateDB = function (parent, func) {
         if ((obj.databaseType == 4) || (obj.databaseType == 5)) {
             // Database actions on the main collection (MariaDB or MySQL)
             obj.Set = function (value, func) {
+<<<<<<< HEAD
+=======
+                obj.dbCounters.fileSet++;
+>>>>>>> upstream/master
                 var extra = null, extraex = null;
                 value = common.escapeLinksFieldNameEx(value);
                 if (value.meshid) { extra = value.meshid; } else if (value.email) { extra = 'email/' + value.email; } else if (value.nodeid) { extra = value.nodeid; }
@@ -833,6 +1095,7 @@ module.exports.CreateDB = function (parent, func) {
                 if (value._id == null) { value._id = require('crypto').randomBytes(16).toString('hex'); }
                 sqlDbQuery('REPLACE INTO meshcentral.main VALUE (?, ?, ?, ?, ?, ?)', [value._id, (value.type ? value.type : null), ((value.domain != null) ? value.domain : null), extra, extraex, JSON.stringify(performTypedRecordEncrypt(value))], func);
             }
+<<<<<<< HEAD
             obj.Get = function (_id, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ?', [_id], function (err, docs) { if ((docs != null) && (docs.length > 0) && (docs[0].links != null)) { docs[0] = common.unEscapeLinksFieldName(docs[0]); } func(err, docs); }); }
             obj.GetAll = function (func) { sqlDbQuery('SELECT domain, doc FROM meshcentral.main', null, func); }
             obj.GetHash = function (id, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ?', [id], func); }
@@ -845,11 +1108,34 @@ module.exports.CreateDB = function (parent, func) {
                         sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND extra IN (?)', [type, domain, meshes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, docs); });
                     } else {
                         sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND (extra IN (?) OR id IN (?))', [type, domain, meshes, extrasids], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, docs); });
+=======
+            obj.SetRaw = function (value, func) {
+                obj.dbCounters.fileSet++;
+                var extra = null, extraex = null;
+                if (value.meshid) { extra = value.meshid; } else if (value.email) { extra = 'email/' + value.email; } else if (value.nodeid) { extra = value.nodeid; }
+                if ((value.type == 'node') && (value.intelamt != null) && (value.intelamt.uuid != null)) { extraex = 'uuid/' + value.intelamt.uuid; }
+                if (value._id == null) { value._id = require('crypto').randomBytes(16).toString('hex'); }
+                sqlDbQuery('REPLACE INTO meshcentral.main VALUE (?, ?, ?, ?, ?, ?)', [value._id, (value.type ? value.type : null), ((value.domain != null) ? value.domain : null), extra, extraex, JSON.stringify(performTypedRecordEncrypt(value))], func);
+            }
+            obj.Get = function (_id, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ?', [_id], function (err, docs) { if ((docs != null) && (docs.length > 0) && (docs[0].links != null)) { docs[0] = common.unEscapeLinksFieldName(docs[0]); } func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetAll = function (func) { sqlDbQuery('SELECT domain, doc FROM meshcentral.main', null, function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetHash = function (id, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ?', [id], function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetAllTypeNoTypeField = function (type, domain, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ?', [type, domain], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); }); };
+            obj.GetAllTypeNoTypeFieldMeshFiltered = function (meshes, extrasids, domain, type, id, func) {
+                if (id && (id != '')) {
+                    sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ? AND type = ? AND domain = ? AND extra IN (?)', [id, type, domain, meshes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); });
+                } else {
+                    if (extrasids == null) {
+                        sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND extra IN (?)', [type, domain, meshes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); });
+                    } else {
+                        sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND (extra IN (?) OR id IN (?))', [type, domain, meshes, extrasids], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); });
+>>>>>>> upstream/master
                     }
                 }
             };
             obj.GetAllTypeNodeFiltered = function (nodes, domain, type, id, func) {
                 if (id && (id != '')) {
+<<<<<<< HEAD
                     sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ? AND type = ? AND domain = ? AND extra IN (?)', [id, type, domain, nodes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, docs); });
                 } else {
                     sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND extra IN (?)', [type, domain, nodes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, docs); });
@@ -863,6 +1149,21 @@ module.exports.CreateDB = function (parent, func) {
             obj.RemoveAll = function (func) { sqlDbQuery('DELETE FROM meshcentral.main', null, func); };
             obj.RemoveAllOfType = function (type, func) { sqlDbQuery('DELETE FROM meshcentral.main WHERE type = ?', [type], func); };
             obj.InsertMany = function (data, func) { var pendingOps = 0; for (var i in data) { pendingOps++; obj.Set(data[i], function () { if (--pendingOps == 0) { func(); } }); } };
+=======
+                    sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id = ? AND type = ? AND domain = ? AND extra IN (?)', [id, type, domain, nodes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); });
+                } else {
+                    sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ? AND domain = ? AND extra IN (?)', [type, domain, nodes], function (err, docs) { if (err == null) { for (var i in docs) { delete docs[i].type } } func(err, performTypedRecordDecrypt(docs)); });
+                }
+            };
+            obj.GetAllType = function (type, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = ?', [type], function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetAllIdsOfType = function (ids, domain, type, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE id IN (?) AND domain = ? AND type = ?', [ids, domain, type], function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetUserWithEmail = function (domain, email, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE domain = ? AND extra = ?', [domain, 'email/' + email], function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.GetUserWithVerifiedEmail = function (domain, email, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE domain = ? AND extra = ?', [domain, 'email/' + email], function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); }
+            obj.Remove = function (id, func) { sqlDbQuery('DELETE FROM meshcentral.main WHERE id = ?', [id], func); };
+            obj.RemoveAll = function (func) { sqlDbQuery('DELETE FROM meshcentral.main', null, func); };
+            obj.RemoveAllOfType = function (type, func) { sqlDbQuery('DELETE FROM meshcentral.main WHERE type = ?', [type], func); };
+            obj.InsertMany = function (data, func) { var pendingOps = 0; for (var i in data) { pendingOps++; obj.SetRaw(data[i], function () { if (--pendingOps == 0) { func(); } }); } }; // Insert records directly, no link escaping
+>>>>>>> upstream/master
             obj.RemoveMeshDocuments = function (id) { sqlDbQuery('DELETE FROM meshcentral.main WHERE extra = ?', [id], function () { sqlDbQuery('DELETE FROM meshcentral.main WHERE id = ?', ['nt' + id], func); } ); };
             obj.MakeSiteAdmin = function (username, domain) { obj.Get('user/' + domain + '/' + username, function (err, docs) { if ((err == null) && (docs.length == 1)) { docs[0].siteadmin = 0xFFFFFFFF; obj.Set(docs[0]); } }); };
             obj.DeleteDomain = function (domain, func) { sqlDbQuery('DELETE FROM meshcentral.main WHERE domain = ?', [domain], func); };
@@ -870,15 +1171,26 @@ module.exports.CreateDB = function (parent, func) {
             obj.dispose = function () { for (var x in obj) { if (obj[x].close) { obj[x].close(); } delete obj[x]; } };
             obj.getLocalAmtNodes = function (func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE (type = "node") AND (extraex IS NOT NULL)', null, function (err, docs) { var r = []; if (err == null) { for (var i in docs) { if (docs[i].host != null) { r.push(docs[i]); } } } func(err, r); }); };
             obj.getAmtUuidMeshNode = function (meshid, uuid, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE meshid = ? AND extraex = ?', [meshid, 'uuid/' + uuid], func); };
+<<<<<<< HEAD
             obj.getAmtUuidNode = function (uuid, func) { sqlDbQuery('SELECT doc FROM meshcentral.main WHERE type = "node" AND extraex = ?', ['uuid/' + uuid], func); };
+=======
+>>>>>>> upstream/master
             obj.isMaxType = function (max, type, domainid, func) { if (max == null) { func(false); } else { sqlDbExec('SELECT COUNT(id) FROM meshcentral.main WHERE domain = ? AND type = ?', [domainid, type], function (err, response) { func((response['COUNT(id)'] == null) || (response['COUNT(id)'] > max), response['COUNT(id)']) }); } }
 
             // Database actions on the events collection
             obj.GetAllEvents = function (func) { sqlDbQuery('SELECT doc FROM meshcentral.events', null, func); };
+<<<<<<< HEAD
             obj.StoreEvent = function (event) {
                 var batchQuery = [['INSERT INTO meshcentral.events VALUE (?, ?, ?, ?, ?, ?, ?)', [null, event.time, ((typeof event.domain == 'string') ? event.domain : null), event.action, event.nodeid ? event.nodeid : null, event.userid ? event.userid : null, JSON.stringify(event)]]];
                 for (var i in event.ids) { if (event.ids[i] != '*') { batchQuery.push(['INSERT INTO meshcentral.eventids VALUE (LAST_INSERT_ID(), ?)', [event.ids[i]]]); } }
                 sqlDbBatchExec(batchQuery, function (err, docs) { });
+=======
+            obj.StoreEvent = function (event, func) {
+                obj.dbCounters.eventsSet++;
+                var batchQuery = [['INSERT INTO meshcentral.events VALUE (?, ?, ?, ?, ?, ?, ?)', [null, event.time, ((typeof event.domain == 'string') ? event.domain : null), event.action, event.nodeid ? event.nodeid : null, event.userid ? event.userid : null, JSON.stringify(event)]]];
+                for (var i in event.ids) { if (event.ids[i] != '*') { batchQuery.push(['INSERT INTO meshcentral.eventids VALUE (LAST_INSERT_ID(), ?)', [event.ids[i]]]); } }
+                sqlDbBatchExec(batchQuery, function (err, docs) { if (func != null) { func(err, docs); } });
+>>>>>>> upstream/master
             };
             obj.GetEvents = function (ids, domain, func) {
                 if (ids.indexOf('*') >= 0) {
@@ -899,7 +1211,11 @@ module.exports.CreateDB = function (parent, func) {
                 if (ids.indexOf('*') >= 0) {
                     sqlDbQuery('SELECT doc FROM meshcentral.events WHERE (domain = ? AND userid = ?) ORDER BY time DESC', [domain, userid], func);
                 } else {
+<<<<<<< HEAD
                     sqlDbQuery('SELECT doc FROM meshcentral.events JOIN meshcentral.eventids ON id = fkid WHERE (domain = ? AND userid = ? AND target IN (?)) GROUP BY id ORDER BY time DESC', [domain, userid, ids, limit], func);
+=======
+                    sqlDbQuery('SELECT doc FROM meshcentral.events JOIN meshcentral.eventids ON id = fkid WHERE (domain = ? AND userid = ? AND target IN (?)) GROUP BY id ORDER BY time DESC', [domain, userid, ids], func);
+>>>>>>> upstream/master
                 }
             };
             obj.GetUserEventsWithLimit = function (ids, domain, username, limit, func) {
@@ -910,6 +1226,10 @@ module.exports.CreateDB = function (parent, func) {
                     sqlDbQuery('SELECT doc FROM meshcentral.events JOIN meshcentral.eventids ON id = fkid WHERE (domain = ? AND userid = ? AND target IN (?)) GROUP BY id ORDER BY time DESC LIMIT ?', [domain, userid, ids, limit], func);
                 }
             };
+<<<<<<< HEAD
+=======
+            //obj.GetUserLoginEvents = function (domain, username, func) { } // TODO
+>>>>>>> upstream/master
             obj.GetNodeEventsWithLimit = function (nodeid, domain, limit, func) { sqlDbQuery('SELECT doc FROM meshcentral.events WHERE (nodeid = ?) AND (domain = ?) ORDER BY time DESC LIMIT ?', [nodeid, domain, limit], func); };
             obj.GetNodeEventsSelfWithLimit = function (nodeid, domain, userid, limit, func) { sqlDbQuery('SELECT doc FROM meshcentral.events WHERE (nodeid = ?) AND (domain = ?) AND ((userid = ?) OR (userid IS NULL)) ORDER BY time DESC LIMIT ?', [nodeid, domain, userid, limit], func); };
             obj.RemoveAllEvents = function (domain) { sqlDbQuery('DELETE FROM meshcentral.events', null, function (err, docs) { }); };
@@ -919,7 +1239,11 @@ module.exports.CreateDB = function (parent, func) {
 
             // Database actions on the power collection
             obj.getAllPower = function (func) { sqlDbQuery('SELECT doc FROM meshcentral.power', null, func); };
+<<<<<<< HEAD
             obj.storePowerEvent = function (event, multiServer, func) { if (multiServer != null) { event.server = multiServer.serverid; } sqlDbQuery('INSERT INTO meshcentral.power VALUE (?, ?, ?, ?)', [null, event.time, event.nodeid ? event.nodeid : null, JSON.stringify(event)], func); };
+=======
+            obj.storePowerEvent = function (event, multiServer, func) { obj.dbCounters.powerSet++; if (multiServer != null) { event.server = multiServer.serverid; } sqlDbQuery('INSERT INTO meshcentral.power VALUE (?, ?, ?, ?)', [null, event.time, event.nodeid ? event.nodeid : null, JSON.stringify(event)], func); };
+>>>>>>> upstream/master
             obj.getPowerTimeline = function (nodeid, func) { sqlDbQuery('SELECT doc FROM meshcentral.power WHERE ((nodeid = ?) OR (nodeid = "*")) ORDER BY time DESC', [nodeid], func); };
             obj.removeAllPowerEvents = function () { sqlDbQuery('DELETE FROM meshcentral.power', null, function (err, docs) { }); };
             obj.removeAllPowerEventsForNode = function (nodeid) { sqlDbQuery('DELETE FROM meshcentral.power WHERE nodeid = ?', [nodeid], function (err, docs) { }); };
@@ -977,6 +1301,7 @@ module.exports.CreateDB = function (parent, func) {
             }
         } else if (obj.databaseType == 3) {
             // Database actions on the main collection (MongoDB)
+<<<<<<< HEAD
             obj.Set = function (data, func) { data = common.escapeLinksFieldNameEx(data); obj.file.replaceOne({ _id: data._id }, performTypedRecordEncrypt(data), { upsert: true }, func); };
             obj.Get = function (id, func) {
                 if (arguments.length > 2) {
@@ -1000,6 +1325,82 @@ module.exports.CreateDB = function (parent, func) {
                     });
                 }
             };
+=======
+
+            // Bulk operations
+            if (parent.config.settings.mongodbbulkoperations) {
+                obj.Set = function (data, func) { // Fast Set operation using bulkWrite(), this is much faster then using replaceOne()
+                    if (obj.filePendingSet == false) {
+                        // Perform the operation now
+                        obj.dbCounters.fileSet++;
+                        obj.filePendingSet = true; obj.filePendingSets = null;
+                        if (func != null) { obj.filePendingCbs = [func]; }
+                        obj.file.bulkWrite([{ replaceOne: { filter: { _id: data._id }, replacement: performTypedRecordEncrypt(common.escapeLinksFieldNameEx(data)), upsert: true } }], fileBulkWriteCompleted);
+                    } else {
+                        // Add this operation to the pending list
+                        obj.dbCounters.fileSetPending++;
+                        if (obj.filePendingSets == null) { obj.filePendingSets = {} }
+                        obj.filePendingSets[data._id] = data;
+                        if (func != null) { if (obj.filePendingCb == null) { obj.filePendingCb = [func]; } else { obj.filePendingCb.push(func); } }
+                    }
+                };
+
+                obj.Get = function (id, func) { // Fast Get operation using a bulk find() to reduce round trips to the database.
+                    // Encode arguments into return function if any are present.
+                    var func2 = func;
+                    if (arguments.length > 2) {
+                        var parms = [func];
+                        for (var parmx = 2; parmx < arguments.length; ++parmx) { parms.push(arguments[parmx]); }
+                        var func2 = function _func2(arg1, arg2) {
+                            var userCallback = _func2.userArgs.shift();
+                            _func2.userArgs.unshift(arg2);
+                            _func2.userArgs.unshift(arg1);
+                            userCallback.apply(obj, _func2.userArgs);
+                        };
+                        func2.userArgs = parms;
+                    }
+
+                    if (obj.filePendingGets == null) {
+                        // No pending gets, perform the operation now.
+                        obj.filePendingGets = {};
+                        obj.filePendingGets[id] = [func2];
+                        obj.file.find({ _id: id }).toArray(fileBulkReadCompleted);
+                    } else {
+                        // Add get to pending list.
+                        if (obj.filePendingGet == null) { obj.filePendingGet = {}; }
+                        if (obj.filePendingGet[id] == null) { obj.filePendingGet[id] = [func2]; } else { obj.filePendingGet[id].push(func2); }
+                    }
+                };
+            } else {
+                obj.Set = function (data, func) {
+                    obj.dbCounters.fileSet++;
+                    data = common.escapeLinksFieldNameEx(data);
+                    obj.file.replaceOne({ _id: data._id }, performTypedRecordEncrypt(data), { upsert: true }, func);
+                };
+                obj.Get = function (id, func) {
+                    if (arguments.length > 2) {
+                        var parms = [func];
+                        for (var parmx = 2; parmx < arguments.length; ++parmx) { parms.push(arguments[parmx]); }
+                        var func2 = function _func2(arg1, arg2) {
+                            var userCallback = _func2.userArgs.shift();
+                            _func2.userArgs.unshift(arg2);
+                            _func2.userArgs.unshift(arg1);
+                            userCallback.apply(obj, _func2.userArgs);
+                        };
+                        func2.userArgs = parms;
+                        obj.file.find({ _id: id }).toArray(function (err, docs) {
+                            if ((docs != null) && (docs.length > 0) && (docs[0].links != null)) { docs[0] = common.unEscapeLinksFieldName(docs[0]); }
+                            func2(err, performTypedRecordDecrypt(docs));
+                        });
+                    } else {
+                        obj.file.find({ _id: id }).toArray(function (err, docs) {
+                            if ((docs != null) && (docs.length > 0) && (docs[0].links != null)) { docs[0] = common.unEscapeLinksFieldName(docs[0]); }
+                            func(err, performTypedRecordDecrypt(docs));
+                        });
+                    }
+                };
+            }
+>>>>>>> upstream/master
             obj.GetAll = function (func) { obj.file.find({}).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
             obj.GetHash = function (id, func) { obj.file.find({ _id: id }).project({ _id: 0, hash: 1 }).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
             obj.GetAllTypeNoTypeField = function (type, domain, func) { obj.file.find({ type: type, domain: domain }).project({ type: 0 }).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
@@ -1023,10 +1424,37 @@ module.exports.CreateDB = function (parent, func) {
             obj.GetAllIdsOfType = function (ids, domain, type, func) { obj.file.find({ type: type, domain: domain, _id: { $in: ids } }).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
             obj.GetUserWithEmail = function (domain, email, func) { obj.file.find({ type: 'user', domain: domain, email: email }).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
             obj.GetUserWithVerifiedEmail = function (domain, email, func) { obj.file.find({ type: 'user', domain: domain, email: email, emailVerified: true }).toArray(function (err, docs) { func(err, performTypedRecordDecrypt(docs)); }); };
+<<<<<<< HEAD
             obj.Remove = function (id, func) { obj.file.deleteOne({ _id: id }, func); };
             obj.RemoveAll = function (func) { obj.file.deleteMany({}, { multi: true }, func); };
             obj.RemoveAllOfType = function (type, func) { obj.file.deleteMany({ type: type }, { multi: true }, func); };
             obj.InsertMany = function (data, func) { obj.file.insertMany(data, func); };
+=======
+
+            // Bulk operations
+            if (parent.config.settings.mongodbbulkoperations) {
+                obj.Remove = function (id, func) { // Fast remove operation using a bulk find() to reduce round trips to the database.
+                    if (obj.filePendingRemoves == null) {
+                        // No pending removes, perform the operation now.
+                        obj.dbCounters.fileRemove++;
+                        obj.filePendingRemoves = {};
+                        obj.filePendingRemoves[id] = [func];
+                        obj.file.deleteOne({ _id: id }, fileBulkRemoveCompleted);
+                    } else {
+                        // Add remove to pending list.
+                        obj.dbCounters.fileRemovePending++;
+                        if (obj.filePendingRemove == null) { obj.filePendingRemove = {}; }
+                        if (obj.filePendingRemove[id] == null) { obj.filePendingRemove[id] = [func]; } else { obj.filePendingRemove[id].push(func); }
+                    }
+                };
+            } else {
+                obj.Remove = function (id, func) { obj.dbCounters.fileRemove++; obj.file.deleteOne({ _id: id }, func); };
+            }
+
+            obj.RemoveAll = function (func) { obj.file.deleteMany({}, { multi: true }, func); };
+            obj.RemoveAllOfType = function (type, func) { obj.file.deleteMany({ type: type }, { multi: true }, func); };
+            obj.InsertMany = function (data, func) { obj.file.insertMany(data, func); }; // Insert records directly, no link escaping
+>>>>>>> upstream/master
             obj.RemoveMeshDocuments = function (id) { obj.file.deleteMany({ meshid: id }, { multi: true }); obj.file.deleteOne({ _id: 'nt' + id }); };
             obj.MakeSiteAdmin = function (username, domain) { obj.Get('user/' + domain + '/' + username, function (err, docs) { if ((err == null) && (docs.length == 1)) { docs[0].siteadmin = 0xFFFFFFFF; obj.Set(docs[0]); } }); };
             obj.DeleteDomain = function (domain, func) { obj.file.deleteMany({ domain: domain }, { multi: true }, func); };
@@ -1034,7 +1462,10 @@ module.exports.CreateDB = function (parent, func) {
             obj.dispose = function () { for (var x in obj) { if (obj[x].close) { obj[x].close(); } delete obj[x]; } };
             obj.getLocalAmtNodes = function (func) { obj.file.find({ type: 'node', host: { $exists: true, $ne: null }, intelamt: { $exists: true } }).toArray(func); };
             obj.getAmtUuidMeshNode = function (meshid, uuid, func) { obj.file.find({ type: 'node', meshid: meshid, 'intelamt.uuid': uuid }).toArray(func); };
+<<<<<<< HEAD
             obj.getAmtUuidNode = function (uuid, func) { obj.file.find({ type: 'node', 'intelamt.uuid': uuid }).toArray(func); };
+=======
+>>>>>>> upstream/master
 
             // TODO: Starting in MongoDB 4.0.3, you should use countDocuments() instead of count() that is deprecated. We should detect MongoDB version and switch.
             // https://docs.mongodb.com/manual/reference/method/db.collection.countDocuments/
@@ -1049,11 +1480,40 @@ module.exports.CreateDB = function (parent, func) {
 
             // Database actions on the events collection
             obj.GetAllEvents = function (func) { obj.eventsfile.find({}).toArray(func); };
+<<<<<<< HEAD
             obj.StoreEvent = function (event) { obj.eventsfile.insertOne(event); };
+=======
+
+            // Bulk operations
+            if (parent.config.settings.mongodbbulkoperations) {
+                obj.StoreEvent = function (event, func) { // Fast MongoDB event store using bulkWrite()
+                    if (obj.eventsFilePendingSet == false) {
+                        // Perform the operation now
+                        obj.dbCounters.eventsSet++;
+                        obj.eventsFilePendingSet = true; obj.eventsFilePendingSets = null;
+                        if (func != null) { obj.eventsFilePendingCbs = [func]; }
+                        obj.eventsfile.bulkWrite([{ insertOne: { document: event } }], eventsFileBulkWriteCompleted);
+                    } else {
+                        // Add this operation to the pending list
+                        obj.dbCounters.eventsSetPending++;
+                        if (obj.eventsFilePendingSets == null) { obj.eventsFilePendingSets = [] }
+                        obj.eventsFilePendingSets.push(event);
+                        if (func != null) { if (obj.eventsFilePendingCb == null) { obj.eventsFilePendingCb = [func]; } else { obj.eventsFilePendingCb.push(func); } }
+                    }
+                };
+            } else {
+                obj.StoreEvent = function (event, func) { obj.dbCounters.eventsSet++; obj.eventsfile.insertOne(event, func); };
+            }
+
+>>>>>>> upstream/master
             obj.GetEvents = function (ids, domain, func) { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }).project({ type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).toArray(func); };
             obj.GetEventsWithLimit = function (ids, domain, limit, func) { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }).project({ type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).limit(limit).toArray(func); };
             obj.GetUserEvents = function (ids, domain, username, func) { obj.eventsfile.find({ domain: domain, $or: [{ ids: { $in: ids } }, { username: username }] }).project({ type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).toArray(func); };
             obj.GetUserEventsWithLimit = function (ids, domain, username, limit, func) { obj.eventsfile.find({ domain: domain, $or: [{ ids: { $in: ids } }, { username: username }] }).project({ type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).limit(limit).toArray(func); };
+<<<<<<< HEAD
+=======
+            obj.GetUserLoginEvents = function (domain, userid, func) { obj.eventsfile.find({ domain: domain, action: { $in: ['authfail', 'login'] }, userid: userid, msgArgs: { $exists: true } }).project({ action: 1, time: 1, msgid: 1, msgArgs: 1 }).sort({ time: -1 }).toArray(func); };
+>>>>>>> upstream/master
             obj.GetNodeEventsWithLimit = function (nodeid, domain, limit, func) { obj.eventsfile.find({ domain: domain, nodeid: nodeid }).project({ type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit).toArray(func); };
             obj.GetNodeEventsSelfWithLimit = function (nodeid, domain, userid, limit, func) { obj.eventsfile.find({ domain: domain, nodeid: nodeid, userid: { $in: [userid, null] } }).project({ type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit).toArray(func); };
             obj.RemoveAllEvents = function (domain) { obj.eventsfile.deleteMany({ domain: domain }, { multi: true }); };
@@ -1069,7 +1529,33 @@ module.exports.CreateDB = function (parent, func) {
 
             // Database actions on the power collection
             obj.getAllPower = function (func) { obj.powerfile.find({}).toArray(func); };
+<<<<<<< HEAD
             obj.storePowerEvent = function (event, multiServer, func) { if (multiServer != null) { event.server = multiServer.serverid; } obj.powerfile.insertOne(event, func); };
+=======
+
+            // Bulk operations
+            if (parent.config.settings.mongodbbulkoperations) {
+                obj.storePowerEvent = function (event, multiServer, func) { // Fast MongoDB event store using bulkWrite()
+                    if (multiServer != null) { event.server = multiServer.serverid; }
+                    if (obj.powerFilePendingSet == false) {
+                        // Perform the operation now
+                        obj.dbCounters.powerSet++;
+                        obj.powerFilePendingSet = true; obj.powerFilePendingSets = null;
+                        if (func != null) { obj.powerFilePendingCbs = [func]; }
+                        obj.powerfile.bulkWrite([{ insertOne: { document: event } }], powerFileBulkWriteCompleted);
+                    } else {
+                        // Add this operation to the pending list
+                        obj.dbCounters.powerSetPending++;
+                        if (obj.powerFilePendingSets == null) { obj.powerFilePendingSets = [] }
+                        obj.powerFilePendingSets.push(event);
+                        if (func != null) { if (obj.powerFilePendingCb == null) { obj.powerFilePendingCb = [func]; } else { obj.powerFilePendingCb.push(func); } }
+                    }
+                };
+            } else {
+                obj.storePowerEvent = function (event, multiServer, func) { obj.dbCounters.powerSet++; if (multiServer != null) { event.server = multiServer.serverid; } obj.powerfile.insertOne(event, func); };
+            }
+
+>>>>>>> upstream/master
             obj.getPowerTimeline = function (nodeid, func) { obj.powerfile.find({ nodeid: { $in: ['*', nodeid] } }).project({ _id: 0, nodeid: 0, s: 0 }).sort({ time: 1 }).toArray(func); };
             obj.removeAllPowerEvents = function () { obj.powerfile.deleteMany({}, { multi: true }); };
             obj.removeAllPowerEventsForNode = function (nodeid) { obj.powerfile.deleteMany({ nodeid: nodeid }, { multi: true }); };
@@ -1130,7 +1616,15 @@ module.exports.CreateDB = function (parent, func) {
 
         } else {
             // Database actions on the main collection (NeDB and MongoJS)
+<<<<<<< HEAD
             obj.Set = function (data, func) { data = common.escapeLinksFieldNameEx(data); var xdata = performTypedRecordEncrypt(data); obj.file.update({ _id: xdata._id }, xdata, { upsert: true }, func); };
+=======
+            obj.Set = function (data, func) {
+                obj.dbCounters.fileSet++;
+                data = common.escapeLinksFieldNameEx(data);
+                var xdata = performTypedRecordEncrypt(data); obj.file.update({ _id: xdata._id }, xdata, { upsert: true }, func);
+            };
+>>>>>>> upstream/master
             obj.Get = function (id, func) {
                 if (arguments.length > 2) {
                     var parms = [func];
@@ -1184,7 +1678,11 @@ module.exports.CreateDB = function (parent, func) {
             obj.Remove = function (id, func) { obj.file.remove({ _id: id }, func); };
             obj.RemoveAll = function (func) { obj.file.remove({}, { multi: true }, func); };
             obj.RemoveAllOfType = function (type, func) { obj.file.remove({ type: type }, { multi: true }, func); };
+<<<<<<< HEAD
             obj.InsertMany = function (data, func) { obj.file.insert(data, func); };
+=======
+            obj.InsertMany = function (data, func) { obj.file.insert(data, func); }; // Insert records directly, no link escaping
+>>>>>>> upstream/master
             obj.RemoveMeshDocuments = function (id) { obj.file.remove({ meshid: id }, { multi: true }); obj.file.remove({ _id: 'nt' + id }); };
             obj.MakeSiteAdmin = function (username, domain) { obj.Get('user/' + domain + '/' + username, function (err, docs) { if ((err == null) && (docs.length == 1)) { docs[0].siteadmin = 0xFFFFFFFF; obj.Set(docs[0]); } }); };
             obj.DeleteDomain = function (domain, func) { obj.file.remove({ domain: domain }, { multi: true }, func); };
@@ -1192,12 +1690,19 @@ module.exports.CreateDB = function (parent, func) {
             obj.dispose = function () { for (var x in obj) { if (obj[x].close) { obj[x].close(); } delete obj[x]; } };
             obj.getLocalAmtNodes = function (func) { obj.file.find({ type: 'node', host: { $exists: true, $ne: null }, intelamt: { $exists: true } }, func); };
             obj.getAmtUuidMeshNode = function (meshid, uuid, func) { obj.file.find({ type: 'node', meshid: meshid, 'intelamt.uuid': uuid }, func); };
+<<<<<<< HEAD
             obj.getAmtUuidNode = function (uuid, func) { obj.file.find({ type: 'node', 'intelamt.uuid': uuid }, func); };
+=======
+>>>>>>> upstream/master
             obj.isMaxType = function (max, type, domainid, func) { if (max == null) { func(false); } else { obj.file.count({ type: type, domain: domainid }, function (err, count) { func((err != null) || (count > max), count); }); } }
 
             // Database actions on the events collection
             obj.GetAllEvents = function (func) { obj.eventsfile.find({}, func); };
+<<<<<<< HEAD
             obj.StoreEvent = function (event) { obj.eventsfile.insert(event); };
+=======
+            obj.StoreEvent = function (event, func) { obj.eventsfile.insert(event, func); };
+>>>>>>> upstream/master
             obj.GetEvents = function (ids, domain, func) { if (obj.databaseType == 1) { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }, { _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).exec(func); } else { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }, { type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }, func); } };
             obj.GetEventsWithLimit = function (ids, domain, limit, func) { if (obj.databaseType == 1) { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }, { _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).limit(limit).exec(func); } else { obj.eventsfile.find({ domain: domain, ids: { $in: ids } }, { type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).limit(limit, func); } };
             obj.GetUserEvents = function (ids, domain, username, func) {
@@ -1214,6 +1719,16 @@ module.exports.CreateDB = function (parent, func) {
                     obj.eventsfile.find({ domain: domain, $or: [{ ids: { $in: ids } }, { username: username }] }, { type: 0, _id: 0, domain: 0, ids: 0, node: 0 }).sort({ time: -1 }).limit(limit, func);
                 }
             };
+<<<<<<< HEAD
+=======
+            obj.GetUserLoginEvents = function (domain, userid, func) {
+                if (obj.databaseType == 1) {
+                    obj.eventsfile.find({ domain: domain, action: { $in: ['authfail', 'login'] }, userid: userid, msgArgs: { $exists: true } }, { action: 1, time: 1, msgid: 1, msgArgs: 1 }).sort({ time: -1 }).exec(func);
+                } else {
+                    obj.eventsfile.find({ domain: domain, action: { $in: ['authfail', 'login'] }, userid: userid, msgArgs: { $exists: true } }, { action: 1, time: 1, msgid: 1, msgArgs: 1 }).sort({ time: -1 }, func);
+                }
+            };
+>>>>>>> upstream/master
             obj.GetNodeEventsWithLimit = function (nodeid, domain, limit, func) { if (obj.databaseType == 1) { obj.eventsfile.find({ domain: domain, nodeid: nodeid }, { type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit).exec(func); } else { obj.eventsfile.find({ domain: domain, nodeid: nodeid }, { type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit, func); } };
             obj.GetNodeEventsSelfWithLimit = function (nodeid, domain, userid, limit, func) { if (obj.databaseType == 1) { obj.eventsfile.find({ domain: domain, nodeid: nodeid, userid: { $in: [userid, null] } }, { type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit).exec(func); } else { obj.eventsfile.find({ domain: domain, nodeid: nodeid }, { type: 0, etype: 0, _id: 0, domain: 0, ids: 0, node: 0, nodeid: 0 }).sort({ time: -1 }).limit(limit, func); } };
             obj.RemoveAllEvents = function (domain) { obj.eventsfile.remove({ domain: domain }, { multi: true }); };
@@ -1328,6 +1843,148 @@ module.exports.CreateDB = function (parent, func) {
         return r;
     }
 
+<<<<<<< HEAD
+=======
+    // Check that the server is capable of performing a backup
+    obj.checkBackupCapability = function (func) {
+        if ((parent.config.settings.autobackup == null) || (parent.config.settings.autobackup == false)) { func(); }
+        if ((obj.databaseType == 2) || (obj.databaseType == 3)) {
+            // Check that we have access to MongoDump
+            var backupPath = parent.backuppath;
+            if (parent.config.settings.autobackup && parent.config.settings.autobackup.backuppath) { backupPath = parent.config.settings.autobackup.backuppath; }
+            try { parent.fs.mkdirSync(backupPath); } catch (e) { }
+            var mongoDumpPath = 'mongodump';
+            if (parent.config.settings.autobackup && parent.config.settings.autobackup.mongodumppath) { mongoDumpPath = parent.config.settings.autobackup.mongodumppath; }
+            const child_process = require('child_process');
+            child_process.exec('"' + mongoDumpPath + '"', { cwd: backupPath }, function (error, stdout, stderr) {
+                try {
+                    if ((error != null) && (error != '')) {
+                        if (parent.platform == 'win32') {
+                            func(1, "Unable to find mongodump.exe, MongoDB database auto-backup will not be performed.");
+                        } else {
+                            func(1, "Unable to find mongodump, MongoDB database auto-backup will not be performed.");
+                        }
+                    } else {
+                        func();
+                    }
+                } catch (ex) { console.log(ex); }
+            });
+        } else {
+            func();
+        }
+    }
+
+    // MongoDB pending bulk read operation, perform fast bulk document reads.
+    function fileBulkReadCompleted(err, docs) {
+        // Send out callbacks with results
+        if (docs != null) {
+            for (var i in docs) {
+                if (docs[i].links != null) { docs[i] = common.unEscapeLinksFieldName(docs[i]); }
+                const id = docs[i]._id;
+                if (obj.filePendingGets[id] != null) {
+                    for (var j in obj.filePendingGets[id]) {
+                        if (typeof obj.filePendingGets[id][j] == 'function') { obj.filePendingGets[id][j](err, performTypedRecordDecrypt([docs[i]])); }
+                    }
+                    delete obj.filePendingGets[id];
+                }
+            }
+        }
+
+        // If there are not results, send out a null callback
+        for (var i in obj.filePendingGets) { for (var j in obj.filePendingGets[i]) { obj.filePendingGets[i][j](err, []); } }
+
+        // Move on to process any more pending get operations
+        obj.filePendingGets = obj.filePendingGet;
+        obj.filePendingGet = null;
+        if (obj.filePendingGets != null) {
+            var findlist = [];
+            for (var i in obj.filePendingGets) { findlist.push(i); }
+            obj.file.find({ _id: { $in: findlist } }).toArray(fileBulkReadCompleted);
+        }
+    }
+
+    // MongoDB pending bulk remove operation, perform fast bulk document removes.
+    function fileBulkRemoveCompleted(err) {
+        // Send out callbacks
+        for (var i in obj.filePendingRemoves) {
+            for (var j in obj.filePendingRemoves[i]) {
+                if (typeof obj.filePendingRemoves[i][j] == 'function') { obj.filePendingRemoves[i][j](err); }
+            }
+        }
+
+        // Move on to process any more pending get operations
+        obj.filePendingRemoves = obj.filePendingRemove;
+        obj.filePendingRemove = null;
+        if (obj.filePendingRemoves != null) {
+            obj.dbCounters.fileRemoveBulk++;
+            var findlist = [], count = 0;
+            for (var i in obj.filePendingRemoves) { findlist.push(i); count++; }
+            obj.file.deleteMany({ _id: { $in: findlist } }, { multi: true }, fileBulkRemoveCompleted);
+        }
+    }
+
+    // MongoDB pending bulk write operation, perform fast bulk document replacement.
+    function fileBulkWriteCompleted() {
+        // Callbacks
+        if (obj.filePendingCbs != null) {
+            for (var i in obj.filePendingCbs) { if (typeof obj.filePendingCbs[i] == 'function') { obj.filePendingCbs[i](); } }
+            obj.filePendingCbs = null;
+        }
+        if (obj.filePendingSets != null) {
+            // Perform pending operations
+            obj.dbCounters.fileSetBulk++;
+            var ops = [];
+            obj.filePendingCbs = obj.filePendingCb;
+            obj.filePendingCb = null;
+            for (var i in obj.filePendingSets) { ops.push({ replaceOne: { filter: { _id: i }, replacement: performTypedRecordEncrypt(common.escapeLinksFieldNameEx(obj.filePendingSets[i])), upsert: true } }); }
+            obj.file.bulkWrite(ops, fileBulkWriteCompleted);
+            obj.filePendingSets = null;
+        } else {
+            // All done, no pending operations.
+            obj.filePendingSet = false;
+        }
+    }
+
+    // MongoDB pending bulk write operation, perform fast bulk document replacement.
+    function eventsFileBulkWriteCompleted() {
+        // Callbacks
+        if (obj.eventsFilePendingCbs != null) { for (var i in obj.eventsFilePendingCbs) { obj.eventsFilePendingCbs[i](); } obj.eventsFilePendingCbs = null; }
+        if (obj.eventsFilePendingSets != null) {
+            // Perform pending operations
+            obj.dbCounters.eventsSetBulk++;
+            var ops = [];
+            for (var i in obj.eventsFilePendingSets) { ops.push({ document: obj.eventsFilePendingSets[i] }); }
+            obj.eventsFilePendingCbs = obj.eventsFilePendingCb;
+            obj.eventsFilePendingCb = null;
+            obj.eventsFilePendingSets = null;
+            obj.eventsfile.bulkWrite(ops, eventsFileBulkWriteCompleted);
+        } else {
+            // All done, no pending operations.
+            obj.eventsFilePendingSet = false;
+        }
+    }
+
+    // MongoDB pending bulk write operation, perform fast bulk document replacement.
+    function powerFileBulkWriteCompleted() {
+        // Callbacks
+        if (obj.powerFilePendingCbs != null) { for (var i in obj.powerFilePendingCbs) { obj.powerFilePendingCbs[i](); } obj.powerFilePendingCbs = null; }
+        if (obj.powerFilePendingSets != null) {
+            // Perform pending operations
+            obj.dbCounters.powerSetBulk++;
+            var ops = [];
+            for (var i in obj.powerFilePendingSets) { ops.push({ document: obj.powerFilePendingSets[i] }); }
+            obj.powerFilePendingCbs = obj.powerFilePendingCb;
+            obj.powerFilePendingCb = null;
+            obj.powerFilePendingSets = null;
+            obj.powerfile.bulkWrite(ops, powerFileBulkWriteCompleted);
+        } else {
+            // All done, no pending operations.
+            obj.powerFilePendingSet = false;
+        }
+    }
+
+    // Perform a server backup
+>>>>>>> upstream/master
     obj.performingBackup = false;
     obj.performBackup = function (func) {
         try {
@@ -1353,11 +2010,20 @@ module.exports.CreateDB = function (parent, func) {
                 if (parent.config.settings.autobackup && parent.config.settings.autobackup.mongodumppath) { mongoDumpPath = parent.config.settings.autobackup.mongodumppath; }
                 const child_process = require('child_process');
                 var cmd = '\"' + mongoDumpPath + '\" --db=\"' + dbname + '\" --archive=\"' + newBackupPath + '.archive\"';
+<<<<<<< HEAD
                 if (dburl) { cmd = '\"' + mongoDumpPath + '\" --uri=\"' + dburl + '\" --archive=\"' + newBackupPath + '.archive\"'; }
                 var backupProcess = child_process.exec(cmd, { cwd: backupPath }, function (error, stdout, stderr) {
                     try {
                         backupProcess = null;
                         if ((error != null) && (error != '')) { console.log('ERROR: Unable to perform database backup: ' + error + '\r\n'); obj.performingBackup = false; return; }
+=======
+                if (dburl) { cmd = '\"' + mongoDumpPath + '\" --uri=\"' + dburl.replace('?', '/?') + '\" --archive=\"' + newBackupPath + '.archive\"'; }
+                var backupProcess = child_process.exec(cmd, { cwd: backupPath }, function (error, stdout, stderr) {
+                    try {
+                        var mongoDumpSuccess = true;
+                        backupProcess = null;
+                        if ((error != null) && (error != '')) { mongoDumpSuccess = false; console.log('ERROR: Unable to perform MongoDB backup: ' + error + '\r\n'); }
+>>>>>>> upstream/master
 
                         // Perform archive compression
                         var archiver = require('archiver');
@@ -1369,12 +2035,25 @@ module.exports.CreateDB = function (parent, func) {
                         } else {
                             archive = archiver('zip', { zlib: { level: 9 } });
                         }
+<<<<<<< HEAD
                         output.on('close', function () { obj.performingBackup = false; if (func) { func('Auto-backup completed.'); } obj.performCloudBackup(newAutoBackupPath + '.zip', func); setTimeout(function () { try { parent.fs.unlink(newBackupPath + '.archive', function () { }); } catch (ex) { console.log(ex); } }, 5000); });
+=======
+                        output.on('close', function () {
+                            obj.performingBackup = false;
+                            if (func) { if (mongoDumpSuccess) { func('Auto-backup completed.'); } else { func('Auto-backup completed without mongodb database: ' + error); } }
+                            obj.performCloudBackup(newAutoBackupPath + '.zip', func);
+                            setTimeout(function () { try { parent.fs.unlink(newBackupPath + '.archive', function () { }); } catch (ex) { console.log(ex); } }, 5000);
+                        });
+>>>>>>> upstream/master
                         output.on('end', function () { });
                         archive.on('warning', function (err) { console.log('Backup warning: ' + err); if (func) { func('Backup warning: ' + err); } });
                         archive.on('error', function (err) { console.log('Backup error: ' + err); if (func) { func('Backup error: ' + err); } });
                         archive.pipe(output);
+<<<<<<< HEAD
                         archive.file(newBackupPath + '.archive', { name: newBackupFile + '.archive' });
+=======
+                        if (mongoDumpSuccess == true) { archive.file(newBackupPath + '.archive', { name: newBackupFile + '.archive' }); }
+>>>>>>> upstream/master
                         archive.directory(parent.datapath, 'meshcentral-data');
                         archive.finalize();
                     } catch (ex) { console.log(ex); }
@@ -1574,24 +2253,127 @@ module.exports.CreateDB = function (parent, func) {
         }
     }
 
+<<<<<<< HEAD
+=======
+    // Transfer NeDB data into the current database
+    obj.nedbtodb = function (func) {
+        var nedbDatastore = require('nedb');
+        var datastoreOptions = { filename: parent.getConfigFilePath('meshcentral.db'), autoload: true };
+
+        // If a DB encryption key is provided, perform database encryption
+        if ((typeof parent.args.dbencryptkey == 'string') && (parent.args.dbencryptkey.length != 0)) {
+            // Hash the database password into a AES256 key and setup encryption and decryption.
+            var nedbKey = parent.crypto.createHash('sha384').update(parent.args.dbencryptkey).digest('raw').slice(0, 32);
+            datastoreOptions.afterSerialization = function (plaintext) {
+                const iv = parent.crypto.randomBytes(16);
+                const aes = parent.crypto.createCipheriv('aes-256-cbc', nedbKey, iv);
+                var ciphertext = aes.update(plaintext);
+                ciphertext = Buffer.concat([iv, ciphertext, aes.final()]);
+                return ciphertext.toString('base64');
+            }
+            datastoreOptions.beforeDeserialization = function (ciphertext) {
+                const ciphertextBytes = Buffer.from(ciphertext, 'base64');
+                const iv = ciphertextBytes.slice(0, 16);
+                const data = ciphertextBytes.slice(16);
+                const aes = parent.crypto.createDecipheriv('aes-256-cbc', nedbKey, iv);
+                var plaintextBytes = Buffer.from(aes.update(data));
+                plaintextBytes = Buffer.concat([plaintextBytes, aes.final()]);
+                return plaintextBytes.toString();
+            }
+        }
+
+        // Setup all NeDB collections
+        var nedbfile = new nedbDatastore(datastoreOptions);
+        var nedbeventsfile = new nedbDatastore({ filename: parent.getConfigFilePath('meshcentral-events.db'), autoload: true, corruptAlertThreshold: 1 });
+        var nedbpowerfile = new nedbDatastore({ filename: parent.getConfigFilePath('meshcentral-power.db'), autoload: true, corruptAlertThreshold: 1 });
+        var nedbserverstatsfile = new nedbDatastore({ filename: parent.getConfigFilePath('meshcentral-stats.db'), autoload: true, corruptAlertThreshold: 1 });
+
+        // Transfered record counts
+        var normalRecordsTransferCount = 0;
+        var eventRecordsTransferCount = 0;
+        var powerRecordsTransferCount = 0;
+        var statsRecordsTransferCount = 0;
+        var pendingTransfer = 0;
+
+        // Transfer the data from main database
+        nedbfile.find({}, function (err, docs) {
+            if ((err == null) && (docs.length > 0)) {
+                performTypedRecordDecrypt(docs)
+                for (var i in docs) {
+                    pendingTransfer++;
+                    normalRecordsTransferCount++;
+                    obj.Set(common.unEscapeLinksFieldName(docs[i]), function () { pendingTransfer--; });
+                }
+            }
+
+            // Transfer events
+            nedbeventsfile.find({}, function (err, docs) {
+                if ((err == null) && (docs.length > 0)) {
+                    for (var i in docs) {
+                        pendingTransfer++;
+                        eventRecordsTransferCount++;
+                        obj.StoreEvent(docs[i], function () { pendingTransfer--; });
+                    }
+                }
+
+                // Transfer power events
+                nedbpowerfile.find({}, function (err, docs) {
+                    if ((err == null) && (docs.length > 0)) {
+                        for (var i in docs) {
+                            pendingTransfer++;
+                            powerRecordsTransferCount++;
+                            obj.storePowerEvent(docs[i], null, function () { pendingTransfer--; });
+                        }
+                    }
+
+                    // Transfer server stats
+                    nedbserverstatsfile.find({}, function (err, docs) {
+                        if ((err == null) && (docs.length > 0)) {
+                            for (var i in docs) {
+                                pendingTransfer++;
+                                statsRecordsTransferCount++;
+                                obj.SetServerStats(docs[i], function () { pendingTransfer--; });
+                            }
+                        }
+
+                        // Only exit when all the records are stored.
+                        setInterval(function () {
+                            if (pendingTransfer == 0) { func("Done. " + normalRecordsTransferCount + " record(s), " + eventRecordsTransferCount + " event(s), " + powerRecordsTransferCount + " power change(s), " + statsRecordsTransferCount + " stat(s)."); }
+                        }, 200)
+                    });
+                });
+            });
+        });
+    }
+
+>>>>>>> upstream/master
     function padNumber(number, digits) { return Array(Math.max(digits - String(number).length + 1, 0)).join(0) + number; }
 
     // Called when a node has changed
     function dbNodeChange(nodeChange, added) {
         common.unEscapeLinksFieldName(nodeChange.fullDocument);
+<<<<<<< HEAD
         const node = nodeChange.fullDocument;
         if (node.intelamt != null) { // Remove the Intel AMT password and MPS password before eventing this.
             if (node.intelamt.pass != null) { node.intelamt.pass = 1; }
             if (node.intelamt.mpspass != null) { node.intelamt.mpspass = 1; }
         } 
         parent.DispatchEvent(['*', node.meshid], obj, { etype: 'node', action: (added ? 'addnode' : 'changenode'), node: node, nodeid: node._id, domain: node.domain, nolog: 1 });
+=======
+        const node = performTypedRecordDecrypt([nodeChange.fullDocument])[0];
+        parent.DispatchEvent(['*', node.meshid], obj, { etype: 'node', action: (added ? 'addnode' : 'changenode'), node: parent.webserver.CloneSafeNode(node), nodeid: node._id, domain: node.domain, nolog: 1 });
+>>>>>>> upstream/master
     }
 
     // Called when a device group has changed
     function dbMeshChange(meshChange, added) {
         if (parent.webserver == null) return;
         common.unEscapeLinksFieldName(meshChange.fullDocument);
+<<<<<<< HEAD
         const mesh = meshChange.fullDocument;
+=======
+        const mesh = performTypedRecordDecrypt([meshChange.fullDocument])[0];
+>>>>>>> upstream/master
 
         // Update the mesh object in memory
         const mmesh = parent.webserver.meshes[mesh._id];
@@ -1604,16 +2386,25 @@ module.exports.CreateDB = function (parent, func) {
         mesh.nolog = 1;
         delete mesh.type;
         delete mesh._id;
+<<<<<<< HEAD
         if (mesh.amt != null) {
             if (delete mesh.amt.password != null) { mesh.amt.password = 1; } // Remove the Intel AMT password if present
         }
         parent.DispatchEvent(['*', mesh.meshid], obj, mesh);
+=======
+        parent.DispatchEvent(['*', mesh.meshid], obj, parent.webserver.CloneSafeMesh(mesh));
+>>>>>>> upstream/master
     }
 
     // Called when a user account has changed
     function dbUserChange(userChange, added) {
         if (parent.webserver == null) return;
+<<<<<<< HEAD
         const user = userChange.fullDocument;
+=======
+        common.unEscapeLinksFieldName(userChange.fullDocument);
+        const user = performTypedRecordDecrypt([userChange.fullDocument])[0];
+>>>>>>> upstream/master
 
         // Update the user object in memory
         const muser = parent.webserver.users[user._id];
@@ -1633,7 +2424,11 @@ module.exports.CreateDB = function (parent, func) {
         const usergroup = ugrpChange.fullDocument;
 
         // Update the user group object in memory
+<<<<<<< HEAD
         const uusergroup = parent.webserver.usergroups[usergroup._id];
+=======
+        const uusergroup = parent.webserver.userGroups[usergroup._id];
+>>>>>>> upstream/master
         for (var i in usergroup) { uusergroup[i] = usergroup[i]; }
         for (var i in uusergroup) { if (usergroup[i] == null) { delete uusergroup[i]; } }
 

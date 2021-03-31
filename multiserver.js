@@ -1,7 +1,11 @@
 ﻿/**
 * @description MeshCentral Multi-Server Support
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -60,7 +64,11 @@ module.exports.CreateMultiServer = function (parent, args) {
             obj.connectionState = 1;
 
             // Get the web socket setup
+<<<<<<< HEAD
             obj.ws = new WebSocket(obj.url + 'meshserver.ashx', { rejectUnauthorized: false, cert: obj.certificates.agent.cert, key: obj.certificates.agent.key });
+=======
+            obj.ws = new WebSocket(obj.url + 'meshserver.ashx', { rejectUnauthorized: false, servername: obj.certificates.CommonName, cert: obj.certificates.agent.cert, key: obj.certificates.agent.key });
+>>>>>>> upstream/master
             obj.parent.parent.debug('peer', 'OutPeer ' + obj.serverid + ': Connecting to: ' + url + 'meshserver.ashx');
 
             // Register the connection failed event
@@ -75,8 +83,14 @@ module.exports.CreateMultiServer = function (parent, args) {
 
                 // Get the peer server's certificate and compute the server public key hash
                 if (obj.ws._socket == null) return;
-                var serverCert = obj.forge.pki.certificateFromAsn1(obj.forge.asn1.fromDer(obj.ws._socket.getPeerCertificate().raw.toString('binary')));
-                obj.serverCertHash = obj.forge.pki.getPublicKeyFingerprint(serverCert.publicKey, { encoding: 'binary', md: obj.forge.md.sha384.create() });
+                if (obj.url.toLowerCase().startsWith('wss://')) {
+                    // We are using TLS, use the certificate hash
+                    var serverCert = obj.forge.pki.certificateFromAsn1(obj.forge.asn1.fromDer(obj.ws._socket.getPeerCertificate().raw.toString('binary')));
+                    obj.serverCertHash = obj.forge.pki.getPublicKeyFingerprint(serverCert.publicKey, { encoding: 'binary', md: obj.forge.md.sha384.create() });
+                } else {
+                    // We are not using TLS, blank out the TLS certificate hash
+                    obj.serverCertHash = Buffer.alloc(48).toString('binary');
+                }
 
                 // Start authenticate the peer server by sending a auth nonce & server TLS cert hash.
                 // Send 384 bits SHA384 hash of TLS cert public key + 384 bits nonce
@@ -98,13 +112,21 @@ module.exports.CreateMultiServer = function (parent, args) {
                             if (msg.length != 98) { obj.parent.parent.debug('peer', 'OutPeer: BAD MESSAGE(A1)'); return; }
 
                             // Check that the server hash matches the TLS server certificate public key hash
+<<<<<<< HEAD
                             if (obj.serverCertHash != msg.substring(2, 50)) { obj.parent.parent.debug('peer', 'OutPeer: Server hash mismatch.'); disconnect(); return; }
+=======
+                            if (obj.url.toLowerCase().startsWith('wss://') && (obj.serverCertHash != msg.substring(2, 50))) { obj.parent.parent.debug('peer', 'OutPeer: Server hash mismatch.'); disconnect(); return; }
+>>>>>>> upstream/master
                             obj.servernonce = msg.substring(50);
 
                             // Perform the hash signature using the server agent certificate
                             obj.parent.parent.certificateOperations.acceleratorPerformSignature(0, msg.substring(2) + obj.nonce, null, function (tag, signature) {
                                 // Send back our certificate + signature
+<<<<<<< HEAD
                                 obj.ws.send(obj.common.ShortToStr(2) + obj.common.ShortToStr(obj.agentCertificateAsn1.length) + obj.agentCertificateAsn1 + signature); // Command 2, certificate + signature
+=======
+                                if (obj.ws != null) { obj.ws.send(obj.common.ShortToStr(2) + obj.common.ShortToStr(obj.agentCertificateAsn1.length) + obj.agentCertificateAsn1 + signature); } // Command 2, certificate + signature
+>>>>>>> upstream/master
                             });
 
                             break;
@@ -172,7 +194,12 @@ module.exports.CreateMultiServer = function (parent, args) {
 
         // Get the next retry time in milliseconds
         function getConnectRetryTime() {
+<<<<<<< HEAD
             if (obj.retryBackoff < 30000) { obj.retryBackoff += ((require('crypto').randomBytes(4).readUInt32BE(0) % 3000) + 1000); }
+=======
+            // The (random & 0x1FFF) creates a random number between 0 and 4096.
+            if (obj.retryBackoff < 30000) { obj.retryBackoff += ((require('crypto').randomBytes(4).readUInt32BE(0) & 0x1FFF) + 1000); }
+>>>>>>> upstream/master
             return obj.retryBackoff;
         }
 
@@ -196,7 +223,7 @@ module.exports.CreateMultiServer = function (parent, args) {
                         if ((command.serverid != null) && (command.dbid != null)) {
                             if (command.serverid == obj.parent.serverid) { console.log('ERROR: Same server ID, trying to peer with self. (' + obj.url + ', ' + command.serverid + ').'); return; }
                             if (command.dbid != obj.parent.parent.db.identifier) { console.log('ERROR: Database ID mismatch. Trying to peer to a server with the wrong database. (' + obj.url + ', ' + command.serverid + ').'); return; }
-                            if (obj.serverCertHash != command.serverCertHash) { console.log('ERROR: Outer certificate hash mismatch (2). (' + obj.url + ', ' + command.serverid + ').'); return; }
+                            if (obj.url.toLowerCase().startsWith('wss://') && (obj.serverCertHash != command.serverCertHash)) { console.log('ERROR: Outer certificate hash mismatch (2). (' + obj.url + ', ' + command.serverid + ').'); return; }
                             obj.peerServerId = command.serverid;
                             obj.peerServerKey = Buffer.from(command.key, 'hex');
                             obj.authenticated = 3;
@@ -215,9 +242,10 @@ module.exports.CreateMultiServer = function (parent, args) {
     };
 
     // Create a mesh server module that received a connection to another server
-    obj.CreatePeerInServer = function (parent, ws, req) {
+    obj.CreatePeerInServer = function (parent, ws, req, tls) {
         var obj = {};
         obj.ws = ws;
+        obj.tls = tls;
         obj.parent = parent;
         obj.common = require('./common.js');
         obj.forge = require('node-forge');
@@ -267,7 +295,7 @@ module.exports.CreateMultiServer = function (parent, args) {
                     obj.receivedCommands += 1; // Peer server can't send the same command twice on the same connection ever. Block DOS attack path.
 
                     // Check that the server hash matches out own web certificate hash
-                    if (obj.webCertificateHash != msg.substring(2, 50)) { obj.close(); return; }
+                    if ((obj.tls == true) && (obj.webCertificateHash != msg.substring(2, 50))) { obj.close(); return; }
                     obj.peernonce = msg.substring(50);
 
                     // Perform the hash signature using the server agent certificate
@@ -424,7 +452,8 @@ module.exports.CreateMultiServer = function (parent, args) {
 
     // We connected to a peer server, setup everything
     obj.SetupPeerServer = function (server, peerServerId) {
-        console.log('Connected to peer server ' + peerServerId + '.');
+        obj.parent.debug('peer', 'Connected to peer server ' + peerServerId + '.');
+        //console.log('Connected to peer server ' + peerServerId + '.');
         obj.peerServers[peerServerId] = server;
 
         // Send the list of connections to the peer
@@ -436,7 +465,8 @@ module.exports.CreateMultiServer = function (parent, args) {
 
     // We disconnected to a peer server, clean up everything
     obj.ClearPeerServer = function (server, peerServerId) {
-        console.log('Disconnected from peer server ' + peerServerId + '.');
+        obj.parent.debug('peer', 'Disconnected from peer server ' + peerServerId + '.');
+        //console.log('Disconnected from peer server ' + peerServerId + '.');
 
         // Clean up the connectivity state
         delete obj.peerServers[peerServerId];
@@ -454,7 +484,7 @@ module.exports.CreateMultiServer = function (parent, args) {
     // Process a message coming from a peer server
     obj.ProcessPeerServerMessage = function (server, peerServerId, msg) {
         var userid, i;
-        //console.log('ProcessPeerServerMessage', peerServerId, msg);
+        //console.log('ProcessPeerServerMessage', peerServerId, msg.action);
         switch (msg.action) {
             case 'mqtt': {
                 if ((obj.parent.mqttbroker != null) && (msg.nodeid != null)) { obj.parent.mqttbroker.publishNoPeers(msg.nodeid, msg.topic, msg.message); } // Dispatch in the MQTT broker
@@ -522,7 +552,7 @@ module.exports.CreateMultiServer = function (parent, args) {
                     if (peerServerId > obj.parent.serverId) {
                         // We must initiate the connection to the peer
                         userid = null;
-                        if (rsession.peer1.req.session != null) { userid = rsession.peer1.req.session.userid; }
+                        if (rsession.peer1.user != null) { userid = rsession.peer1.user._id; }
                         obj.createPeerRelay(rsession.peer1.ws, rsession.peer1.req, peerServerId, userid);
                         delete obj.parent.webserver.wsrelays[msg.id];
                     }
@@ -561,6 +591,26 @@ module.exports.CreateMultiServer = function (parent, args) {
                 }
                 break;
             }
+<<<<<<< HEAD
+=======
+            case 'newIntelAmtPolicy': {
+                // See if any agents for the affected device group is connected, if so, update the Intel AMT policy
+                for (var nodeid in obj.parent.webserver.wsagents) {
+                    const agent = obj.parent.webserver.wsagents[nodeid];
+                    if (agent.dbMeshKey == msg.meshid) { agent.sendUpdatedIntelAmtPolicy(msg.amtpolicy); }
+                }
+                break;
+            }
+            case 'agentMsgByMeshId': {
+                // See if any agents for the target device group is connected, if so, send the message
+                const jsonCmd = JSON.stringify(msg.command);
+                for (var nodeid in obj.parent.webserver.wsagents) {
+                    var agent = obj.parent.webserver.wsagents[nodeid];
+                    if (agent.dbMeshKey == msg.meshid) { try { agent.send(jsonCmd); } catch (ex) { } }
+                }
+                break;
+            }
+>>>>>>> upstream/master
             default: {
                 // Unknown peer server command
                 console.log('Unknown action from peer server ' + peerServerId + ': ' + msg.action + '.');
@@ -600,7 +650,11 @@ module.exports.CreateMultiServer = function (parent, args) {
         peerTunnel.connect = function () {
             // Get the web socket setup
             peerTunnel.parent.parent.debug('peer', 'FTunnel ' + peerTunnel.serverid + ': Start connect to ' + peerTunnel.url);
+<<<<<<< HEAD
             peerTunnel.ws2 = new WebSocket(peerTunnel.url, { rejectUnauthorized: false });
+=======
+            peerTunnel.ws2 = new WebSocket(peerTunnel.url, { rejectUnauthorized: false, servername: this.parent.parent.certificates.CommonName, cert: this.parent.parent.certificates.agent.cert, key: this.parent.parent.certificates.agent.key });
+>>>>>>> upstream/master
 
             // Register the connection failed event
             peerTunnel.ws2.on('error', function (error) { peerTunnel.parent.parent.debug('peer', 'FTunnel ' + obj.serverid + ': Connection error'); peerTunnel.close(); });
@@ -615,12 +669,20 @@ module.exports.CreateMultiServer = function (parent, args) {
             peerTunnel.ws2.on('open', function () {
                 peerTunnel.parent.parent.debug('peer', 'FTunnel ' + peerTunnel.serverid + ': Connected');
 
+<<<<<<< HEAD
                 // Get the peer server's certificate and compute the server public key hash
                 var serverCert = obj.forge.pki.certificateFromAsn1(obj.forge.asn1.fromDer(peerTunnel.ws2._socket.getPeerCertificate().raw.toString('binary')));
                 var serverCertHashHex = Buffer.from(obj.forge.pki.getPublicKeyFingerprint(serverCert.publicKey, { encoding: 'binary', md: obj.forge.md.sha384.create() }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
+=======
+                if (peerTunnel.ws2._socket.getPeerCertificate != null) {
+                    // Get the peer server's certificate and compute the server public key hash
+                    var serverCert = obj.forge.pki.certificateFromAsn1(obj.forge.asn1.fromDer(peerTunnel.ws2._socket.getPeerCertificate().raw.toString('binary')));
+                    var serverCertHashHex = Buffer.from(obj.forge.pki.getPublicKeyFingerprint(serverCert.publicKey, { encoding: 'binary', md: obj.forge.md.sha384.create() }), 'binary').toString('base64').replace(/\+/g, '@').replace(/\//g, '$');
+>>>>>>> upstream/master
 
-                // Check if the peer certificate is the expected one for this serverid
-                if (obj.peerServers[serverid] == null || obj.peerServers[serverid].serverCertHash != serverCertHashHex) { console.log('ERROR: Outer certificate hash mismatch (1). (' + peerTunnel.url + ', ' + peerTunnel.serverid + ').'); peerTunnel.close(); return; }
+                    // Check if the peer certificate is the expected one for this serverid
+                    if ((obj.peerServers[serverid] == null) || (obj.peerServers[serverid].serverCertHash != serverCertHashHex)) { console.log('ERROR: Outer certificate hash mismatch (1). (' + peerTunnel.url + ', ' + peerTunnel.serverid + ').'); peerTunnel.close(); return; }
+                }
 
                 // Connection accepted, resume the web socket to start the data flow
                 peerTunnel.ws1._socket.resume();
@@ -640,12 +702,21 @@ module.exports.CreateMultiServer = function (parent, args) {
         peerTunnel.close = function (arg) {
             if (arg == 2) {
                 // Hard close, close the TCP socket
+<<<<<<< HEAD
                 if (peerTunnel.ws1 != null) { try { peerTunnel.ws1._socket._parent.end(); peerTunnel.parent.parent.debug('peer', 'FTunnel1: Hard disconnect'); } catch (e) { console.log(e); } }
                 if (peerTunnel.ws2 != null) { try { peerTunnel.ws2._socket._parent.end(); peerTunnel.parent.parent.debug('peer', 'FTunnel2: Hard disconnect'); } catch (e) { console.log(e); } }
             } else {
                 // Soft close, close the websocket
                 if (peerTunnel.ws1 != null) { try { peerTunnel.ws1.close(); peerTunnel.parent.parent.debug('peer', 'FTunnel1: Soft disconnect '); } catch (e) { console.log(e); } }
                 if (peerTunnel.ws2 != null) { try { peerTunnel.ws2.close(); peerTunnel.parent.parent.debug('peer', 'FTunnel2: Soft disconnect '); } catch (e) { console.log(e); } }
+=======
+                if (peerTunnel.ws1 != null) { try { peerTunnel.ws1._socket._parent.end(); peerTunnel.parent.parent.debug('peer', 'FTunnel1: Hard disconnect'); } catch (e) { console.log(e); } delete peerTunnel.ws1; }
+                if (peerTunnel.ws2 != null) { try { peerTunnel.ws2._socket._parent.end(); peerTunnel.parent.parent.debug('peer', 'FTunnel2: Hard disconnect'); } catch (e) { console.log(e); } delete peerTunnel.ws2; }
+            } else {
+                // Soft close, close the websocket
+                if (peerTunnel.ws1 != null) { try { peerTunnel.ws1.close(); peerTunnel.parent.parent.debug('peer', 'FTunnel1: Soft disconnect '); } catch (e) { console.log(e); } delete peerTunnel.ws1; }
+                if (peerTunnel.ws2 != null) { try { peerTunnel.ws2.close(); peerTunnel.parent.parent.debug('peer', 'FTunnel2: Soft disconnect '); } catch (e) { console.log(e); } delete peerTunnel.ws2; }
+>>>>>>> upstream/master
             }
         };
 

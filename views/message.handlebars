@@ -53,13 +53,22 @@
         var title = '';
         if (titleid == 1) { title = "Account Verification"; }
         if (titleid == 2) { title = "Desktop Sharing"; }
+<<<<<<< HEAD
+=======
+        if (titleid == 3) { title = "Server Under Maintenance"; }
+        if (titleid == 4) { title = "Terminal Sharing"; }
+>>>>>>> upstream/master
         QH('topTitle', Q('topTitle').innerText + ' - ' + title);
         QH('mainTitle', title);
 
         var msg = '';
         switch (msgid) {
             case 1: { msg = "ERROR: Invalid domain."; break; }
+<<<<<<< HEAD
             case 2: { msg = "ERROR: Invalid username \"{0}\"."; break; }
+=======
+            case 2: { msg = format("ERROR: Invalid username \"{0}\".", arg1); break; }
+>>>>>>> upstream/master
             case 3: { msg = format("ERROR: Invalid e-mail \"{0}\" for user \"{1}\".", arg1, arg2); break; }
             case 4: { msg = format("E-mail \"{0}\" for user \"{1}\" already verified.", arg1, arg2); break; }
             case 5: { msg = format("E-mail \"{0}\" already in use on a different account. Change the email address and try again.", arg1); break; }
@@ -74,10 +83,19 @@
             case 10: { msg = "ERROR: Invalid account check, verification url is only valid for 30 minutes."; break; }
             case 11: { msg = "Sharing link not valid yet."; break; }
             case 12: { msg = "Sharing link is expired."; break; }
+<<<<<<< HEAD
         }
 
         // Add login page link
         if ((msgid != 11) && (msgid != 12)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "Go to login page" + '</a>.' }
+=======
+            case 13: { msg = "If you are an administrator, [login here].".replace('[', '<a href=login?admin=1>').replace(']', '</a>'); break; }
+            case 14: { msg = '<a href=' + window.location.href + '&confirm=1>' + "Click here to reset your account password." + '</a>'; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12) && (msgid != 13) && (msgid != 14)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "Go to login page" + '</a>.' }
+>>>>>>> upstream/master
         QH('mainMessage', msg);
 
         function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };

@@ -1,7 +1,11 @@
 /**
 * @fileoverview Script Compiler / Decompiler / Runner
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.1.0e
 */

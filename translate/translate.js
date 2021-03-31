@@ -1,7 +1,11 @@
 /**
 * @description MeshCentral MeshAgent
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2019-2020
+=======
+* @copyright Intel Corporation 2019-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -37,6 +41,10 @@ var meshCentralSourceFiles = [
     "../views/messenger.handlebars",
     "../views/player.handlebars",
     "../views/desktop.handlebars",
+<<<<<<< HEAD
+=======
+    "../views/terminal.handlebars",
+>>>>>>> upstream/master
     "../views/mstsc.handlebars",
     "../emails/account-check.html",
     "../emails/account-invite.html",
@@ -48,7 +56,12 @@ var meshCentralSourceFiles = [
     "../emails/account-login.txt",
     "../emails/account-reset.txt",
     "../emails/mesh-invite.txt",
+<<<<<<< HEAD
     "../emails/sms-messages.txt"
+=======
+    "../emails/sms-messages.txt",
+    '../agents/agent-translations.json'
+>>>>>>> upstream/master
 ];
 
 var minifyMeshCentralSourceFiles = [
@@ -62,13 +75,25 @@ var minifyMeshCentralSourceFiles = [
     "../views/error4042.handlebars",
     "../views/error404-mobile.handlebars",
     "../views/login.handlebars",
+<<<<<<< HEAD
+=======
+    "../views/login2.handlebars",
+>>>>>>> upstream/master
     "../views/login-mobile.handlebars",
     "../views/terms.handlebars",
     "../views/terms-mobile.handlebars",
     "../views/xterm.handlebars",
     "../views/message.handlebars",
+<<<<<<< HEAD
     "../views/messenger.handlebars",
     "../views/player.handlebars",
+=======
+    "../views/message2.handlebars",
+    "../views/messenger.handlebars",
+    "../views/player.handlebars",
+    "../views/desktop.handlebars",
+    "../views/terminal.handlebars",
+>>>>>>> upstream/master
     "../views/mstsc.handlebars",
     "../public/scripts/agent-desktop-0.0.2.js",
     "../public/scripts/agent-redir-rtc-0.1.0.js",
@@ -351,6 +376,7 @@ function startEx(argv) {
                 if (outname.endsWith('.handlebars') >= 0) { inFile = inFile.split('{{{pluginHandler}}}').join('"{{{pluginHandler}}}"'); }
                 if (outname.endsWith('.js')) { inFile = '<script>' + inFile + '</script>'; }
 
+<<<<<<< HEAD
                 var minifiedOut = minify(inFile, {
                     collapseBooleanAttributes: true,
                     collapseInlineTagWhitespace: false, // This is not good.
@@ -367,6 +393,29 @@ function startEx(argv) {
                     preserveLineBreaks: false,
                     useShortDoctype: true
                 });
+=======
+                var minifiedOut = null;
+                try {
+                    minifiedOut = minify(inFile, {
+                        collapseBooleanAttributes: true,
+                        collapseInlineTagWhitespace: false, // This is not good.
+                        collapseWhitespace: true,
+                        minifyCSS: true,
+                        minifyJS: true,
+                        removeComments: true,
+                        removeOptionalTags: true,
+                        removeEmptyAttributes: true,
+                        removeAttributeQuotes: true,
+                        removeRedundantAttributes: true,
+                        removeScriptTypeAttributes: true,
+                        removeTagWhitespace: true,
+                        preserveLineBreaks: false,
+                        useShortDoctype: true
+                    });
+                } catch (ex) {
+                    console.log(ex);
+                }
+>>>>>>> upstream/master
 
                 // Perform minification post-processing
                 if (outname.endsWith('.js')) { minifiedOut = minifiedOut.substring(8, minifiedOut.length - 9); }
@@ -573,6 +622,12 @@ function translate(lang, langFile, sources, createSubDir) {
         // Single threaded translation
         translateSingleThreaded(lang, langFile, sources, createSubDir);
     }
+<<<<<<< HEAD
+=======
+
+    // Translate any JSON files
+    for (var i = 0; i < sources.length; i++) { if (sources[i].endsWith('.json')) { translateAllInJson(lang, langFile, sources[i]); } }
+>>>>>>> upstream/master
 }
 
 function translateSingleThreaded(lang, langFile, sources, createSubDir) {
@@ -623,6 +678,10 @@ function extract(langFile, sources) {
     for (var i = 0; i < sources.length; i++) {
         if (sources[i].endsWith('.html') || sources[i].endsWith('.htm') || sources[i].endsWith('.handlebars')) { extractFromHtml(sources[i]); } 
         else if (sources[i].endsWith('.txt')) { extractFromTxt(sources[i]); }
+<<<<<<< HEAD
+=======
+        else if (sources[i].endsWith('.json')) { extractFromJson(sources[i]); }
+>>>>>>> upstream/master
     }
     var count = 0, output = [];
     for (var i in sourceStrings) {
@@ -649,6 +708,33 @@ function extractFromTxt(file) {
     }
 }
 
+<<<<<<< HEAD
+=======
+function extractFromJson(file) {
+    log("Processing JSON: " + path.basename(file));
+    var json = JSON.parse(fs.readFileSync(file).toString());
+    var name = path.basename(file);
+    if (json.en == null) return;
+    for (var i in json.en) {
+        if (typeof json.en[i] == 'string') {
+            const str = json.en[i]
+            if (sourceStrings[str] == null) {
+                sourceStrings[str] = { en: str, xloc: [name] };
+            } else {
+                if (sourceStrings[str].xloc == null) { sourceStrings[str].xloc = []; } sourceStrings[str].xloc.push(name);
+            }
+        } else if (Array.isArray(json.en[i])) {
+            for (var k in json.en[i]) {
+                if (typeof json.en[i][k] == 'string') {
+                    const str = json.en[i][k];
+                    if (sourceStrings[str] == null) { sourceStrings[str] = { en: str, xloc: [name] }; } else { if (sourceStrings[str].xloc == null) { sourceStrings[str].xloc = []; } sourceStrings[str].xloc.push(name); }
+                }
+            }
+        }
+    }
+}
+
+>>>>>>> upstream/master
 function extractFromHtml(file) {
     var data = fs.readFileSync(file);
     var { JSDOM } = jsdom;
@@ -749,10 +835,64 @@ function translateFromTxt(lang, file, createSubDir) {
     fs.writeFileSync(outname, out, { flag: 'w+' });
 }
 
+<<<<<<< HEAD
 
 
 function translateFromHtml(lang, file, createSubDir) {
     var data = fs.readFileSync(file);
+=======
+function translateAllInJson(xlang, langFile, file) {
+    log("Translating JSON (" + ((xlang == null)?'All':xlang) + "): " + path.basename(file));
+
+    // Load the language file
+    var langFileData = null;
+    try { langFileData = JSON.parse(fs.readFileSync(langFile)); } catch (ex) { console.log(ex); }
+    if ((langFileData == null) || (langFileData.strings == null)) { log("Invalid language file."); process.exit(); return; }
+    var languages = [];
+
+    // Build translation table, simple source->target for the given language.
+    var xtranslationTable = {};
+    for (var i in langFileData.strings) {
+        var entry = langFileData.strings[i];
+        for (var lang in entry) {
+            if ((lang == 'en') || (lang == 'xloc')) continue;
+            if ((xlang != null) && (lang != xlang)) continue;
+            if (languages.indexOf(lang) == -1) { languages.push(lang); xtranslationTable[lang] = {}; }
+            if ((entry['en'] != null) && (entry[lang] != null)) { xtranslationTable[lang][entry['en']] = entry[lang]; }
+        }
+    }
+
+    // Load and translate
+    var json = JSON.parse(fs.readFileSync(file).toString());
+    if (json.en != null) {
+        for (var j in languages) {
+            var lang = languages[j];
+            for (var i in json.en) {
+                if ((typeof json.en[i] == 'string') && (xtranslationTable[lang][json.en[i]] != null)) {
+                    // Translate a string
+                    if (json[lang] == null) { json[lang] = {}; }
+                    json[lang][i] = xtranslationTable[lang][json.en[i]];
+                } else if (Array.isArray(json.en[i])) {
+                    // Translate an array of strings
+                    var r = [], translateCount = 0;
+                    for (var k in json.en[i]) {
+                        var str = json.en[i][k];
+                        if (xtranslationTable[lang][str] != null) { r.push(xtranslationTable[lang][str]); translateCount++; } else { r.push(str); }
+                    }
+                    if (translateCount > 0) { json[lang][i] = r; }
+                }
+            }
+        }
+    }
+
+    // Save the results
+    fs.writeFileSync(file, JSON.stringify(json, null, 2), { flag: 'w+' });
+}
+
+function translateFromHtml(lang, file, createSubDir) {
+    var data = fs.readFileSync(file);
+    if (file.endsWith('.js')) { data = '<html><head></head><body><script>' + data + '</script></body></html>'; }
+>>>>>>> upstream/master
     var { JSDOM } = jsdom;
     const dom = new JSDOM(data, { includeNodeLocations: true });
     log("Translating HTML (" + lang + "): " + path.basename(file));
@@ -778,6 +918,14 @@ function translateFromHtml(lang, file, createSubDir) {
     } else if (outname.endsWith('.htm')) {
         outnamemin = (outname.substring(0, outname.length - 4) + '-min_' + lang + '.htm');
         outname = (outname.substring(0, outname.length - 4) + '_' + lang + '.htm');
+<<<<<<< HEAD
+=======
+    } else if (outname.endsWith('.js')) {
+        if (out.startsWith('<html><head></head><body><script>')) { out = out.substring(33); }
+        if (out.endsWith('</script></body></html>')) { out = out.substring(0, out.length - 23); }
+        outnamemin = (outname.substring(0, outname.length - 3) + '-min_' + lang + '.js');
+        outname = (outname.substring(0, outname.length - 3) + '_' + lang + '.js');
+>>>>>>> upstream/master
     } else {
         outnamemin = (outname + '_' + lang + '.min');
         outname = (outname + '_' + lang);
@@ -935,7 +1083,11 @@ function InstallModule(modulename, func, tag1, tag2) {
     if ((__dirname.endsWith('/node_modules/meshcentral')) || (__dirname.endsWith('\\node_modules\\meshcentral')) || (__dirname.endsWith('/node_modules/meshcentral/')) || (__dirname.endsWith('\\node_modules\\meshcentral\\'))) { parentpath = require('path').join(__dirname, '../..'); }
 
     // Looks like we need to keep a global reference to the child process object for this to work correctly.
+<<<<<<< HEAD
     InstallModuleChildProcess = child_process.exec('npm install --no-optional --save ' + modulename, { maxBuffer: 512000, timeout: 120000, cwd: parentpath }, function (error, stdout, stderr) {
+=======
+    InstallModuleChildProcess = child_process.exec('npm install --no-optional ' + modulename, { maxBuffer: 512000, timeout: 120000, cwd: parentpath }, function (error, stdout, stderr) {
+>>>>>>> upstream/master
         InstallModuleChildProcess = null;
         if ((error != null) && (error != '')) {
             log('ERROR: Unable to install required module "' + modulename + '". May not have access to npm, or npm may not have suffisent rights to load the new module. Try "npm install ' + modulename + '" to manualy install this module.\r\n');

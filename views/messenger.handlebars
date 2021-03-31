@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" style=height:100%>
+<<<<<<< HEAD
     <head>
         <title>{{{title}}} - Messenger</title>
         <meta http-equiv=X-UA-Compatible content="IE=edge">
@@ -44,12 +45,77 @@
         </div>
         <input id="uploadFileInput" type="file" multiple style="display:none">
         <script type="text/javascript" onunload="onUnLoad()">
+=======
+<head>
+    <title>{{{title}}} - Messenger</title>
+    <meta http-equiv=X-UA-Compatible content="IE=edge">
+    <meta content="text/html;charset=utf-8" http-equiv=Content-Type>
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
+    <meta name=format-detection content="telephone=no">
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="styles/style.css" media="screen" rel="stylesheet" title="CSS" />
+    <link type="text/css" href="styles/messenger.css" media="screen" rel="stylesheet" title="CSS" />
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/filesaver.min.js"></script>
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif">
+    <div id="xtop" style="position:absolute;left:0;right:0;top:0;height:38px;background-color:#036;color:#EEE;box-shadow:3px 3px 10px gray">
+        <img style="float:left" height="38" src="messenger.png" />
+        <div style="position:absolute;background-color:#036;right:0;height:38px">
+            <div id="saveButton" class="icon15 topButton" style="margin-right:4px" title="Save conversation" onclick="saveChatSession()"></div>
+            <div id="notifyButton" class="icon13 topButton" style="display:none" title="Enable browser notification" onclick="enableNotificationsButtonClick()"></div>
+            <div id="fileButton" class="icon4 topButton" title="Share a file" style="display:none" onclick="fileButtonClick()"></div>
+            <div id="camButton" class="icon2 topButton" title="Activate camera & microphone" style="display:none" onclick="camButtonClick()"></div>
+            <div id="micButton" class="icon6 topButton" title="Activate microphone" style="display:none" onclick="micButtonClick()"></div>
+            <div id="hangupButton" class="icon11 topRedButton" title="Hang up" style="display:none" onclick="hangUpButtonClick(1)"></div>
+        </div>
+        <div style="padding-top:9px;padding-left:6px;font-size:20px;display:inline-block"><b><span id="xtitle"></span></b></div>
+    </div>
+    <div id="xmiddle" style="position:absolute;left:0;right:0;top:38px;bottom:36px;font-size:18px">
+        <div id="xmsgparent" style="position:absolute;left:0;right:0;bottom:0;max-height:100%;overflow-y:auto">
+            <div id="xmsg" style="padding:5px"></div>
+            <div id="typingIndicator" style="display:none;margin-left:5px;clear:both"><img src="images/3dots-24.gif" srcset="images/3dots-48.gif 2x" /></div>
+        </div>
+    </div>
+    <div id="xbottom" style="position:absolute;left:0;right:0;bottom:0px;height:36px;background-color:#036;font-size:18px">
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <input id="xouttext" type="text" style="box-sizing:border-box;width:100%;font-size:18px" onfocus=onUserInputFocus(1) onblur=onUserInputFocus(0) onkeyup="updateLocalOutText()" />
+                </td>
+                <td style="width:1px">
+                    <input type="button" id="sendButton" value="Send" style="box-sizing: border-box;float:right;font-size:18px" onclick="xsend(event)" />
+                </td>
+                <td style="width:1px">
+                    <input type="button" id="clearButton" value="Clear" style="box-sizing: border-box;float:right;font-size:18px" onclick="displayClear()" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="remoteVideo" style="position:absolute;right:24px;top:45px;width:320px;height:calc(240px + 30px);background-color:gray;border-radius:12px 12px 12px 12px;box-shadow:3px 3px 10px gray;display:none">
+        <div style="position:absolute;right:0;left:0;top:2.5px;text-align:center">Remote</div>
+        <video id="remoteVideoCanvas" autoplay style="position:absolute;top:20px;left:0;width:100%;height:calc(100% - 30px);background-color:black" onclick="remotePlay(event)"></video>
+        <div id="remoteClickToView" style="position:absolute;top:20px;left:0;width:100%;height:calc(100% - 30px);color:white;text-align:center;padding-top:20px;display:none" onclick="remotePlay(event)">Click here to view.</div>
+    </div>
+    <div id="localVideo" style="position:absolute;right:24px;top:320px;width:160px;height:calc(120px + 30px);background-color:gray;border-radius:12px 12px 12px 12px;box-shadow:3px 3px 10px gray;display:none">
+        <div style="position:absolute;right:0;left:0;top:2.5px;text-align:center">Local</div>
+        <video id="localVideoCanvas" autoplay muted style="position:absolute;top:20px;left:0;right:100%;height:calc(100% - 30px);background-color:black"></video>
+    </div>
+    <canvas width="256" height="256" id="remoteImage" style="position:absolute;right:24px;top:45px;width:200px;height:200px;background-color:gray;border-radius:12px 12px 12px 12px;box-shadow:3px 3px 10px gray;display:none" />
+    <input id="uploadFileInput" type="file" multiple style="display:none">
+    <script type="text/javascript" onunload="onUnLoad()">
+>>>>>>> upstream/master
             var userInputFocus = 0;
             var socket = null;                  // Websocket object
             var state = 0;                      // Connection state. 0 = Disconnected, 1 = Connecting, 2 = Connected.
             var args = XparseUriArgs();
             if (args.key && (isAlphaNumeric(args.key) == false)) { delete args.key; }
             if (args.locale && (isAlphaNumeric(args.locale) == false)) { delete args.locale; }
+<<<<<<< HEAD
+=======
+            var pushMessaging = (args.pmt == 1);
+>>>>>>> upstream/master
 
             // WebRTC sessions and data, audio and video channels
             var random = Math.random();         // Selected random, larger value initiates WebRTC.
@@ -61,10 +127,23 @@
             var userMediaSupport = 0;
             var notification = null;
             getUserMediaSupport(function (x) { userMediaSupport = x; })
+<<<<<<< HEAD
+=======
+            var meshMessengerTitle = '{{{meshMessengerTitle}}}';
+            var meshMessengerImage = '{{{meshMessengerImage}}}';
+            var remoteUserName = '{{{username}}}';
+            var remoteUserId = '{{{userid}}}';
+>>>>>>> upstream/master
             var webrtcconfiguration = '{{{webrtconfig}}}';
             if (webrtcconfiguration == '') { webrtcconfiguration = null; } else { try { webrtcconfiguration = JSON.parse(decodeURIComponent(webrtcconfiguration)); } catch (ex) { console.log('Invalid WebRTC config: "' + webrtcconfiguration + '".'); webrtcconfiguration = null; } }
             var windowFocus = true;
             var chatTextSession = new Date().toString() + '\r\n';
+<<<<<<< HEAD
+=======
+            var localOutText = false;
+            var remoteOutText = false;
+            var remoteImage = false;
+>>>>>>> upstream/master
 
             // File transfer state
             var fileUploads = [];
@@ -72,11 +151,38 @@
             var currentFileUpload = null;
             var currentFileDownload = null;
 
+<<<<<<< HEAD
             // Set the title
             if (args.title) { QH('xtitle', EscapeHtml(args.title).split(' ').join('&nbsp')); document.title = document.title + ' - ' + args.title; }
             
             // Setup web notifications
             if (Notification) { QV('notifyButton', Notification.permission != 'granted'); }
+=======
+            setInterval(resizeVideos, 1000);
+            function resizeVideos() {
+                var rheight = 0;
+                if (remoteStream != null) {
+                    rheight = ((320 * Q('remoteVideoCanvas').videoHeight) / Q('remoteVideoCanvas').videoWidth);
+                    QS('remoteVideo').height = 'calc(' + rheight + 'px + 30px)';
+                } else {
+                    if (remoteImage == true) { rheight += 200; }
+                }
+                if (localStream != null) {
+                    QS('localVideo').height = 'calc(' + ((160 * Q('localVideoCanvas').videoHeight) / Q('localVideoCanvas').videoWidth) + 'px + 30px)';
+                    QS('localVideo').top = (rheight + 50 + ((remoteStream != null)?30:0)) + 'px';
+                }
+            }
+
+            // Set the title
+            var newTitle = '';
+            if (args.title) { newTitle = decodeURIComponent(args.title); document.title = document.title + ' - ' + decodeURIComponent(args.title); }
+            else if (meshMessengerTitle == '!') { newTitle = "MeshMessenger"; } else { newTitle = decodeURIComponent(meshMessengerTitle); }
+            newTitle = newTitle.split('{0}').join(decodeURIComponent(remoteUserName)).split('{1}').join(decodeURIComponent(remoteUserId));
+            QH('xtitle', EscapeHtml(newTitle).split(' ').join('&nbsp'));
+
+            // Setup web notifications
+            try { if (Notification) { QV('notifyButton', Notification.permission != 'granted'); } } catch (ex) { }
+>>>>>>> upstream/master
 
             // Track window focus
             window.addEventListener('focus', function (event) { windowFocus = true; }, false);
@@ -101,6 +207,10 @@
                         // Backspace
                         var outtext = Q('xouttext').value;
                         if (outtext.length > 0) { Q('xouttext').value = outtext.substring(0, outtext.length - 1); }
+<<<<<<< HEAD
+=======
+                        updateLocalOutText();
+>>>>>>> upstream/master
                     }
                 }
                 if (userInputFocus == 0) { haltEvent(e); return false; }
@@ -110,13 +220,21 @@
             document.onkeypress = function ondockeypress(e) {
                 if (Notification) { QV('notifyButton', Notification.permission != 'granted'); }
                 if (notification != null) { notification.close(); notification = null; }
+<<<<<<< HEAD
                 if (state == 2) {
+=======
+                if ((state == 2) || pushMessaging) {
+>>>>>>> upstream/master
                     if (e.keyCode == 13) {
                         // Return
                         xsend(e);
                     } else {
                         // Any other key
+<<<<<<< HEAD
                         if ((userInputFocus == 0) && (e.key.length == 1)) { Q('xouttext').value = Q('xouttext').value + e.key; }
+=======
+                        if ((userInputFocus == 0) && (e.key.length == 1)) { Q('xouttext').value = Q('xouttext').value + e.key; updateLocalOutText(); }
+>>>>>>> upstream/master
                     }
                 }
                 if (userInputFocus == 0) { haltEvent(e); return false; }
@@ -166,9 +284,19 @@
             function displayLocalVideo(active) { QV('localVideo', active); adjustVideoWindows(); }
             function displayRemoteVideo(active) { QV('remoteVideo', active); adjustVideoWindows(); }
             function adjustVideoWindows() {
+<<<<<<< HEAD
                 //var lv = (QS('localVideo')['display'] != 'none');
                 var rv = (QS('remoteVideo')['display'] != 'none');
                 QS('localVideo')['top'] = rv ? '320px' : '45px';
+=======
+                var lv = (QS('localVideo')['display'] != 'none');
+                var rv = (QS('remoteVideo')['display'] != 'none');
+                QV('remoteImage', (remoteImage == true) && (rv == false))
+                if (rv) { QS('localVideo')['top'] = '320px'; }
+                else if (remoteImage) { QS('localVideo')['top'] = '320px'; }
+                else { QS('localVideo')['top'] = '45px'; }
+                resizeVideos();
+>>>>>>> upstream/master
             }
 
             // Display a message from the remote user
@@ -181,11 +309,15 @@
                 if (Notification) { QV('notifyButton', Notification.permission != 'granted'); }
                 if (Notification && (windowFocus == false) && (Notification.permission == 'granted')) {
                     if (notification != null) { notification.close(); notification = null; }
+<<<<<<< HEAD
                     if (args.title) {
                         notification = new Notification("MeshMessenger" + ' - ' + args.title, { body: msg });
                     } else {
                         notification = new Notification("MeshMessenger", { body: msg });
                     }
+=======
+                    notification = new Notification(Q('xtitle').innerHTML.split('&nbsp;').join(' '), { body: msg });
+>>>>>>> upstream/master
                 }
             }
 
@@ -195,11 +327,21 @@
                 if (Notification) { QV('notifyButton', Notification.permission != 'granted'); }
                 var outtext = Q('xouttext').value;
                 if (outtext.length > 0) {
+<<<<<<< HEAD
                     Q('xouttext').value = '';
                     chatTextSession += ((new Date()).toLocaleTimeString() + ' - ' + "Local" + '> ' + outtext + '\r\n');
                     QA('xmsg', '<div style="clear:both"><div class="localBubble">' + EscapeHtml(outtext) + '</div><div></div></div>');
                     Q('xmsgparent').scrollTop = Q('xmsgparent').scrollHeight;
                     send({ action: 'chat', msg: outtext });
+=======
+                    chatTextSession += ((new Date()).toLocaleTimeString() + ' - ' + "Local" + '> ' + outtext + '\r\n');
+                    QA('xmsg', '<div style="clear:both"><div class="localBubble">' + EscapeHtml(outtext) + '</div><div></div></div>');
+                    Q('xmsgparent').scrollTop = Q('xmsgparent').scrollHeight;
+                    if ((state == 2) || pushMessaging) { send({ action: 'chat', msg: outtext }); }
+                    Q('xouttext').value = '';
+                    Q('xouttext').focus();
+                    localOutText = false;
+>>>>>>> upstream/master
                 }
             }
 
@@ -207,13 +349,23 @@
 
             // Update user controls
             function updateControls() {
+<<<<<<< HEAD
                 QE('sendButton', state == 2);
                 QE('clearButton', state == 2);
                 QE('xouttext', state == 2);
+=======
+                QE('sendButton', (state == 2) || pushMessaging);
+                QE('clearButton', (state == 2) || pushMessaging);
+                QE('xouttext', (state == 2) || pushMessaging);
+>>>>>>> upstream/master
                 QV('fileButton', state == 2);
                 QV('camButton', webchannel && webchannel.ok && !localStream && (userMediaSupport == 2));
                 QV('micButton', webchannel && webchannel.ok && !localStream && (userMediaSupport > 0));
                 QV('hangupButton', webchannel && webchannel.ok && localStream);
+<<<<<<< HEAD
+=======
+                updateLocalOutText();
+>>>>>>> upstream/master
             }
 
             // This is the WebRTC setup
@@ -246,9 +398,26 @@
                 }
                 webrtc.ontrack = function (event) {
                     //console.log('ontrack', id);
+<<<<<<< HEAD
                     var video = Q('remoteVideoCanvas');
                     video.srcObject = remoteStream = event.streams[0];
                     video.onloadedmetadata = function (e) { video.play(); };
+=======
+                    QV('remoteClickToView', false);
+                    var video = Q('remoteVideoCanvas');
+                    video.srcObject = remoteStream = event.streams[0];
+                    video.onloadedmetadata = function (e) {
+                        var promise = video.play();
+                        if (promise !== undefined) {
+                            promise.then(function() {
+                                // Video start ok
+                            }).catch(function(err) {
+                                // Video start error, display a play button
+                                QV('remoteClickToView', true);
+                            })
+                        }
+                    };
+>>>>>>> upstream/master
                     displayRemoteVideo(true);
                 }
                 //webrtc.onremovetrack = function (event) { console.log('onremovetrack'); }
@@ -267,6 +436,11 @@
                 return webrtc;
             }
 
+<<<<<<< HEAD
+=======
+            function remotePlay() { QV('remoteClickToView', false); Q('remoteVideoCanvas').play(); }
+
+>>>>>>> upstream/master
             function webRtcHandleOffer(id, description) {
                 //console.log('webRtcHandleOffer', description.sdp.length);
                 var webrtc = webrtcSessions[id];
@@ -299,11 +473,22 @@
                 if (socket != null) { socket.close(); socket = null; }
                 updateControls();
                 state = 0;
+<<<<<<< HEAD
+=======
+                remoteImage = false;
+                QV('remoteImage', false);
+                updateLocalOutText();
+                updateRemoteOutText();
+>>>>>>> upstream/master
             }
 
             // Send data over the current transport (WebRTC first)
             function send(data) {
+<<<<<<< HEAD
                 if (state != 2) return; // If not in connected state, ignore this.
+=======
+                if ((state != 2) && (pushMessaging == false)) return; // If not in connected state, ignore this.
+>>>>>>> upstream/master
                 if (typeof data == 'object') { data = JSON.stringify(data); } // If this is an object, convert it to a string.
                 if (webchannel && webchannel.ok) { if (webchannel.xoutBuffer != null) { webchannel.xoutBuffer.push(data); } else { webchannel.send(data); } } // If WebRTC channel is possible, use it or hold until we can use it.
                 else { if (socket != null) { try { socket.send(data); } catch (ex) { } } } // If a websocket channel is present, use that.
@@ -320,13 +505,46 @@
             // WebRTC id switcher (0 -> 0, 1 -> 2, 2 -> 1)
             function webRtcIdSwitch(id) { if (id == 0) { return 0; } return 3 - id; }
 
+<<<<<<< HEAD
+=======
+            function drawRemoteImage(imageBase64) {
+                var canvas = Q('remoteImage'), context = canvas.getContext('2d'), img = new Image();
+                img.onload = function () { context.drawImage(this, 0, 0, canvas.width, canvas.height); remoteImage = true; adjustVideoWindows(); }
+                img.src = imageBase64;
+            }
+
+>>>>>>> upstream/master
             // Process incoming messages
             function processMessage(data, transport) {
                 if (typeof data == 'string') {
                     try { data = JSON.parse(data); } catch (ex) { console.log('Unable to parse', data); return; }
                     //console.log('RECV', data);
+<<<<<<< HEAD
                     switch (data.action) {
                         case 'chat': { displayRemote(data.msg); break; } // Incoming chat message.
+=======
+
+                    // Handle control command
+                    if (data.ctrlChannel == '102938') {
+                        switch (data.type) {
+                            case 'image': { drawRemoteImage(data.image); break; }
+                            case 'ping': { send({ ctrlChannel: '102938', type: 'pong' }); break; }
+                            case 'pong': { break; }
+                        }
+                        return;
+                    }
+
+                    // Handle command
+                    switch (data.action) {
+                        case 'chat': { displayRemote(data.msg); updateRemoteOutText(false); break; } // Incoming chat message.
+                        case 'outtext': { updateRemoteOutText(data.value); break; }
+                        case 'ctrl': {
+                            if (data.value == 1) { displayControl("Sent as push notification."); }
+                            else if (data.value == 2) { displayControl("Push notification failed."); }
+                            if (data.msg != null) { displayControl(msg); }
+                            break;
+                        }
+>>>>>>> upstream/master
                         case 'random': { if (random > data.random) { startWebRTC(0, true); } break; } // If we have a larger random value, we start WebRTC.
                         case 'webRtcSdp': { if (!webrtcSessions[webRtcIdSwitch(data.id)]) { startWebRTC(webRtcIdSwitch(data.id), false); } webRtcHandleOffer(webRtcIdSwitch(data.id), data.sdp); break; } // Remote WebRTC offer or answer.
                         case 'webRtcIce': { var webrtc = webrtcSessions[webRtcIdSwitch(data.id)]; if (webrtc) { try { webrtc.addIceCandidate(new RTCIceCandidate(data.ice)); } catch (ex) { } } break; } // Remote ICE candidate
@@ -636,9 +854,17 @@
                             state = 2;
                             updateControls();
                             sendws({ action: 'random', random: random }); // Send a random number. Higher number starts the WebRTC session.
+<<<<<<< HEAD
                             return;
                         }
                         if (state == 2) { processMessage(msg.data, 1); }
+=======
+                            updateLocalOutText();
+                            updateRemoteOutText();
+                            return;
+                        }
+                        if (msg.data[0] == '{') { processMessage(msg.data, 1); }
+>>>>>>> upstream/master
                     }
                 } else {
                     displayControl("Error: No connection key specified.");
@@ -674,6 +900,27 @@
                 return r;
             }
 
+<<<<<<< HEAD
         </script>
+=======
+            function updateLocalOutText() {
+                var l = Q('xouttext').value;
+                if (((state != 2) || (l == '')) && (localOutText == true)) {
+                    localOutText = false;
+                    send({ action: 'outtext', value: false });
+                } else if ((state == 2) && ((l != '') && (localOutText == false))) {
+                    localOutText = true;
+                    send({ action: 'outtext', value: true });
+                }
+            }
+
+            function updateRemoteOutText(newState) {
+                //console.log('updateRemoteOutText', newState);
+                if (state != 2) { newState = false; }
+                if (remoteOutText != newState) { remoteOutText = newState; QV('typingIndicator', remoteOutText); }
+            }
+
+    </script>
+>>>>>>> upstream/master
 </body>
 </html>

@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
 Copyright 2018-2020 Intel Corporation
+=======
+Copyright 2018-2021 Intel Corporation
+>>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,11 +62,19 @@ function AmtManager(agent, db, isdebug) {
     var rebindToMeiRetrys = 0;
     obj.reset = function () {
         ++rebindToMeiRetrys;
+<<<<<<< HEAD
         amtMei = null, amtMeiState = 0, amtLms = null, amtLmsState = 0, obj.state = 0, obj.lmsstate = 0;
         //debug('Binding to MEI');
         try {
             var amtMeiLib = require('amt-mei');
             amtMei = new amtMeiLib();
+=======
+        obj.amtMei = null, amtMei = null, amtMeiState = 0, amtLms = null, amtLmsState = 0, obj.state = 0, obj.lmsstate = 0;
+        //debug('Binding to MEI');
+        try {
+            var amtMeiLib = require('amt-mei');
+            obj.amtMei = amtMei = new amtMeiLib();
+>>>>>>> upstream/master
             amtMei.on('error', function (e) { debug('MEI error'); amtMei = null; amtMeiState = -1; obj.state = -1; if (obj.onStateChange != null) { obj.onStateChange(amtMeiState); } });
             amtMei.getVersion(function (result) {
                 if (result == null) {
@@ -87,7 +99,11 @@ function AmtManager(agent, db, isdebug) {
     obj.getMeiState = function(flags, func) {
         if ((amtMei == null) || (amtMeiState < 2)) { if (func != null) { func(null); } return; }
         try {
+<<<<<<< HEAD
             var amtMeiTmpState = { OsHostname: require('os').hostname(), Flags: 0 }; // Flags: 1=EHBC, 2=CCM, 4=ACM
+=======
+            var amtMeiTmpState = { 'core-ver': 1, OsHostname: require('os').hostname(), Flags: 0 }; // Flags: 1=EHBC, 2=CCM, 4=ACM
+>>>>>>> upstream/master
             if (getMeiStateCache.MeiVersion != null) { amtMeiTmpState.MeiVersion = getMeiStateCache.MeiVersion; } else { amtMei.getProtocolVersion(function (result) { if (result != null) { getMeiStateCache.MeiVersion = amtMeiTmpState.MeiVersion = result; } }); }
             if ((flags & 1) != 0) {
                 if (getMeiStateCache.Versions != null) {
@@ -97,7 +113,11 @@ function AmtManager(agent, db, isdebug) {
                 }
             }
             amtMei.getProvisioningMode(function (result) { if (result) { amtMeiTmpState.ProvisioningMode = result.mode; } });
+<<<<<<< HEAD
             amtMei.getProvisioningState(function (result) { if (result) { amtMeiTmpState.ProvisioningState = result.state; } }); // 0: "Not Activated (Pre)", 1: "Not Activated (In)", 2: "Activated"
+=======
+            amtMei.getProvisioningState(function (result) { if (result) { amtMeiTmpState.ProvisioningState = result.state; if (result.state != 2) { amtMei.stopConfiguration(function () { }); } } }); // 0: "Not Activated (Pre)", 1: "Not Activated (In)", 2: "Activated". Make sure to stop remote configuration if needed.
+>>>>>>> upstream/master
             amtMei.getEHBCState(function (result) { if ((result != null) && (result.EHBC == true)) { amtMeiTmpState.Flags += 1; } });
             amtMei.getControlMode(function (result) { if (result != null) { if (result.controlMode == 1) { amtMeiTmpState.Flags += 2; } if (result.controlMode == 2) { amtMeiTmpState.Flags += 4; } } }); // Flag 2 = CCM, 4 = ACM
             //amtMei.getMACAddresses(function (result) { if (result) { amtMeiTmpState.mac = result; } });
@@ -157,6 +177,15 @@ function AmtManager(agent, db, isdebug) {
         }
     }
 
+<<<<<<< HEAD
+=======
+    // Start host based ACM activation with TLS
+    obj.startConfigurationHBased = function startConfigurationHBased(certHash, hostVpn, dnsSuffixList, func) {
+        if ((amtMei == null) || (amtMeiState < 2)) { if (func != null) { func({ status: -100 }); } return; }
+        amtMei.startConfigurationHBased(certHash, hostVpn, dnsSuffixList, func);
+    }
+
+>>>>>>> upstream/master
 }
 
 module.exports = AmtManager;

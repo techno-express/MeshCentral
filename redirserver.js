@@ -1,7 +1,11 @@
 /**
 * @description Meshcentral web server
 * @author Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
+=======
+* @copyright Intel Corporation 2018-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.2
 */
@@ -53,7 +57,11 @@ module.exports.CreateRedirServer = function (parent, db, args, func) {
     obj.app.get('/MeshServerRootCert.cer', function (req, res) {
         // The redirection server starts before certificates are loaded, make sure to handle the case where no certificate is loaded now.
         if (obj.certificates != null) {
+<<<<<<< HEAD
             res.set({ 'Cache-Control': 'no-store', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="' + obj.certificates.RootName + '.cer"' });
+=======
+            res.set({ 'Cache-Control': 'no-store', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename*="' + encodeURIComponent(obj.certificates.RootName) + '.cer"' });
+>>>>>>> upstream/master
             var rootcert = obj.certificates.root.cert;
             var i = rootcert.indexOf('-----BEGIN CERTIFICATE-----\r\n');
             if (i >= 0) { rootcert = rootcert.substring(i + 29); }
@@ -94,9 +102,15 @@ module.exports.CreateRedirServer = function (parent, db, args, func) {
         for (var i in parent.config.domains) {
             if (parent.config.domains[i].dns != null) { continue; }
             var url = parent.config.domains[i].url;
+<<<<<<< HEAD
             obj.app.post(url + "amtevents.ashx", obj.parent.webserver.handleAmtEventRequest);
             obj.app.get(url + "meshsettings", obj.parent.webserver.handleMeshSettingsRequest);
             obj.app.get(url + "meshagents", obj.parent.webserver.handleMeshAgentRequest);
+=======
+            obj.app.post(url + 'amtevents.ashx', obj.parent.webserver.handleAmtEventRequest);
+            obj.app.get(url + 'meshsettings', obj.parent.webserver.handleMeshSettingsRequest);
+            obj.app.get(url + 'meshagents', obj.parent.webserver.handleMeshAgentRequest);
+>>>>>>> upstream/master
 
             // Server redirects
             if (parent.config.domains[i].redirects) {
@@ -115,6 +129,13 @@ module.exports.CreateRedirServer = function (parent, db, args, func) {
         obj.app.get(url, performRedirection); // Root redirection
         obj.app.get(url + 'player.htm', performRedirection); // Player redirection
 
+<<<<<<< HEAD
+=======
+        // Setup any .well-known folders
+        var p = obj.parent.path.join(obj.parent.datapath, '.well-known' + ((parent.config.domains[i].id == '') ? '' : ('-' + parent.config.domains[i].id)));
+        if (obj.parent.fs.existsSync(p)) { obj.app.use(url + '.well-known', obj.express.static(p)); }
+
+>>>>>>> upstream/master
         // Setup all of the redirections to HTTPS
         const redirections = ['terms', 'logout', 'MeshServerRootCert.cer', 'mescript.ashx', 'checkmail', 'agentinvite', 'messenger', 'meshosxagent', 'devicepowerevents.ashx', 'downloadfile.ashx', 'userfiles/*', 'webrelay.ashx', 'health.ashx', 'logo.png', 'welcome.jpg'];
         for (i in redirections) { obj.app.get(url + redirections[i], performRedirection); }

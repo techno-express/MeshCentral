@@ -35,6 +35,10 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     obj.firstUpKeys = [];
     obj.stopInput = false;
     obj.localKeyMap = true;
+<<<<<<< HEAD
+=======
+    obj.remoteKeyMap = false; // If false, the remote keyboard mapping is not used.
+>>>>>>> upstream/master
     obj.pressedKeys = [];
 
     obj.sessionid = 0;
@@ -77,7 +81,7 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
         obj.UnGrabKeyInput();
         obj.UnGrabMouseInput();
         obj.touchenabled = 0;
-        if (obj.onScreenSizeChange != null) obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId);
+        if (obj.onScreenSizeChange != null) { obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId); }
         obj.Canvas.clearRect(0, 0, obj.CanvasId.width, obj.CanvasId.height);
     }
 
@@ -101,7 +105,11 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     }
 
     obj.send = function (x) {
+<<<<<<< HEAD
         if (obj.debugmode > 2) { console.log("KSend(" + x.length + "): " + rstr2hex(x)); }
+=======
+        if (obj.debugmode > 2) { console.log('KSend(' + x.length + '): ' + rstr2hex(x)); }
+>>>>>>> upstream/master
         if (obj.parent != null) { obj.parent.send(x); }
     }
 
@@ -115,7 +123,11 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
         // String.fromCharCode.apply() can't handle very large argument count, so we have to split like this.
         while ((tdata.byteLength - ptr) > 50000) { strs.push(String.fromCharCode.apply(null, tdata.slice(ptr, ptr + 50000))); ptr += 50000; }
         if (ptr > 0) { strs.push(String.fromCharCode.apply(null, tdata.slice(ptr))); } else { strs.push(String.fromCharCode.apply(null, tdata)); }
+<<<<<<< HEAD
         tile.src = "data:image/jpeg;base64," + btoa(strs.join(''));
+=======
+        tile.src = 'data:image/jpeg;base64,' + btoa(strs.join(''));
+>>>>>>> upstream/master
         tile.onload = function () {
             //console.log('DecodeTile #' + this.xcount);
             if ((obj.Canvas != null) && (obj.KillDraw < r) && (obj.State != 0)) {
@@ -157,13 +169,21 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     }
 
     obj.SendUnPause = function () {
+<<<<<<< HEAD
         if (obj.debugmode > 1) { console.log("SendUnPause"); }
+=======
+        if (obj.debugmode > 1) { console.log('SendUnPause'); }
+>>>>>>> upstream/master
         //obj.xxStateChange(3);
         obj.send(String.fromCharCode(0x00, 0x08, 0x00, 0x05, 0x00));
     }
 
     obj.SendPause = function () {
+<<<<<<< HEAD
         if (obj.debugmode > 1) { console.log("SendPause"); }
+=======
+        if (obj.debugmode > 1) { console.log('SendPause'); }
+>>>>>>> upstream/master
         //obj.xxStateChange(2);
         obj.send(String.fromCharCode(0x00, 0x08, 0x00, 0x05, 0x01));
     }
@@ -181,8 +201,13 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     }
 
     obj.ProcessScreenMsg = function (width, height) {
+<<<<<<< HEAD
         if (obj.debugmode > 0) { console.log("ScreenSize: " + width + " x " + height); }
         if ((obj.ScreenWidth == width) || (obj.ScreenHeight == height)) return; // Ignore change if screen is same size.
+=======
+        if (obj.debugmode > 0) { console.log('ScreenSize: ' + width + ' x ' + height); }
+        if ((obj.ScreenWidth == width) && (obj.ScreenHeight == height)) return; // Ignore change if screen is same size.
+>>>>>>> upstream/master
         obj.Canvas.setTransform(1, 0, 0, 1, 0, 0);
         obj.rotation = 0;
         obj.FirstDraw = true;
@@ -192,6 +217,7 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
         while (obj.PendingOperations.length > 0) { obj.PendingOperations.shift(); }
         obj.SendCompressionLevel(1);
         obj.SendUnPause();
+        // No need to event the display size change now, it will be evented on first draw.
         if (obj.onScreenSizeChange != null) { obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId); }
     }
 
@@ -251,12 +277,21 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
                 obj.TouchArray = {};
                 break;
             case 17: // MNG_KVM_MESSAGE
+<<<<<<< HEAD
                 var str = String.fromCharCode.apply(null, data.slice(4));
                 console.log("Got KVM Message: " + str);
                 if (obj.onMessage != null) obj.onMessage(str, obj);
                 break;
             case 65: // Alert
                 var str = String.fromCharCode.apply(null, data.slice(4));
+=======
+                var str = String.fromCharCode.apply(null, view.slice(4));
+                console.log('Got KVM Message: ' + str);
+                if (obj.onMessage != null) obj.onMessage(str, obj);
+                break;
+            case 65: // Alert
+                var str = String.fromCharCode.apply(null, view.slice(4));
+>>>>>>> upstream/master
                 if (str[0] != '.') {
                     console.log(str); //alert('KVM: ' + str);
                     if (obj.parent && obj.parent.setConsoleMessage) { obj.parent.setConsoleMessage(str); }
@@ -265,7 +300,11 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
                 }
                 break;
             case 88: // MNG_KVM_MOUSE_CURSOR
+<<<<<<< HEAD
                 if (cmdsize != 5) break;
+=======
+                if ((cmdsize != 5) || (obj.stopInput)) break;
+>>>>>>> upstream/master
                 var cursorNum = view[4];
                 if (cursorNum > mouseCursors.length) { cursorNum = 0; }
                 xMouseCursorCurrent = mouseCursors[cursorNum];
@@ -281,7 +320,11 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     // Keyboard and Mouse I/O.
     obj.MouseButton = { "NONE": 0x00, "LEFT": 0x02, "RIGHT": 0x08, "MIDDLE": 0x20 };
     obj.KeyAction = { "NONE": 0, "DOWN": 1, "UP": 2, "SCROLL": 3, "EXUP": 4, "EXDOWN": 5, "DBLCLICK": 6 };
+<<<<<<< HEAD
     obj.InputType = { "KEY": 1, "MOUSE": 2, "CTRLALTDEL": 10, "TOUCH": 15 };
+=======
+    obj.InputType = { "KEY": 1, "MOUSE": 2, "CTRLALTDEL": 10, "TOUCH": 15, "KEYUNICODE": 85 };
+>>>>>>> upstream/master
     obj.Alternate = 0;
 
     var convertKeyCodeTable = {
@@ -397,8 +440,26 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
                 var i = obj.pressedKeys.indexOf(kc);
                 if (i != -1) { obj.pressedKeys.splice(i, 1); } // Remove the key press from the pressed array
             }
+<<<<<<< HEAD
             obj.send(String.fromCharCode(0x00, obj.InputType.KEY, 0x00, 0x06, (action - 1), kc));
         }
+=======
+
+            if (obj.debugmode > 0) { console.log('Sending Key ' + kc + ', action ' + action); }
+            obj.send(String.fromCharCode(0x00, obj.InputType.KEY, 0x00, 0x06, (action - 1), kc));
+        }
+    }
+
+    obj.SendStringUnicode = function (str) {
+        if (obj.State != 3) return;
+        for (var i = 0; i < str.length; i++) { obj.send(String.fromCharCode(0x00, obj.InputType.KEYUNICODE, 0x00, 0x07, 0) + ShortToStr(str.charCodeAt(i))); }
+    }
+
+    obj.SendKeyUnicode = function (action, val) {
+        if (obj.State != 3) return;
+        if (obj.debugmode > 0) { console.log('Sending UnicodeKey ' + val); }
+        obj.send(String.fromCharCode(0x00, obj.InputType.KEYUNICODE, 0x00, 0x07, (action - 1)) + ShortToStr(val));
+>>>>>>> upstream/master
     }
 
     obj.sendcad = function() { obj.SendCtrlAltDelMsg(); }
@@ -506,7 +567,7 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
             obj.Canvas.canvas.width = obj.ScreenWidth;
             obj.Canvas.canvas.height = obj.ScreenHeight;
             obj.Canvas.fillRect(0, 0, obj.ScreenWidth, obj.ScreenHeight);
-            if (obj.onScreenSizeChange != null) obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId);
+            if (obj.onScreenSizeChange != null) { obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId); }
         }
         obj.FirstDraw = false;
         if (obj.debugmode > 1) { console.log("onResize: " + obj.ScreenWidth + " x " + obj.ScreenHeight); }
@@ -520,13 +581,35 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
     obj.xxMouseDblClick = function (e) { if (obj.State == 3) obj.SendMouseMsg(obj.KeyAction.DBLCLICK, e); if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
     obj.xxDOMMouseScroll = function (e) { if (obj.State == 3) { obj.SendMouseMsg(obj.KeyAction.SCROLL, e); return false; } return true; }
     obj.xxMouseWheel = function (e) { if (obj.State == 3) { obj.SendMouseMsg(obj.KeyAction.SCROLL, e); return false; } return true; }
-    obj.xxKeyUp = function (e) { if (obj.State == 3) { obj.SendKeyMsg(obj.KeyAction.UP, e); } if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
-    obj.xxKeyDown = function (e) { if (obj.State == 3) { obj.SendKeyMsg(obj.KeyAction.DOWN, e); } if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
-    obj.xxKeyPress = function (e) { if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
+    obj.xxKeyUp = function (e) {
+        if ((e.key != 'Dead') && (obj.State == 3)) {
+            if ((typeof e.key == 'string') && (e.key.length == 1) && (e.ctrlKey != true) && (e.altKey != true) && ((obj.remoteKeyMap == false) || (obj.debugmode > 0))) { obj.SendKeyUnicode(obj.KeyAction.UP, e.key.charCodeAt(0)); } else { obj.SendKeyMsg(obj.KeyAction.UP, e); }
+        }
+        if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false;
+    }
+    obj.xxKeyDown = function (e) {
+        if ((e.key != 'Dead') && (obj.State == 3)) {
+            if (!((typeof e.key == 'string') && (e.key.length == 1) && (e.ctrlKey != true) && (e.altKey != true) && ((obj.remoteKeyMap == false) || (obj.debugmode > 0)))) {
+                obj.SendKeyMsg(obj.KeyAction.DOWN, e);
+                if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false;
+            }
+        }
+    }
+    obj.xxKeyPress = function (e) {
+        if ((e.key != 'Dead') && (obj.State == 3)) {
+            if ((typeof e.key == 'string') && (e.key.length == 1) && (e.ctrlKey != true) && (e.altKey != true) && ((obj.remoteKeyMap == false) || (obj.debugmode > 0))) { obj.SendKeyUnicode(obj.KeyAction.DOWN, e.key.charCodeAt(0)); } //else { obj.SendKeyMsg(obj.KeyAction.DOWN, e); }
+        }
+        if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false;
+    }
 
     // Key handlers
-    obj.handleKeys = function (e) { if (obj.stopInput == true || desktop.State != 3) return false; return obj.xxKeyPress(e); }
+    obj.handleKeys = function (e) {
+        //console.log('keypress', e.code, e.key, e.keyCode, (e.key.length == 1) ? e.key.charCodeAt(0) : 0);
+        if (obj.stopInput == true || desktop.State != 3) return false;
+        return obj.xxKeyPress(e);
+    }
     obj.handleKeyUp = function (e) {
+        //console.log('keyup', e.code, e.key, e.keyCode, (e.key.length == 1)?e.key.charCodeAt(0):0);
         if (obj.stopInput == true || desktop.State != 3) return false;
         if (obj.firstUpKeys.length < 5) {
             obj.firstUpKeys.push(e.keyCode);
@@ -535,6 +618,10 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
         return obj.xxKeyUp(e);
     }
     obj.handleKeyDown = function (e) {
+<<<<<<< HEAD
+=======
+        //console.log('keydown', e.code, e.key, e.keyCode, (e.key.length == 1) ? e.key.charCodeAt(0) : 0);
+>>>>>>> upstream/master
         if (obj.stopInput == true || desktop.State != 3) return false;
         return obj.xxKeyDown(e);
     }
@@ -752,7 +839,7 @@ var CreateAgentRemoteDesktop = function (canvasid, scrolldiv) {
 
         obj.ScreenWidth = obj.Canvas.canvas.width;
         obj.ScreenHeight = obj.Canvas.canvas.height;
-        if (obj.onScreenSizeChange != null) obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId);
+        if (obj.onScreenSizeChange != null) { console.log('s4', obj.ScreenWidth, obj.ScreenHeight); obj.onScreenSizeChange(obj, obj.ScreenWidth, obj.ScreenHeight, obj.CanvasId); }
         return true;
     }
 

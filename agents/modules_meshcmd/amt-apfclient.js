@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
 Copyright 2018-2020 Intel Corporation
+=======
+Copyright 2018-2021 Intel Corporation
+>>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +21,11 @@ limitations under the License.
 /**
 * @description APF/CIRA Client for Duktape
 * @author Joko Sastriawan & Ylian Saint-Hilaire
+<<<<<<< HEAD
 * @copyright Intel Corporation 2020
+=======
+* @copyright Intel Corporation 2020-2021
+>>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.2
 */
@@ -183,6 +191,11 @@ function CreateAPFClient(parent, args) {
 
     obj.updateMeiState = function (state) { SendJsonControl(obj.forwardClient.ws, { action: 'meiState', value: state }); }
     obj.sendMeiDeactivationState = function (state) { SendJsonControl(obj.forwardClient.ws, { action: 'deactivate', value: state }); }
+<<<<<<< HEAD
+=======
+    obj.sendStartTlsHostConfigResponse = function (state) { SendJsonControl(obj.forwardClient.ws, { action: 'startTlsHostConfig', value: state }); }
+    obj.sendStopConfigurationResponse = function (state) { SendJsonControl(obj.forwardClient.ws, { action: 'stopConfiguration', value: state }); }
+>>>>>>> upstream/master
 
     function SendJsonControl(socket, o) {
         var data = JSON.stringify(o)
