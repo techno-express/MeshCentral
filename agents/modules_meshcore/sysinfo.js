@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
 Copyright 2019-2020 Intel Corporation
-=======
-Copyright 2019-2021 Intel Corporation
->>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -219,7 +215,6 @@ function macos_memUtilization()
     }
 }
 
-<<<<<<< HEAD
 switch(process.platform)
 {
     case 'linux':
@@ -230,81 +225,6 @@ switch(process.platform)
         break;
     case 'darwin':
         module.exports = { cpuUtilization: macos_cpuUtilization, memUtilization: macos_memUtilization };
-=======
-function windows_thermals()
-{
-    var ret = [];
-    child = require('child_process').execFile(process.env['windir'] + '\\System32\\wbem\\wmic.exe', ['wmic', '/namespace:\\\\root\\wmi', 'PATH', 'MSAcpi_ThermalZoneTemperature', 'get', 'CurrentTemperature']);
-    child.stdout.str = ''; child.stdout.on('data', function (c) { this.str += c.toString(); });
-    child.stderr.str = ''; child.stderr.on('data', function (c) { this.str += c.toString(); });
-    child.waitExit();
-
-    if(child.stdout.str.trim!='')
-    {
-        var lines = child.stdout.str.trim().split('\r\n');
-        for (var i = 1; i < lines.length; ++i)
-        {
-            if (lines[i].trim() != '') { ret.push(((parseFloat(lines[i]) / 10) - 273.15).toFixed(2)); }
-        }
-    }
-    return (ret);
-}
-
-function linux_thermals()
-{
-    child = require('child_process').execFile('/bin/sh', ['sh']);
-    child.stdout.str = ''; child.stdout.on('data', function (c) { this.str += c.toString(); });
-    child.stderr.str = ''; child.stderr.on('data', function (c) { this.str += c.toString(); });
-    child.stdin.write("cat /sys/class/thermal/thermal_zone*/temp | awk '{ print $0 / 1000 }'\nexit\n");
-    child.waitExit();
-    var ret = child.stdout.str.trim().split('\n');
-    if (ret.length == 1 && ret[0] == '') { ret = []; }
-    return (ret);
-}
-
-function macos_thermals()
-{
-    var ret = [];
-    var child = require('child_process').execFile('/bin/sh', ['sh']);
-    child.stdout.str = ''; child.stdout.on('data', function (c) { this.str += c.toString(); });
-    child.stderr.on('data', function () { });
-    child.stdin.write('powermetrics --help | grep SMC\nexit\n');
-    child.waitExit();
-    
-    if (child.stdout.str.trim() != '')
-    {
-        child = require('child_process').execFile('/bin/sh', ['sh']);
-        child.stdout.str = ''; child.stdout.on('data', function (c)
-        {
-            this.str += c.toString();
-            var tokens = this.str.trim().split('\n');
-            for (var i in tokens)
-            {
-                if (tokens[i].split(' die temperature: ').length > 1)
-                {
-                    ret.push(tokens[i].split(' ')[3]);
-                    this.parent.kill();
-                }
-            }
-        });
-        child.stderr.str = ''; child.stderr.on('data', function (c) { this.str += c.toString(); });
-        child.stdin.write('powermetrics -s smc\n');
-        child.waitExit(5000);
-    }
-    return (ret);
-}
-
-switch(process.platform)
-{
-    case 'linux':
-        module.exports = { cpuUtilization: linux_cpuUtilization, memUtilization: linux_memUtilization, thermals: linux_thermals };
-        break;
-    case 'win32':
-        module.exports = { cpuUtilization: windows_cpuUtilization, memUtilization: windows_memUtilization, thermals: windows_thermals };
-        break;
-    case 'darwin':
-        module.exports = { cpuUtilization: macos_cpuUtilization, memUtilization: macos_memUtilization, thermals: macos_thermals };
->>>>>>> upstream/master
         break;
 }
 

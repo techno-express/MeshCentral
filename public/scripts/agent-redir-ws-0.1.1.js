@@ -76,10 +76,7 @@ var CreateAgentRedirect = function (meshserver, module, serverPublicNamePort, au
         var controlMsg;
         try { controlMsg = JSON.parse(msg); } catch (e) { return; }
         if (controlMsg.ctrlChannel != '102938') { obj.m.ProcessData(msg); return; }
-<<<<<<< HEAD
         //console.log(controlMsg);
-=======
->>>>>>> upstream/master
         if ((typeof args != 'undefined') && args.redirtrace) { console.log('RedirRecv', controlMsg); }
         if (controlMsg.type == 'console') {
             obj.setConsoleMessage(controlMsg.msg, controlMsg.msgid, controlMsg.msgargs, controlMsg.timeout);
@@ -178,12 +175,6 @@ var CreateAgentRedirect = function (meshserver, module, serverPublicNamePort, au
         } else {
             // Send the data to the module
             if (obj.m.ProcessBinaryCommand) {
-<<<<<<< HEAD
-=======
-                // If only 1 byte
-                if ((cmdAccLen == 0) && (e.data.byteLength < 4)) return; // Ignore any commands less than 4 bytes.
-
->>>>>>> upstream/master
                 // Send as Binary Command
                 if (cmdAccLen != 0) {
                     // Accumulator is active

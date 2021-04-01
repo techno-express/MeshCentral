@@ -1,11 +1,7 @@
 /**
 * @description Windows Service Launcher
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -36,12 +32,6 @@ function start() {
         } else if (fs.existsSync(path.join(__dirname, '../meshcentral/meshcentral.js'))) {
             runarg = path.join(__dirname, '../meshcentral/meshcentral.js');
             cwd = path.join(__dirname, '../meshcentral');
-<<<<<<< HEAD
-=======
-        } else if (fs.existsSync(path.join(__dirname, '../meshcentral.js'))) {
-            runarg = path.join(__dirname, '../meshcentral.js');
-            cwd = path.join(__dirname, '..');
->>>>>>> upstream/master
         }
         if (runarg == null) { console.log('ERROR: Unable to find MeshCentral.js'); process.exit(255); return; }
 

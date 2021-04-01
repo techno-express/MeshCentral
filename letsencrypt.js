@@ -1,11 +1,7 @@
 ﻿/**
 * @description MeshCentral letsEncrypt module, uses GreenLock to do all the work.
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.2
 */
@@ -62,21 +58,12 @@ module.exports.CreateLetsEncrypt = function (parent) {
     obj.getCertificate = function(certs, func) {
         obj.runAsProduction = (obj.parent.config.letsencrypt.production === true);
         obj.log("Getting certs from local store (" + (obj.runAsProduction ? "Production" : "Staging") + ")");
-<<<<<<< HEAD
         if (certs.CommonName.indexOf('.') == -1) { obj.configErr = "ERROR: Use --cert to setup the default server name before using Let's Encrypt."; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
         if (obj.parent.config.letsencrypt == null) { obj.configErr = "No Let's Encrypt configuration"; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
         if (obj.parent.config.letsencrypt.email == null) { obj.configErr = "ERROR: Let's Encrypt email address not specified."; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
         if ((obj.parent.redirserver == null) || ((typeof obj.parent.config.settings.rediraliasport === 'number') && (obj.parent.config.settings.rediraliasport !== 80)) || ((obj.parent.config.settings.rediraliasport == null) && (obj.parent.redirserver.port !== 80))) { obj.configErr = "ERROR: Redirection web server must be active on port 80 for Let's Encrypt to work."; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
         if (obj.redirWebServerHooked !== true) { obj.configErr = "ERROR: Redirection web server not setup for Let's Encrypt to work."; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
         if ((obj.parent.config.letsencrypt.rsakeysize != null) && (obj.parent.config.letsencrypt.rsakeysize !== 2048) && (obj.parent.config.letsencrypt.rsakeysize !== 3072)) { obj.configErr = "ERROR: Invalid Let's Encrypt certificate key size, must be 2048 or 3072."; obj.log(obj.configErr); console.log(obj.configErr); func(certs); return; }
-=======
-        if (certs.CommonName.indexOf('.') == -1) { obj.configErr = "Add \"cert\" value to settings in config.json before using Let's Encrypt."; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
-        if (obj.parent.config.letsencrypt == null) { obj.configErr = "No Let's Encrypt configuration"; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
-        if (obj.parent.config.letsencrypt.email == null) { obj.configErr = "Let's Encrypt email address not specified."; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
-        if ((obj.parent.redirserver == null) || ((typeof obj.parent.config.settings.rediraliasport === 'number') && (obj.parent.config.settings.rediraliasport !== 80)) || ((obj.parent.config.settings.rediraliasport == null) && (obj.parent.redirserver.port !== 80))) { obj.configErr = "Redirection web server must be active on port 80 for Let's Encrypt to work."; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
-        if (obj.redirWebServerHooked !== true) { obj.configErr = "Redirection web server not setup for Let's Encrypt to work."; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
-        if ((obj.parent.config.letsencrypt.rsakeysize != null) && (obj.parent.config.letsencrypt.rsakeysize !== 2048) && (obj.parent.config.letsencrypt.rsakeysize !== 3072)) { obj.configErr = "Invalid Let's Encrypt certificate key size, must be 2048 or 3072."; parent.addServerWarning(obj.configErr); obj.log("WARNING: " + obj.configErr); func(certs); return; }
->>>>>>> upstream/master
         if (obj.checkInterval == null) { obj.checkInterval = setInterval(obj.checkRenewCertificate, 86400000); } // Call certificate check every 24 hours.
         obj.configOk = true;
 
@@ -169,24 +156,12 @@ module.exports.CreateLetsEncrypt = function (parent) {
 
     obj.requestCertificate = function () {
         if (obj.pendingRequest == true) return;
-<<<<<<< HEAD
         if (obj.configOk == false) { obj.log("Can't request cert, invalid configuration.");return; }
-=======
-        if (obj.configOk == false) { obj.log("Can't request cert, invalid configuration."); return; }
-        if (acme.forge == null) { obj.log("Forge not setup in ACME, unable to continue."); return; }
->>>>>>> upstream/master
         obj.pendingRequest = true;
 
         // Create a private key
         obj.log("Generating private key...");
         acme.forge.createPrivateKey().then(function (accountKey) {
-<<<<<<< HEAD
-=======
-
-            // TODO: ZeroSSL
-            // https://acme.zerossl.com/v2/DV90
-
->>>>>>> upstream/master
             // Create the ACME client
             obj.log("Setting up ACME client...");
             obj.client = new acme.Client({
@@ -196,16 +171,10 @@ module.exports.CreateLetsEncrypt = function (parent) {
 
             // Create Certificate Request (CSR)
             obj.log("Creating certificate request...");
-<<<<<<< HEAD
             acme.forge.createCsr({
                 commonName: obj.leDomains[0],
                 altNames: obj.leDomains
             }).then(function (r) {
-=======
-            var certRequest = { commonName: obj.leDomains[0] };
-            if (obj.leDomains.length > 1) { certRequest.altNames = obj.leDomains; }
-            acme.forge.createCsr(certRequest).then(function (r) {
->>>>>>> upstream/master
                 var csr = r[1];
                 obj.tempPrivateKey = r[0];
                 obj.log("Requesting certificate from Let's Encrypt...");
@@ -255,11 +224,7 @@ module.exports.CreateLetsEncrypt = function (parent) {
             webServer: obj.redirWebServerHooked,
             certPath: obj.certPath
         };
-<<<<<<< HEAD
         if (obj.configErr) { r.error = obj.configErr; }
-=======
-        if (obj.configErr) { r.error = "WARNING: " + obj.configErr; }
->>>>>>> upstream/master
         if (obj.certExpire) { r.cert = 'Present'; r.daysLeft = Math.floor((obj.certExpire - new Date()) / 86400000); } else { r.cert = 'None'; }
         return r;
     }

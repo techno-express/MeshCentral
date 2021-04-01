@@ -1,9 +1,5 @@
 ﻿/*
-<<<<<<< HEAD
 Copyright 2020 Intel Corporation
-=======
-Copyright 2020-2021 Intel Corporation
->>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -168,11 +164,7 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                 obj.kerberosDone = 1;
             }
         } else if (obj.challengeParams != null) {
-<<<<<<< HEAD
             var response = hex_md5(hex_md5(obj.user + ':' + obj.challengeParams['realm'] + ':' + obj.pass) + ':' + obj.challengeParams['nonce'] + ':' + obj.noncecounter + ':' + obj.cnonce + ':' + obj.challengeParams['qop'] + ':' + hex_md5(action + ':' + url));
-=======
-            var response = hex_md5(hex_md5(obj.user + ':' + obj.challengeParams['realm'] + ':' + obj.pass) + ':' + obj.challengeParams['nonce'] + ':' + obj.noncecounter + ':' + obj.cnonce + ':' + obj.challengeParams['qop'] + ':' + hex_md5(action + ':' + url + ((obj.challengeParams['qop'] == 'auth-int') ? (':' + hex_md5(postdata)) : '')));
->>>>>>> upstream/master
             h += 'Authorization: ' + obj.renderDigest({ 'username': obj.user, 'realm': obj.challengeParams['realm'], 'nonce': obj.challengeParams['nonce'], 'uri': url, 'qop': obj.challengeParams['qop'], 'response': response, 'nc': obj.noncecounter++, 'cnonce': obj.cnonce }) + '\r\n';
         }
         h += 'Host: ' + obj.host + ':' + obj.port + '\r\nContent-Length: ' + postdata.length + '\r\n\r\n' + postdata; // Use Content-Length
@@ -250,24 +242,14 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                         var options = { socket: ser, ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE, rejectUnauthorized: false };
                         if (obj.xtlsMethod == 1) { options.secureProtocol = 'TLSv1_method'; }
                         if (obj.xtlsoptions) {
-<<<<<<< HEAD
                             if (obj.xtlsoptions.ca) options.ca = obj.xtlsoptions.ca;
                             if (obj.xtlsoptions.cert) options.cert = obj.xtlsoptions.cert;
                             if (obj.xtlsoptions.key) options.key = obj.xtlsoptions.key;
-=======
-                            if (obj.xtlsoptions.ca) { options.ca = obj.xtlsoptions.ca; }
-                            if (obj.xtlsoptions.cert) { options.cert = obj.xtlsoptions.cert; }
-                            if (obj.xtlsoptions.key) { options.key = obj.xtlsoptions.key; }
->>>>>>> upstream/master
                         }
 
                         obj.socket = obj.tls.connect(obj.port, obj.host, options, obj.xxOnSocketConnected);
                         obj.socket.setEncoding('binary');
-<<<<<<< HEAD
                         obj.socket.setTimeout(6000); // Set socket idle timeout
-=======
-                        obj.socket.setTimeout(60000); // Set socket idle timeout
->>>>>>> upstream/master
                         obj.socket.on('error', function (ex) { obj.xtlsMethod = 1 - obj.xtlsMethod; });
                         obj.socket.on('close', obj.xxOnSocketClosed);
                         obj.socket.on('timeout', obj.xxOnSocketTimeout);
@@ -287,11 +269,7 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                 // Direct connect without TLS
                 obj.socket = new obj.net.Socket();
                 obj.socket.setEncoding('binary');
-<<<<<<< HEAD
                 obj.socket.setTimeout(6000); // Set socket idle timeout
-=======
-                obj.socket.setTimeout(60000); // Set socket idle timeout
->>>>>>> upstream/master
                 obj.socket.on('data', obj.xxOnSocketData);
                 obj.socket.on('close', obj.xxOnSocketClosed);
                 obj.socket.on('timeout', obj.xxOnSocketTimeout);
@@ -302,7 +280,6 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                 var options = { ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: obj.constants.SSL_OP_NO_SSLv2 | obj.constants.SSL_OP_NO_SSLv3 | obj.constants.SSL_OP_NO_COMPRESSION | obj.constants.SSL_OP_CIPHER_SERVER_PREFERENCE, rejectUnauthorized: false };
                 if (obj.xtlsMethod != 0) { options.secureProtocol = 'TLSv1_method'; }
                 if (obj.xtlsoptions) {
-<<<<<<< HEAD
                     if (obj.xtlsoptions.ca) options.ca = obj.xtlsoptions.ca;
                     if (obj.xtlsoptions.cert) options.cert = obj.xtlsoptions.cert;
                     if (obj.xtlsoptions.key) options.key = obj.xtlsoptions.key;
@@ -314,19 +291,6 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                 obj.socket.on('close', obj.xxOnSocketClosed);
                 obj.socket.on('timeout', obj.xxOnSocketTimeout);
                 obj.socket.on('error', function (e) { if (e.message && e.message.indexOf('sslv3 alert bad record mac') >= 0) { obj.xtlsMethod = 1 - obj.xtlsMethod; } });
-=======
-                    if (obj.xtlsoptions.ca) { options.ca = obj.xtlsoptions.ca; }
-                    if (obj.xtlsoptions.cert) { options.cert = obj.xtlsoptions.cert; }
-                    if (obj.xtlsoptions.key) { options.key = obj.xtlsoptions.key; }
-                }
-                obj.socket = obj.tls.connect(obj.port, obj.host, options, obj.xxOnSocketConnected);
-                obj.socket.setEncoding('binary');
-                obj.socket.setTimeout(60000); // Set socket idle timeout
-                obj.socket.on('data', obj.xxOnSocketData);
-                obj.socket.on('close', obj.xxOnSocketClosed);
-                obj.socket.on('timeout', obj.xxOnSocketTimeout);
-                obj.socket.on('error', function (ex) { if (ex.message && ex.message.indexOf('sslv3 alert bad record mac') >= 0) { obj.xtlsMethod = 1 - obj.xtlsMethod; } });
->>>>>>> upstream/master
             }
             obj.socket.setNoDelay(true); // Disable nagle. We will encode each WSMAN request as a single send block and want to send it at once. This may help Intel AMT handle pipelining?
         }
@@ -336,26 +300,6 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
     obj.getPeerCertificate = function () { if (obj.xtls == 1) { return obj.socket.getPeerCertificate(); } return null; }
     obj.getPeerCertificateFingerprint = function () { if (obj.xtls == 1) { return obj.socket.getPeerCertificate().fingerprint.split(':').join('').toLowerCase(); } return null; }
 
-<<<<<<< HEAD
-=======
-    // Check if the certificate matched the certificate hash.
-    function checkCertHash(cert, hash) {
-        // Check not required
-        if (hash == 0) return true;
-
-        // SHA1 compare
-        if (cert.fingerprint.split(':').join('').toLowerCase() == hash) return true;
-
-        // SHA256 compare
-        if ((hash.length == 64) && (obj.crypto.createHash('sha256').update(cert.raw).digest('hex') == hash)) { return true; }
-
-        // SHA384 compare
-        if ((hash.length == 96) && (obj.crypto.createHash('sha384').update(cert.raw).digest('hex') == hash)) { return true; }
-
-        return false;
-    }
-
->>>>>>> upstream/master
     // NODE.js specific private method
     obj.xxOnSocketConnected = function () {
         if (obj.socket == null) return;
@@ -363,10 +307,7 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
         if (obj.xtls == 1) {
             obj.xtlsCertificate = obj.socket.getPeerCertificate();
 
-<<<<<<< HEAD
             // ###BEGIN###{Certificates}
-=======
->>>>>>> upstream/master
             // Setup the forge certificate check
             var camatch = 0;
             if ((obj.xtlsoptions != null) && (obj.xtlsoptions.ca != null)) {
@@ -386,17 +327,12 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
                     if (amtcertname.toLowerCase() != obj.host.toLowerCase()) { camatch = 0; }
                 }
             }
-<<<<<<< HEAD
             if ((camatch == 0) && (obj.xtlsFingerprint != 0) && (obj.xtlsCertificate.fingerprint.split(':').join('').toLowerCase() != obj.xtlsFingerprint)) {
-=======
-            if ((camatch == 0) && (checkCertHash(obj.xtlsCertificate, obj.xtlsFingerprint) == false)) {
->>>>>>> upstream/master
                 obj.FailAllError = 998; // Cause all new responses to be silent. 998 = TLS Certificate check error
                 obj.CancelAllQueries(998);
                 return;
             }
             if ((obj.xtlsFingerprint == 0) && (camatch == 0)) { obj.xtlsCheck = 3; } else { obj.xtlsCheck = (camatch == 0) ? 2 : 1; }
-<<<<<<< HEAD
             // ###END###{Certificates}
             // ###BEGIN###{!Certificates}
             if ((obj.xtlsFingerprint != 0) && (obj.xtlsCertificate.fingerprint.split(':').join('').toLowerCase() != obj.xtlsFingerprint)) {
@@ -406,8 +342,6 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
             }
             obj.xtlsCheck = 2;
             // ###END###{!Certificates}
-=======
->>>>>>> upstream/master
         } else { obj.xtlsCheck = 0; }
         obj.socketState = 2;
         obj.socketParseState = 0;
@@ -489,14 +423,6 @@ var CreateWsmanComm = function (host, port, user, pass, tls, tlsoptions, mpsConn
         if (isNaN(s)) s = 500;
         if (s == 401 && ++(obj.authcounter) < 3) {
             obj.challengeParams = obj.parseDigest(header['www-authenticate']); // Set the digest parameters, after this, the socket will close and we will auto-retry            
-<<<<<<< HEAD
-=======
-            if (obj.challengeParams['qop'] != null) {
-                var qopList = obj.challengeParams['qop'].split(',');
-                for (var i in qopList) { qopList[i] = qopList[i].trim(); }
-                if (qopList.indexOf('auth-int') >= 0) { obj.challengeParams['qop'] = 'auth-int'; } else { obj.challengeParams['qop'] = 'auth'; }
-            }
->>>>>>> upstream/master
             if (obj.mpsConnection == null) { obj.socket.end(); } else { obj.socket.close(); }
         } else {
             var r = obj.pendingAjaxCall.shift();

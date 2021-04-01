@@ -47,7 +47,6 @@
                             <form method=post>
                                 <input type=hidden name=action value=login />
                                 <div id=message1></div>
-<<<<<<< HEAD
                                 <div>
                                     <b>Log In</b>
                                 </div>
@@ -84,46 +83,6 @@
                                     <a id="auth-jumpcloud" href="auth-jumpcloud" style="display:none"><img src="images/login/jumpcloud32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using JumpCloud" /></a>
                                     <a id="auth-intel" href="auth-intel" style="display:none"><img src="images/login/intel32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Intel" /></a>
                                     <a id="auth-saml" href="auth-saml" style="display:none"><img src="images/login/generic32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Single Sign-in" /></a>
-=======
-                                <div id="loginuserpassdiv" style="display:none">
-                                    <div>
-                                        <b>Log In</b>
-                                    </div>
-                                    <table>
-                                        <tr>
-                                            <td id=loginusername align=right width=100>Username:</td>
-                                            <td><input id=username {{{autocomplete}}}="username" type=text maxlength=64 name=username onchange=validateLogin(1) onkeyup=validateLogin(1,event) /></td>
-                                        </tr>
-                                        <tr>
-                                            <td align=right>Password:</td>
-                                            <td><input id=password {{{autocomplete}}}="current-password" type=password maxlength=256 name=password onchange=validateLogin(2) onkeyup=validateLogin(2,event) /></td>
-                                        </tr>
-                                        <tr>
-                                            <td><div id=showPassHintLink style=display:none><a onclick="return showPassHint(event);" href="#" style="cursor:pointer">Show Hint</a></div></td>
-                                            <td align=right><input id=loginButton type=submit value="Log In" disabled="disabled" /></td>
-                                        </tr>
-                                    </table>
-                                    <div id="hrAccountDiv" style="display:none"><hr /></div>
-                                    <div id="resetAccountDiv" style="display:none;padding:2px">
-                                        <span id="resetAccountSpan">Forgot username/password?</span> <a onclick="return xgo(3,event);" href="#" style=cursor:pointer>Reset account</a>.
-                                    </div>
-                                    <div id="newAccountDiv" style="display:none;padding:2px">
-                                        Don&#39;t have an account? <a onclick="return xgo(2,event);" href="#" style=cursor:pointer>Create one</a>.
-                                    </div>
-                                </div>
-                                <input id=loginformargs name="urlargs" type="hidden" value="" />
-                                <div id="authStrategies" style="display:none">
-                                    <hr id="loginuserpasshr" style="display:none" />
-                                    <div style="margin-bottom:8px">Log in using an existing account</div>
-                                    <a id="auth-twitter" href="auth-twitter" style="display:none"><img src="images/login/twitter32.png" srcset="images/login/twitter64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Twitter" /></a>
-                                    <a id="auth-google" href="auth-google" style="display:none"><img src="images/login/google32.png" srcset="images/login/google64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Google" /></a>
-                                    <a id="auth-github" href="auth-github" style="display:none"><img src="images/login/github32.png" srcset="images/login/github64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using GitHub" /></a>
-                                    <a id="auth-reddit" href="auth-reddit" style="display:none"><img src="images/login/reddit32.png" srcset="images/login/reddit64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Reddit" /></a>
-                                    <a id="auth-azure" href="auth-azure" style="display:none"><img src="images/login/azure32.png" srcset="images/login/azure64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Azure" /></a>
-                                    <a id="auth-jumpcloud" href="auth-jumpcloud" style="display:none"><img src="images/login/jumpcloud32.png" srcset="images/login/jumpcloud64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using JumpCloud" /></a>
-                                    <a id="auth-intel" href="auth-intel" style="display:none"><img src="images/login/intel32.png" srcset="images/login/intel64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Intel" /></a>
-                                    <a id="auth-saml" href="auth-saml" style="display:none"><img src="images/login/generic32.png" srcset="images/login/generic64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Single Sign-in" /></a>
->>>>>>> upstream/master
                                 </div>
                             </form>
                         </div>
@@ -138,7 +97,6 @@
                                 <table>
                                     <tr id="nuUserRow">
                                         <td id="nuUser" align=right width=100>Username:</td>
-<<<<<<< HEAD
                                         <td><input id=ausername type=text autocomplete="username" name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
                                     </tr>
                                     <tr>
@@ -160,29 +118,6 @@
                                     <tr id=newAccountPass title="Enter the account creation token">
                                         <td id="nuToken" align=right>Creation Token:</td>
                                         <td><input id=anewaccountpass type=password name=anewaccountpass autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(6,event) onkeyup=validateCreate(6,event) /></td>
-=======
-                                        <td><input id=ausername type=text {{{autocomplete}}}="username" name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
-                                    </tr>
-                                    <tr>
-                                        <td id="nuEmail" align=right width=100>Email:</td>
-                                        <td><input id=aemail type=text {{{autocomplete}}}="email" inputmode="email" name=email onchange=validateCreate(2) maxlength=256 onkeydown=haltReturn(event) onkeyup=validateCreate(2,event) /></td>
-                                    </tr>
-                                    <tr>
-                                        <td id="nuPass1" align=right>Password:</td>
-                                        <td><input id=apassword1 type=password name=password1 {{{autocomplete}}}="new-password" maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(3,event) onkeyup=validateCreate(3,event) /></td>
-                                    </tr>
-                                    <tr>
-                                        <td id="nuPass2" align=right>Password:</td>
-                                        <td><input id=apassword2 type=password name=password2 {{{autocomplete}}}="new-password" maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(4,event) onkeyup=validateCreate(4,event) /></td>
-                                    </tr>
-                                    <tr id="createPanelHint" style="display:none">
-                                        <td id="nuHint" align=right>Password Hint:</td>
-                                        <td><input id=apasswordhint type=text name=apasswordhint {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(5,event) onkeyup=validateCreate(5,event) /></td>
-                                    </tr>
-                                    <tr id=newAccountPass title="Enter the account creation token">
-                                        <td id="nuToken" align=right>Creation Token:</td>
-                                        <td><input id=anewaccountpass type=password name=anewaccountpass {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(6,event) onkeyup=validateCreate(6,event) /></td>
->>>>>>> upstream/master
                                     </tr>
                                     <tr>
                                         <td colspan=2>
@@ -219,11 +154,7 @@
                             </form>
                         </div>
                         <div id=tokenpanel style="display:none">
-<<<<<<< HEAD
                             <form method=post autocomplete=off>
-=======
-                            <form method=post {{{autocomplete}}}=off>
->>>>>>> upstream/master
                                 <input type=hidden name=action value=tokenlogin />
                                 <input type=hidden name=hwstate value="{{{hwstate}}}" />
                                 <div id=message4></div>
@@ -231,11 +162,7 @@
                                     <tr>
                                         <td align=right width=100>Login token:</td>
                                         <td>
-<<<<<<< HEAD
                                             <input id=tokenInput autocomplete="one-time-code" inputmode="numeric" type=text name=token maxlength=50 onchange=checkToken(event) onpaste=checkToken(event) onkeyup=checkToken(event) onkeydown=checkToken(event) /><br />
-=======
-                                            <input id=tokenInput {{{autocomplete}}}="one-time-code" inputmode="numeric" type=text name=token maxlength=50 onchange=checkToken(event) onpaste=checkToken(event) onkeyup=checkToken(event) onkeydown=checkToken(event) /><br />
->>>>>>> upstream/master
                                             <input id=hwtokenInput type=text name=hwtoken style="display:none" />
                                         </td>
                                     </tr>
@@ -294,7 +221,6 @@
                                 <table>
                                     <tr>
                                         <td id="rnuPass1" width=100 align=right>Password:</td>
-<<<<<<< HEAD
                                         <td><input id=rapassword1 type=password name=rpassword1 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(3,event) onkeyup=validatePassReset(3,event) /></td>
                                     </tr>
                                     <tr>
@@ -304,17 +230,6 @@
                                     <tr id="resetpasswordpanelHint" style="display:none">
                                         <td id="rnuHint" align=right>Password Hint:</td>
                                         <td><input id=rapasswordhint type=text name=rpasswordhint autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(5,event) onkeyup=validatePassReset(5,event) /></td>
-=======
-                                        <td><input id=rapassword1 type=password name=rpassword1 {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(3,event) onkeyup=validatePassReset(3,event) /></td>
-                                    </tr>
-                                    <tr>
-                                        <td id="rnuPass2" align=right>Password:</td>
-                                        <td><input id=rapassword2 type=password name=rpassword2 {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(4,event) onkeyup=validatePassReset(4,event) /></td>
-                                    </tr>
-                                    <tr id="resetpasswordpanelHint" style="display:none">
-                                        <td id="rnuHint" align=right>Password Hint:</td>
-                                        <td><input id=rapasswordhint type=text name=rpasswordhint {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(5,event) onkeyup=validatePassReset(5,event) /></td>
->>>>>>> upstream/master
                                     </tr>
                                     <tr>
                                         <td colspan=2>
@@ -387,10 +302,6 @@
     </div>
     <script>
         'use strict';
-<<<<<<< HEAD
-=======
-        var passlogin = '{{{passlogin}}}';
->>>>>>> upstream/master
         var passhint = '{{{passhint}}}';
         var loginMode = '{{{loginmode}}}';
         var newAccount = '{{{newAccount}}}';
@@ -417,11 +328,7 @@
             var i;
             var messageid = parseInt('{{{messageid}}}');
             var okmessages = ['', "If valid, reset mail sent.", "Email sent.", "Email verification required, check your mailbox and click the confirmation link.", "SMS sent."];
-<<<<<<< HEAD
             var failmessages = ["Unable to create account.", "Account limit reached.", "Existing account with this email address.", "Invalid account creation token.", "Username already exists.", "Password rejected, use a different one.", "Invalid email.", "Account not found.", "Invalid token, try again.", "Unable to sent email.", "Account locked.", "Access denied.", "Login failed, check username and password.", "Password change requested.", "IP address blocked, try again later."];
-=======
-            var failmessages = ["Unable to create account.", "Account limit reached.", "Existing account with this email address.", "Invalid account creation token.", "Username already exists.", "Password rejected, use a different one.", "Invalid email.", "Account not found.", "Invalid token, try again.", "Unable to sent email.", "Account locked.", "Access denied.", "Login failed, check username and password.", "Password change requested.", "IP address blocked, try again later.", "Server under maintenance."];
->>>>>>> upstream/master
             if (messageid > 0) {
                 var msg = '';
                 if ((messageid < 100) && (messageid < okmessages.length)) { msg = okmessages[messageid]; }
@@ -438,16 +345,6 @@
                 Q('termsLinkFooter').href += '?key=' + urlargs.key;
             }
 
-<<<<<<< HEAD
-=======
-            // Show user/pass login
-            passlogin = (passlogin == 'true');
-            if (urlargs.passlogin === 1) { passlogin = true; }
-            if (urlargs.passlogin === 0) { passlogin = false; }
-            QV('loginuserpassdiv', passlogin)
-            QV('loginuserpasshr', passlogin)
-
->>>>>>> upstream/master
             // Setup two factor cookie time
             if (twoFactorCookieDays > 0) {
                 QV('tokenInputRememberLabel', true);
@@ -573,7 +470,6 @@
 
             // Setup the user interface in the right mode
             userInterfaceSelectMenu();
-<<<<<<< HEAD
         }
 
         // Use a hardware security key
@@ -635,69 +531,6 @@
             setDialogMode(1, "Secure Login", 3, useSMSTokenEx, "Send token to registered phone number?", panelAction);
         }
 
-=======
-        }
-
-        // Use a hardware security key
-        function useSecurityKey(panelAction) {
-            if ((hardwareKeyChallenge != null) && (hardwareKeyChallenge.type == 'webAuthn')) {
-                if (typeof hardwareKeyChallenge.challenge == 'string') { hardwareKeyChallenge.challenge = Uint8Array.from(atob(hardwareKeyChallenge.challenge), function (c) { return c.charCodeAt(0) }).buffer; }
-
-                publicKeyCredentialRequestOptions = { challenge: hardwareKeyChallenge.challenge, allowCredentials: [], timeout: hardwareKeyChallenge.timeout }
-                for (var i = 0; i < hardwareKeyChallenge.keyIds.length; i++) {
-                    publicKeyCredentialRequestOptions.allowCredentials.push(
-                        { id: Uint8Array.from(atob(hardwareKeyChallenge.keyIds[i]), function (c) { return c.charCodeAt(0) }), type: 'public-key', transports: ['usb', 'ble', 'nfc', 'internal'] }
-                    );
-                }
-
-                // New WebAuthn hardware keys
-                navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions }).then(
-                    function (rawAssertion) {
-                        var assertion = {
-                            id: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.rawId))),
-                            clientDataJSON: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.clientDataJSON))),
-                            userHandle: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.userHandle))),
-                            signature: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.signature))),
-                            authenticatorData: btoa(String.fromCharCode.apply(null, new Uint8Array(rawAssertion.response.authenticatorData))),
-                        };
-                        if (panelAction == 1) {
-                            Q('hwtokenInput').value = JSON.stringify(assertion);
-                            QE('tokenOkButton', true);
-                            Q('tokenOkButton').click();
-                        } else if (panelAction == 2) {
-                            Q('resetHwtokenInput').value = JSON.stringify(assertion);
-                            QE('resetTokenOkButton', true);
-                            Q('resetTokenOkButton').click();
-                        }
-                    },
-                    function (error) { console.log('credentials-get error', error); }
-                );
-            }
-        }
-
-        function useEmailToken(panelAction) {
-            if (otpemail != true) return;
-            setDialogMode(1, "Secure Login", 3, useEmailKeyEx, "Send token to registered email address?", panelAction);
-        }
-
-        function useEmailKeyEx(b, panelAction) {
-            if (panelAction == 1) {
-                Q('hwtokenInput').value = '**email**';
-                QE('tokenOkButton', true);
-                Q('tokenOkButton').click();
-            } else if (panelAction == 2) {
-                Q('resetHwtokenInput').value = '**email**';
-                QE('resetTokenOkButton', true);
-                Q('resetTokenOkButton').click();
-            }
-        }
-
-        function useSMSToken(panelAction) {
-            if (otpsms != true) return;
-            setDialogMode(1, "Secure Login", 3, useSMSTokenEx, "Send token to registered phone number?", panelAction);
-        }
-
->>>>>>> upstream/master
         function useSMSTokenEx(b, panelAction) {
             if (panelAction == 1) {
                 Q('hwtokenInput').value = '**sms**';
@@ -940,11 +773,7 @@
 
         function changeEmailAddress() {
             var email = Q('unconfirmedEmail').innerHTML;
-<<<<<<< HEAD
             var x = addHtmlValue("Email", '<input id=dp1email style=width:230px maxlength=256 value="' + email + '" autocomplete=off onchange=validateEmailAddress() onkeyup=validateEmailAddress() />');
-=======
-            var x = addHtmlValue("Email", '<input id=dp1email style=width:230px maxlength=256 value="' + email + '" {{{autocomplete}}}=off onchange=validateEmailAddress() onkeyup=validateEmailAddress() />');
->>>>>>> upstream/master
             setDialogMode(1, "Email Confirmation", 3, changeEmailAddressEx, x);
             validateEmailAddress();
         }
@@ -1032,7 +861,6 @@
             toggleFullScreen(0);
             //toggleStackMenu(0);
         }
-<<<<<<< HEAD
 
         function toggleNightMode() {
             nightMode = !nightMode;
@@ -1040,15 +868,6 @@
             putstore('_nightMode', (nightMode ? '1' : '0'));
         }
 
-=======
-
-        function toggleNightMode() {
-            nightMode = !nightMode;
-            if (nightMode) { QC('body').add('night'); } else { QC('body').remove('night'); }
-            putstore('_nightMode', (nightMode ? '1' : '0'));
-        }
-
->>>>>>> upstream/master
         function center() {
             /* Now we use CSS media to achive the same effect as deleted JS  */
             if (webPageFullScreen == false) {

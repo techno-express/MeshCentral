@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
 Copyright 2020 Intel Corporation
-=======
-Copyright 2020-2021 Intel Corporation
->>>>>>> upstream/master
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,82 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-<<<<<<< HEAD
 
 
 // The folloing line just below with 'msh=' needs to stay exactly like this since MeshCentral will replace it with the correct settings.
 var msh = {};
 var displayName = msh.displayName ? msh.displayName : 'MeshCentral Agent';
 var s = null, buttons = ['Cancel'], skip = false;
-=======
-Object.defineProperty(Array.prototype, 'getParameterEx',
-        {
-            value: function (name, defaultValue)
-            {
-                var i, ret;
-                for (i = 0; i < this.length; ++i)
-                {
-                    if (this[i] == name) { return (null); }
-                    if (this[i].startsWith(name + '='))
-                    {
-                        ret = this[i].substring(name.length + 1);
-                        if (ret.startsWith('"')) { ret = ret.substring(1, ret.length - 1); }
-                        return (ret);
-                    }
-                }
-                return (defaultValue);
-            }
-        });
-Object.defineProperty(Array.prototype, 'getParameter',
-    {
-        value: function (name, defaultValue)
-        {
-            return (this.getParameterEx('-' + name, defaultValue));
-        }
-    });
-
-// The folloing line just below with 'msh=' needs to stay exactly like this since MeshCentral will replace it with the correct settings.
-var msh = {};
-var translation = JSON.parse(msh.translation);
-
-var lang = require('util-language').current;
-if (lang == null) { lang = 'en'; }
-if (process.argv.getParameter('lang', lang) == null)
-{
-    console.log('\nCurrent Language: ' + lang + '\n');
-    process.exit();
-}
-else
-{
-    lang = process.argv.getParameter('lang', lang).toLowerCase();
-    lang = lang.split('_').join('-');
-    if (translation[lang] == null)
-    {
-        if (translation[lang.split('-')[0]] == null)
-        {
-            console.log('Language: ' + lang + ' is not translated.');
-            process.exit();
-        }
-        else
-        {
-            lang = lang.split('-')[0];
-        }
-    }
-}
-
-if (lang != 'en')
-{
-    for (var i in translation['en'])
-    {
-        // If translated entries are missing, substitute the english translation
-        if (translation[lang][i] == null) { translation[lang][i] = translation['en'][i]; }
-    }
-}
-
-
-var displayName = msh.displayName ? msh.displayName : 'MeshCentral Agent';
-var s = null, buttons = [translation[lang].cancel], skip = false;
->>>>>>> upstream/master
 var serviceName = msh.meshServiceName ? msh.meshServiceName : 'meshagent';
 
 try { s = require('service-manager').manager.getService(serviceName); } catch (e) { }
@@ -158,45 +84,10 @@ if (process.argv.includes('-mesh'))
     console.log(JSON.stringify(msh, null, 2));
     process.exit();
 }
-<<<<<<< HEAD
 
 if ((msh.InstallFlags & 1) == 1)
 {
     buttons.unshift('Connect');
-=======
-if (process.argv.includes('-translations'))
-{
-    console.log(JSON.stringify(translation));
-    process.exit();
-}
-if (process.argv.includes('-help'))
-{
-    console.log("\n" + translation[lang].commands + ": ");
-    if ((msh.InstallFlags & 1) == 1)
-    {
-        console.log('./' + process.execPath.split('/').pop() + ' -connect');
-    }
-    if ((msh.InstallFlags & 2) == 2)
-    {
-        if (s)
-        {
-            console.log('./' + process.execPath.split('/').pop() + ' -update');
-            console.log('./' + process.execPath.split('/').pop() + ' -uninstall');
-        }
-        else
-        {
-            console.log('./' + process.execPath.split('/').pop() + ' -install');
-            console.log('./' + process.execPath.split('/').pop() + ' -install --installPath="/alternate/path"');
-        }
-    }
-    console.log('');
-    process.exit();
-}
-
-if ((msh.InstallFlags & 1) == 1)
-{
-    buttons.unshift(translation[lang].connect);
->>>>>>> upstream/master
     if (process.argv.includes('-connect'))
     {
         global._child = require('child_process').execFile(process.execPath, connectArgs);
@@ -204,15 +95,9 @@ if ((msh.InstallFlags & 1) == 1)
         global._child.stderr.on('data', function (c) { });
         global._child.on('exit', function (code) { process.exit(code); });
 
-<<<<<<< HEAD
         console.log("\nConnecting to: " + msh.MeshServer);
         console.log("Device Group: " + msh.MeshName);
         console.log('\nPress Ctrl-C to exit\n');
-=======
-        console.log("\n" + translation[lang].url + ": " + msh.MeshServer);
-        console.log(translation[lang].group + ": " + msh.MeshName);
-        console.log('\n' + translation[lang].ctrlc + '\n');
->>>>>>> upstream/master
         skip = true;
     }
 }
@@ -221,20 +106,14 @@ if ((!skip) && ((msh.InstallFlags & 2) == 2))
 {
     if (!require('user-sessions').isRoot())
     {
-<<<<<<< HEAD
         console.log('\n' + "Elevated permissions is required to install/uninstall the agent.");
         console.log("Please try again with sudo.");
-=======
-        console.log('\n' + translation[lang].elevation);
-        console.log(translation[lang].sudo);
->>>>>>> upstream/master
         process.exit();
     }
     if (s)
     {
         if ((process.platform == 'darwin') || require('message-box').kdialog)
         {
-<<<<<<< HEAD
             buttons.unshift("Setup");
         } else
         {
@@ -244,17 +123,6 @@ if ((!skip) && ((msh.InstallFlags & 2) == 2))
     } else
     {
         buttons.unshift("Install");
-=======
-            buttons.unshift(translation[lang].setup);
-        } else
-        {
-            buttons.unshift(translation[lang].uninstall);
-            buttons.unshift(translation[lang].update);
-        }
-    } else
-    {
-        buttons.unshift(translation[lang].install);
->>>>>>> upstream/master
     }
 }
 
@@ -284,15 +152,9 @@ if (!skip)
         {
             if (!require('message-box').kdialog && ((require('message-box').zenity == null) || (!require('message-box').zenity.extra)))
             {
-<<<<<<< HEAD
                 console.log('\n' + "The graphical version of this installer cannot run on this system.");
                 console.log("Try installing/updating Zenity, and run again." + '\n');
                 console.log("You can also run the text version from the command line with the following command(s): ");
-=======
-                console.log('\n' + translation[lang].graphicalerror + '.');
-                console.log(translation[lang].zenity + ".\n");
-                console.log(translation[lang].commands + ": ");
->>>>>>> upstream/master
                 if ((msh.InstallFlags & 1) == 1)
                 {
                     console.log('./' + process.execPath.split('/').pop() + ' -connect');
@@ -317,11 +179,7 @@ if (!skip)
     }
     else
     {
-<<<<<<< HEAD
         if (!require('user-sessions').isRoot()) { console.log('\n' + "This utility requires elevated permissions. Please try again with sudo."); process.exit(); }
-=======
-        if (!require('user-sessions').isRoot()) { console.log('\n' + translation[lang].elevation); process.exit(); }
->>>>>>> upstream/master
     }
 }
 
@@ -330,7 +188,6 @@ if (!skip)
 {
     if (!s)
     {
-<<<<<<< HEAD
         msg = "Agent: " + "NOT INSTALLED" + '\n';
     } else
     {
@@ -341,52 +198,24 @@ if (!skip)
     msg += ("Server URL: " + msh.MeshServer + '\n');
 
     var p = require('message-box').create(displayName + " Setup", msg, 99999, buttons);
-=======
-        msg = translation[lang].agent + ": " + translation[lang].status[0] + '\n';
-    } else
-    {
-        msg = translation[lang].agent + ": " + (s.isRunning() ? translation[lang].status[1] : translation[lang].status[2]) + '\n';
-    }
-
-    msg += (translation[lang].group + ": " + msh.MeshName + '\n');
-    msg += (translation[lang].url + ": " + msh.MeshServer + '\n');
-
-    var p = require('message-box').create(displayName + " " + translation[lang].setup, msg, 99999, buttons);
->>>>>>> upstream/master
     p.then(function (v)
     {
         switch (v)
         {
-<<<<<<< HEAD
             case "Cancel":
                 process.exit();
                 break;
             case 'Setup':
                 var d = require('message-box').create(displayName, msg, 99999, ['Update', 'Uninstall', 'Cancel']);
-=======
-            case translation[lang].cancel:
-                process.exit();
-                break;
-            case translation[lang].setup:
-                var d = require('message-box').create(displayName, msg, 99999, [translation[lang].update, translation[lang].uninstall, translation[lang].cancel]);
->>>>>>> upstream/master
                 d.then(function (v)
                 {
                     switch (v)
                     {
-<<<<<<< HEAD
                         case 'Update':
                         case 'Install':
                             _install();
                             break;
                         case 'Uninstall':
-=======
-                        case translation[lang].update:
-                        case translation[lang].install:
-                            _install();
-                            break;
-                        case translation[lang].uninstall:
->>>>>>> upstream/master
                             _uninstall();
                             break;
                         default:
@@ -395,29 +224,19 @@ if (!skip)
                     process.exit();
                 }).catch(function (v) { process.exit(); });
                 break;
-<<<<<<< HEAD
             case "Connect":
-=======
-            case translation[lang].connect:
->>>>>>> upstream/master
                 global._child = require('child_process').execFile(process.execPath, connectArgs);
                 global._child.stdout.on('data', function (c) { });
                 global._child.stderr.on('data', function (c) { });
                 global._child.on('exit', function (code) { process.exit(code); });
 
-<<<<<<< HEAD
                 msg = ("Device Group: " + msh.MeshName + '\n');
                 msg += ("Server URL: " + msh.MeshServer + '\n');
-=======
-                msg = (translation[lang].group + ": " + msh.MeshName + '\n');
-                msg += (translation[lang].url + ": " + msh.MeshServer + '\n');
->>>>>>> upstream/master
 
                 if (process.platform != 'darwin')
                 {
                     if (!require('message-box').zenity && require('message-box').kdialog)
                     {
-<<<<<<< HEAD
                         msg += ('\nPress OK to Disconnect');
                     }
                 }
@@ -431,21 +250,6 @@ if (!skip)
                 break;
             case "Install":
             case "Update":
-=======
-                        msg += ('\n' + translation[lang].pressok);
-                    }
-                }
-
-                var d = require('message-box').create(displayName, msg, 99999, [translation[lang].disconnect]);
-                d.then(function (v) { process.exit(); }).catch(function (v) { process.exit(); });
-                break;
-            case translation[lang].uninstall:
-                _uninstall();
-                process.exit();
-                break;
-            case translation[lang].install:
-            case translation[lang].update:
->>>>>>> upstream/master
                 _install();
                 process.exit();
                 break;

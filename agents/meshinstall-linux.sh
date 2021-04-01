@@ -20,7 +20,6 @@ CheckStartupType() {
   if [[ $starttype1 == 'systemd' ]]
     then return 1;
   elif [[ $starttype1 == 'init'  ||  $starttype2 == 'init' ]]
-<<<<<<< HEAD
 	then
 		if [ -d "/etc/init" ]
 			then
@@ -28,31 +27,19 @@ CheckStartupType() {
 			else
 				return 3;
 		fi
-=======
-    then
-        if [ -d "/etc/init" ]
-            then
-                return 2;
-            else
-                return 3;
-        fi
->>>>>>> upstream/master
   fi
   return 0;
 }
 
 
-<<<<<<< HEAD
 
-=======
->>>>>>> upstream/master
 # Add "StartupType=(type)" to .msh file
 UpdateMshFile() {
   # Remove all lines that start with "StartupType="
-  sed '/^StartupType=/ d' < ./meshagent.msh >> ./meshagent2.msh
+  sed '/^StartupType=/ d' < /usr/local/mesh/meshagent.msh >> /usr/local/mesh/meshagent2.msh
   # Add the startup type to the file
-  echo "StartupType=$starttype" >> ./meshagent2.msh
-  mv ./meshagent2.msh ./meshagent.msh
+  echo "StartupType=$starttype" >> /usr/local/mesh/meshagent2.msh
+  mv /usr/local/mesh/meshagent2.msh /usr/local/mesh/meshagent.msh
 }
 
 CheckInstallAgent() {
@@ -65,16 +52,8 @@ CheckInstallAgent() {
   fi
   if [ $# -ge 2 ]
   then
-    uninstall=$1
-    url=$2
-    meshid=$3
-    if [[ $4 =~ ^--WebProxy= ]];
-    then
-       webproxy=$4
-    fi
-
-
-
+    url=$1
+    meshid=$2
     meshidlen=${#meshid}
     if [ $meshidlen -gt 63 ]
     then
@@ -82,22 +61,14 @@ CheckInstallAgent() {
       machinetype=$( uname -m )
 
       # If we have 3 arguments...
-<<<<<<< HEAD
       if [ $# -ge 3 ]
       then
         # echo "Computer type is specified..."
         machineid=$3
-=======
-      if [ $# -ge 4 ] &&  [ -z "$webproxy" ]
-      then
-        # echo "Computer type is specified..."
-        machineid=$4
->>>>>>> upstream/master
       else
         # echo "Detecting computer type..."
         if [ $machinetype == 'x86_64' ] || [ $machinetype == 'amd64' ]
         then
-<<<<<<< HEAD
 		  if [ $starttype -eq 5 ]
 		  then
 			# FreeBSD x86, 64 bit
@@ -125,35 +96,6 @@ CheckInstallAgent() {
 				# Linux x86, 32 bit
 				machineid=5
 			fi
-=======
-          if [ $starttype -eq 5 ]
-          then
-            # FreeBSD x86, 64 bit
-            machineid=30
-          else
-            # Linux x86, 64 bit
-            bitlen=$( getconf LONG_BIT )
-            if [ $bitlen == '32' ] 
-            then
-                # 32 bit OS
-                machineid=5
-            else
-                # 64 bit OS
-                machineid=6
-            fi
-          fi
-        fi
-        if [ $machinetype == 'x86' ] || [ $machinetype == 'i686' ] || [ $machinetype == 'i586' ]
-        then
-          if [ $starttype -eq 5 ]
-          then
-            # FreeBSD x86, 32 bit
-            machineid=31
-          else
-            # Linux x86, 32 bit
-            machineid=5
-          fi
->>>>>>> upstream/master
         fi
         if [ $machinetype == 'armv6l' ] || [ $machinetype == 'armv7l' ]
         then
@@ -172,24 +114,19 @@ CheckInstallAgent() {
       then
         echo "Unsupported machine type: $machinetype."
       else
-        DownloadAgent $uninstall $url $meshid $machineid
+        DownloadAgent $url $meshid $machineid
       fi
 
     else
-<<<<<<< HEAD
       echo "MeshID is not correct, must be at least 64 characters long."
-=======
-      echo "Device group identifier is not correct, must be at least 64 characters long."
->>>>>>> upstream/master
     fi
   else
-    echo "URI and/or device group identifier have not been specified, must be passed in as arguments."
+    echo "URI and/or MeshID have not been specified, must be passed in as arguments."
     return 0;
   fi
 }
 
 DownloadAgent() {
-<<<<<<< HEAD
   url=$1
   meshid=$2
   machineid=$3
@@ -198,53 +135,29 @@ DownloadAgent() {
   cd /usr/local/mesh
   echo "Downloading Mesh agent #$machineid..."
   wget $url/meshagents?id=$machineid {{{wgetoptionshttps}}}-O /usr/local/mesh/meshagent || curl {{{curloptionshttps}}}--output /usr/local/mesh/meshagent $url/meshagents?id=$machineid
-=======
-  uninstall=$1
-  url=$2
-  meshid=$3
-  machineid=$4
-  echo "Downloading agent #$machineid..."
-  wget $url/meshagents?id=$machineid {{{wgetoptionshttps}}}-O ./meshagent || curl {{{curloptionshttps}}}--output ./meshagent $url/meshagents?id=$machineid
->>>>>>> upstream/master
 
   # If it did not work, try again using http
   if [ $? != 0 ]
   then
     url=${url/"https://"/"http://"}
-<<<<<<< HEAD
     wget $url/meshagents?id=$machineid {{{wgetoptionshttp}}}-O /usr/local/mesh/meshagent || curl {{{curloptionshttp}}}--output /usr/local/mesh/meshagent $url/meshagents?id=$machineid
-=======
-    wget $url/meshagents?id=$machineid {{{wgetoptionshttp}}}-O ./meshagent || curl {{{curloptionshttp}}}--output ./meshagent $url/meshagents?id=$machineid
->>>>>>> upstream/master
   fi
 
   if [ $? -eq 0 ]
   then
-<<<<<<< HEAD
     echo "Mesh agent downloaded."
     # TODO: We could check the meshagent sha256 hash, but best to authenticate the server.
     chmod 755 /usr/local/mesh/meshagent
     wget $url/meshsettings?id=$meshid {{{wgetoptionshttps}}}-O /usr/local/mesh/meshagent.msh || curl {{{curloptionshttps}}}--output /usr/local/mesh/meshagent.msh $url/meshsettings?id=$meshid
-=======
-    echo "Agent downloaded."
-    # TODO: We could check the meshagent sha256 hash, but best to authenticate the server.
-    chmod 755 ./meshagent
-    wget $url/meshsettings?id=$meshid {{{wgetoptionshttps}}}-O ./meshagent.msh || curl {{{curloptionshttps}}}--output ./meshagent.msh $url/meshsettings?id=$meshid
->>>>>>> upstream/master
 
     # If it did not work, try again using http
     if [ $? -ne 0 ]
     then
-<<<<<<< HEAD
       wget $url/meshsettings?id=$meshid {{{wgetoptionshttp}}}-O /usr/local/mesh/meshagent.msh || curl {{{curloptionshttp}}}--output /usr/local/mesh/meshagent.msh $url/meshsettings?id=$meshid
-=======
-      wget $url/meshsettings?id=$meshid {{{wgetoptionshttp}}}-O ./meshagent.msh || curl {{{curloptionshttp}}}--output ./meshagent.msh $url/meshsettings?id=$meshid
->>>>>>> upstream/master
     fi
 
     if [ $? -eq 0 ]
     then
-<<<<<<< HEAD
       UpdateMshFile
       if [ $starttype -eq 1 ]
       then
@@ -304,25 +217,22 @@ DownloadAgent() {
 		  echo 'To stop service: /usr/local/mesh_daemons/daemon stop meshagent'
       fi
       echo "Mesh agent started."
-=======
-      # Update the .msh file and run the agent installer/uninstaller
-      if [ $uninstall == 'uninstall' ] || [ $uninstall == 'UNINSTALL' ]
-      then
-        # Uninstall the agent
-        ./meshagent -fulluninstall
-      else
-        # Install the agent
-        UpdateMshFile
-        ./meshagent -fullinstall --copy-msh=1 $webproxy
-      fi
->>>>>>> upstream/master
     else
-      echo "Unable to download device group settings at: $url/meshsettings?id=$meshid."
+      echo "Unable to download mesh settings at: $url/meshsettings?id=$meshid."
     fi
   else
-    echo "Unable to download agent at: $url/meshagents?id=$machineid."
+    echo "Unable to download mesh agent at: $url/meshagents?id=$machineid."
   fi
-<<<<<<< HEAD
+}
+
+UninstallAgent() {
+# Uninstall agent
+  if [ -e "/usr/local" ]
+  then
+    installpath="/usr/local/mesh"
+  else
+    installpath="/usr/mesh"
+  fi
 
   if [ $starttype -eq 1 ]
   then
@@ -365,8 +275,6 @@ DownloadAgent() {
   rm -rf /usr/local/mesh_services/meshagentDiagnostic &> /dev/null
   rm -f /etc/cron.d/meshagentDiagnostic_periodicStart &> /dev/null
   echo "Agent uninstalled."
-=======
->>>>>>> upstream/master
 }
 
 
@@ -379,24 +287,19 @@ if [ $currentuser == 'root' ]
 then
   if [ $# -eq 0 ]
   then
-<<<<<<< HEAD
     echo -e "This script will install or uninstall a mesh agent, usage:\n  $0 [serverurl] [meshid] (machineid)\n  $0 uninstall"
-=======
-    echo -e "This script will install or uninstall a agent, usage:\n  $0 [serverUrl] [deviceGroupId] (machineId)\n  $0 uninstall [serverUrl] [deviceGroupId] (machineId)"
->>>>>>> upstream/master
   else
-    if [ $1 == 'uninstall' ] || [ $1 == 'UNINSTALL' ]
+    if [ $# -eq 1 ]
     then
-      CheckInstallAgent 'uninstall' $2 $3 $4
+      if [ $1 == 'uninstall' ] || [ $1 == 'UNINSTALL' ]
+      then
+        UninstallAgent
+      fi
     else
-<<<<<<< HEAD
       UninstallAgent
       CheckInstallAgent $1 $2 $3
-=======
-      CheckInstallAgent 'install' $1 $2 $3
->>>>>>> upstream/master
     fi
   fi
 else
-  echo "Must be root to install or uninstall the agent."
+  echo "Must be root to install or uninstall mesh agent."
 fi

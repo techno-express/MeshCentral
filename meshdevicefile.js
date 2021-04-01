@@ -1,11 +1,7 @@
 /**
 * @description MeshCentral device file download relay module
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -103,11 +99,7 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
                 }
             } else {
                 // Check if a peer server is connected to this agent
-<<<<<<< HEAD
                 var routing = parent.parent.GetRoutingServerId(command.nodeid, 1); // 1 = MeshAgent routing type
-=======
-                var routing = parent.parent.GetRoutingServerIdNotSelf(command.nodeid, 1); // 1 = MeshAgent routing type
->>>>>>> upstream/master
                 if (routing != null) {
                     // Check if we have permission to send a message to that node
                     rights = parent.GetNodeRights(user, routing.meshid, command.nodeid);
@@ -129,11 +121,7 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
     };
 
     function performRelay() {
-<<<<<<< HEAD
         if (obj.id == null) { try { obj.close(); } catch (e) { } return null; } // Attempt to connect without id, drop this.
-=======
-        if (obj.id == null) { try { obj.close(); } catch (e) { } return; } // Attempt to connect without id, drop this.
->>>>>>> upstream/master
         if (obj.ws != null) { obj.ws._socket.setKeepAlive(true, 240000); } // Set TCP keep alive
 
         // Check the peer connection status
@@ -149,11 +137,7 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
                         delete obj.id;
                         delete obj.ws;
                         delete obj.peer;
-<<<<<<< HEAD
                         return null;
-=======
-                        return;
->>>>>>> upstream/master
                     }
 
                     // Connect to peer
@@ -176,15 +160,9 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
                     parent.parent.debug('relay', 'FileRelay connected: ' + obj.id + ' (' + obj.req.clientIp + ' --> ' + obj.peer.req.clientIp + ')');
 
                     // Log the connection
-<<<<<<< HEAD
                     if (sessionUser != null) {
                         var event = { etype: 'relay', action: 'relaylog', domain: domain.id, userid: sessionUser._id, username: sessionUser.name, msg: "Started file transfer session" + ' \"' + obj.id + '\" from ' + obj.peer.req.clientIp + ' to ' + req.clientIp, protocol: req.query.p, nodeid: req.query.nodeid };
                         parent.parent.DispatchEvent(['*', sessionUser._id], obj, event);
-=======
-                    if (obj.user != null) {
-                        var event = { etype: 'relay', action: 'relaylog', domain: domain.id, userid: obj.user._id, username: obj.user.name, msg: "Started file transfer session" + ' \"' + obj.id + '\" from ' + obj.peer.req.clientIp + ' to ' + req.clientIp, protocol: req.query.p, nodeid: req.query.nodeid };
-                        parent.parent.DispatchEvent(['*', obj.user._id], obj, event);
->>>>>>> upstream/master
                     }
                 } else {
                     // Connected already, drop this connection.
@@ -193,17 +171,12 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
                     delete obj.id;
                     delete obj.ws;
                     delete obj.peer;
-<<<<<<< HEAD
                     return null;
-=======
-                    return;
->>>>>>> upstream/master
                 }
             } else {
                 // Wait for other relay connection
                 parent.wsrelays[obj.id] = { peer1: obj, state: 1, timeout: setTimeout(closeBothSides, 30000) };
                 parent.parent.debug('relay', 'FileRelay holding: ' + obj.id + ' (' + obj.req.clientIp + ') ' + (obj.authenticated ? 'Authenticated' : ''));
-<<<<<<< HEAD
 
                 // Check if a peer server has this connection
                 if (parent.parent.multiServer != null) {
@@ -252,72 +225,6 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
 
         // If the relay web socket is closed, close both sides.
         obj.ws.on('close', function (req) { closeBothSides(); });
-=======
-                if (obj.ws != null) {
-                    // Websocket connection
-                    obj.ws._socket.pause();
-
-                    // Check if a peer server has this connection
-                    if (parent.parent.multiServer != null) {
-                        var rsession = parent.wsPeerRelays[obj.id];
-                        if ((rsession != null) && (rsession.serverId > parent.parent.serverId)) {
-                            // We must initiate the connection to the peer
-                            parent.parent.multiServer.createPeerRelay(ws, req, rsession.serverId, obj.req.session.userid);
-                            delete parent.wsrelays[obj.id];
-                            return;
-                        } else {
-
-                            // Unexpected connection, drop it
-                            if (obj.ws) { obj.ws.close(); }
-                            parent.parent.debug('relay', 'FileRelay unexpected connection: ' + obj.id + ' (' + obj.req.clientIp + ')');
-                            delete obj.id;
-                            delete obj.ws;
-                            delete obj.peer;
-                            return;
-                        }
-                    }
-                } else {
-                    // HTTP connection, Send message to other peers that we have this connection
-                    if (parent.parent.multiServer != null) { parent.parent.multiServer.DispatchMessage(JSON.stringify({ action: 'relay', id: obj.id })); }
-                    return;
-                }
-            }
-        }
-
-        // Websocket handling
-        if (obj.ws != null) {
-            // When data is received from the mesh relay web socket
-            obj.ws.on('message', function (data) {
-                if (this.res == null) { return; } // File download websocket does not have an HTTP peer, should not happen.
-                if (typeof data == 'string') {
-                    var cmd = null;
-                    try { cmd = JSON.parse(data); } catch (ex) { }
-                    if ((cmd == null) || (typeof cmd.op == 'string')) {
-                        if (cmd.op == 'ok') {
-                            setContentDispositionHeader(this.res, 'application/octet-stream', this.file, cmd.size, 'file.bin');
-                        } else {
-                            try { this.res.sendStatus(401); } catch (ex) { }
-                        }
-                    }
-                } else {
-                    var unpause = function unpauseFunc(err) { try { unpauseFunc.s.resume(); } catch (ex) { } }
-                    unpause.s = this._socket;
-                    this._socket.pause();
-                    try { this.res.write(data, unpause); } catch (ex) { }
-                }
-            });
-
-            // If error, close both sides of the relay.
-            obj.ws.on('error', function (err) {
-                parent.relaySessionErrorCount++;
-                //console.log('FileRelay error from ' + obj.req.clientIp + ', ' + err.toString().split('\r')[0] + '.');
-                closeBothSides();
-            });
-
-            // If the relay web socket is closed, close both sides.
-            obj.ws.on('close', function (req) { closeBothSides(); });
-        }
->>>>>>> upstream/master
     }
 
     // Close both our side and the peer side.
@@ -371,15 +278,9 @@ module.exports.CreateMeshDeviceFile = function (parent, ws, res, req, domain, us
     // Set the content disposition header for a HTTP response.
     // Because the filename can't have any special characters in it, we need to be extra careful.
     function setContentDispositionHeader(res, type, name, size, altname) {
-<<<<<<< HEAD
         var name = require('path').basename(name).split('\\').join('').split('/').join('').split(':').join('').split('*').join('').split('?').join('').split('"').join('').split('<').join('').split('>').join('').split('|').join('').split(' ').join('').split('\'').join('');
         try {
             var x = { 'Cache-Control': 'no-store', 'Content-Type': type, 'Content-Disposition': 'attachment; filename="' + name + '"' };
-=======
-        if (name != null) { name = require('path').basename(name).split('\\').join('').split('/').join('').split(':').join('').split('*').join('').split('?').join('').split('"').join('').split('<').join('').split('>').join('').split('|').join('').split('\'').join(''); } else { name = altname; }
-        try {
-            var x = { 'Cache-Control': 'no-store', 'Content-Type': type, 'Content-Disposition': 'attachment; filename="' + encodeURIComponent(name) + '"' };
->>>>>>> upstream/master
             if (typeof size == 'number') { x['Content-Length'] = size; }
             res.set(x);
         } catch (ex) {

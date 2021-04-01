@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD:amt/amt-xml.js
 Copyright 2020 Intel Corporation
-=======
-Copyright 2020-2021 Intel Corporation
->>>>>>> upstream/master:agents/modules_meshcore/amt-xml.js
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

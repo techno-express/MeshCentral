@@ -1,11 +1,7 @@
 /**
 * @description MeshCentral main module
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -142,11 +138,7 @@ function CreateMeshCentralServer(config, args) {
         try { require('./pass').hash('test', function () { }, 0); } catch (e) { console.log('Old version of node, must upgrade.'); return; } // TODO: Not sure if this test works or not.
 
         // Check for invalid arguments
-<<<<<<< HEAD
         var validArguments = ['_', 'user', 'port', 'aliasport', 'mpsport', 'mpsaliasport', 'redirport', 'rediraliasport', 'cert', 'mpscert', 'deletedomain', 'deletedefaultdomain', 'showall', 'showusers', 'showitem', 'listuserids', 'showusergroups', 'shownodes', 'showallmeshes', 'showmeshes', 'showevents', 'showsmbios', 'showpower', 'clearpower', 'showiplocations', 'help', 'exactports', 'xinstall', 'xuninstall', 'install', 'uninstall', 'start', 'stop', 'restart', 'debug', 'filespath', 'datapath', 'noagentupdate', 'launch', 'noserverbackup', 'mongodb', 'mongodbcol', 'wanonly', 'lanonly', 'nousers', 'mpspass', 'ciralocalfqdn', 'dbexport', 'dbexportmin', 'dbimport', 'dbmerge', 'dbfix', 'dbencryptkey', 'selfupdate', 'tlsoffload', 'userallowedip', 'userblockedip', 'swarmallowedip', 'agentallowedip', 'agentblockedip', 'fastcert', 'swarmport', 'logintoken', 'logintokenkey', 'logintokengen', 'mailtokengen', 'admin', 'unadmin', 'sessionkey', 'sessiontime', 'minify', 'minifycore', 'dblistconfigfiles', 'dbshowconfigfile', 'dbpushconfigfiles', 'dbpullconfigfiles', 'dbdeleteconfigfiles', 'vaultpushconfigfiles', 'vaultpullconfigfiles', 'vaultdeleteconfigfiles', 'configkey', 'loadconfigfromdb', 'npmpath', 'serverid', 'recordencryptionrecode', 'vault', 'token', 'unsealkey', 'name', 'log', 'dbstats', 'translate', 'createaccount', 'resetaccount', 'pass', 'adminaccount', 'removeaccount', 'domain', 'email'];
-=======
-        var validArguments = ['_', 'user', 'port', 'aliasport', 'mpsport', 'mpsaliasport', 'redirport', 'rediraliasport', 'cert', 'mpscert', 'deletedomain', 'deletedefaultdomain', 'showall', 'showusers', 'showitem', 'listuserids', 'showusergroups', 'shownodes', 'showallmeshes', 'showmeshes', 'showevents', 'showsmbios', 'showpower', 'clearpower', 'showiplocations', 'help', 'exactports', 'xinstall', 'xuninstall', 'install', 'uninstall', 'start', 'stop', 'restart', 'debug', 'filespath', 'datapath', 'noagentupdate', 'launch', 'noserverbackup', 'mongodb', 'mongodbcol', 'wanonly', 'lanonly', 'nousers', 'mpspass', 'ciralocalfqdn', 'dbexport', 'dbexportmin', 'dbimport', 'dbmerge', 'dbfix', 'dbencryptkey', 'selfupdate', 'tlsoffload', 'userallowedip', 'userblockedip', 'swarmallowedip', 'agentallowedip', 'agentblockedip', 'fastcert', 'swarmport', 'logintoken', 'logintokenkey', 'logintokengen', 'mailtokengen', 'admin', 'unadmin', 'sessionkey', 'sessiontime', 'minify', 'minifycore', 'dblistconfigfiles', 'dbshowconfigfile', 'dbpushconfigfiles', 'dbpullconfigfiles', 'dbdeleteconfigfiles', 'vaultpushconfigfiles', 'vaultpullconfigfiles', 'vaultdeleteconfigfiles', 'configkey', 'loadconfigfromdb', 'npmpath', 'serverid', 'recordencryptionrecode', 'vault', 'token', 'unsealkey', 'name', 'log', 'dbstats', 'translate', 'createaccount', 'resetaccount', 'pass', 'adminaccount', 'domain', 'email', 'configfile', 'maintenancemode', 'nedbtodb', 'removetestagents', 'agentupdatetest', 'hashpassword', 'hashpass'];
->>>>>>> upstream/master
         for (var arg in obj.args) { obj.args[arg.toLocaleLowerCase()] = obj.args[arg]; if (validArguments.indexOf(arg.toLocaleLowerCase()) == -1) { console.log('Invalid argument "' + arg + '", use --help.'); return; } }
         if (obj.args.mongodb == true) { console.log('Must specify: --mongodb [connectionstring] \r\nSee https://docs.mongodb.com/manual/reference/connection-string/ for MongoDB connection string.'); return; }
         for (i in obj.config.settings) { obj.args[i] = obj.config.settings[i]; } // Place all settings into arguments, arguments have already been placed into settings so arguments take precedence.
@@ -167,10 +159,6 @@ function CreateMeshCentralServer(config, args) {
             console.log('   --redirport [number]              Creates an additional HTTP server to redirect users to the HTTPS server.');
             console.log('   --exactports                      Server must run with correct ports or exit.');
             console.log('   --noagentupdate                   Server will not update mesh agent native binaries.');
-<<<<<<< HEAD
-=======
-            console.log('   --nedbtodb                        Transfer all NeDB records into current database.');
->>>>>>> upstream/master
             console.log('   --listuserids                     Show a list of a user identifiers in the database.');
             console.log('   --cert [name], (country), (org)   Create a web server certificate with [name] server name.');
             console.log('                                     country and organization can optionally be set.');
@@ -179,10 +167,7 @@ function CreateMeshCentralServer(config, args) {
             console.log('   --createaccount [userid]          Create a new user account.');
             console.log('   --resetaccount [userid]           Unlock an account, disable 2FA and set a new account password.');
             console.log('   --adminaccount [userid]           Promote account to site administrator.');
-<<<<<<< HEAD
             console.log('   --removeaccount [userid]          Remove a user account.');
-=======
->>>>>>> upstream/master
             return;
         }
 
@@ -200,12 +185,6 @@ function CreateMeshCentralServer(config, args) {
             return;
         }
 
-<<<<<<< HEAD
-=======
-        // Perform a password hash
-        if (obj.args.hashpassword) { require('./pass').hash(obj.args.hashpassword, function (err, salt, hash, tag) { console.log(salt + ',' + hash); process.exit(); }); return; }
-
->>>>>>> upstream/master
         // Perform web site translations into different languages
         if (obj.args.translate) {
             // Check NodeJS version
@@ -360,30 +339,11 @@ function CreateMeshCentralServer(config, args) {
 
         // Windows background service handling
         if ((obj.platform == 'win32') && (obj.service != null)) {
-<<<<<<< HEAD
-=======
-            // Build MeshCentral parent path and Windows Service path
-            var mcpath = __dirname;
-            if (mcpath.endsWith('\\node_modules\\meshcentral') || mcpath.endsWith('/node_modules/meshcentral')) { mcpath = require('path').join(mcpath, '..', '..'); }
-            var servicepath = obj.path.join(mcpath, 'WinService');
-
->>>>>>> upstream/master
             // Check if we need to install, start, stop, remove ourself as a background service
             if (((obj.args.xinstall == true) || (obj.args.xuninstall == true) || (obj.args.start == true) || (obj.args.stop == true) || (obj.args.restart == true))) {
                 var env = [], xenv = ['user', 'port', 'aliasport', 'mpsport', 'mpsaliasport', 'redirport', 'exactport', 'rediraliasport', 'debug'];
                 for (i in xenv) { if (obj.args[xenv[i]] != null) { env.push({ name: 'mesh' + xenv[i], value: obj.args[xenv[i]] }); } } // Set some args as service environement variables.
-<<<<<<< HEAD
                 var svc = new obj.service({ name: 'MeshCentral', description: 'MeshCentral Remote Management Server', script: obj.path.join(__dirname, 'winservice.js'), env: env, wait: 2, grow: 0.5 });
-=======
-
-                var serviceFilePath = null;
-                if (obj.fs.existsSync(obj.path.join(servicepath, 'winservice.js'))) { serviceFilePath = obj.path.join(servicepath, 'winservice.js'); }
-                else if (obj.fs.existsSync(obj.path.join(__dirname, '../WinService/winservice.js'))) { serviceFilePath = obj.path.join(__dirname, '../WinService/winservice.js'); }
-                else if (obj.fs.existsSync(obj.path.join(__dirname, 'winservice.js'))) { serviceFilePath = obj.path.join(__dirname, 'winservice.js'); }
-                if (serviceFilePath == null) { console.log('Unable to find winservice.js'); return; }
-
-                var svc = new obj.service({ name: 'MeshCentral', description: 'MeshCentral Remote Management Server', script: servicepath, env: env, wait: 2, grow: 0.5 });
->>>>>>> upstream/master
                 svc.on('install', function () { console.log('MeshCentral service installed.'); svc.start(); });
                 svc.on('uninstall', function () { console.log('MeshCentral service uninstalled.'); process.exit(); });
                 svc.on('start', function () { console.log('MeshCentral service started.'); process.exit(); });
@@ -393,11 +353,7 @@ function CreateMeshCentralServer(config, args) {
 
                 if (obj.args.xinstall == true) { try { svc.install(); } catch (e) { logException(e); } }
                 if (obj.args.stop == true || obj.args.restart == true) { try { svc.stop(); } catch (e) { logException(e); } }
-<<<<<<< HEAD
                 if (obj.args.start == true || obj.args.restart == true) { try { svc.start(); } catch (e) { logException(e); } }
-=======
-                if (obj.args.start == true) { try { svc.start(); } catch (e) { logException(e); } }
->>>>>>> upstream/master
                 if (obj.args.xuninstall == true) { try { svc.uninstall(); } catch (e) { logException(e); } }
                 return;
             }
@@ -405,33 +361,16 @@ function CreateMeshCentralServer(config, args) {
             // Windows service install using the external winservice.js
             if (obj.args.install == true) {
                 console.log('Installing MeshCentral as Windows Service...');
-<<<<<<< HEAD
                 if (obj.fs.existsSync(obj.path.join(__dirname, '../WinService')) == false) { try { obj.fs.mkdirSync(obj.path.join(__dirname, '../WinService')); } catch (ex) { console.log('ERROR: Unable to create WinService folder: ' + ex); process.exit(); return; } }
                 try { obj.fs.createReadStream(obj.path.join(__dirname, 'winservice.js')).pipe(obj.fs.createWriteStream(obj.path.join(__dirname, '../WinService/winservice.js'))); } catch (ex) { console.log('ERROR: Unable to copy winservice.js: ' + ex); process.exit(); return; }
                 require('child_process').exec('node winservice.js --install', { maxBuffer: 512000, timeout: 120000, cwd: obj.path.join(__dirname, '../WinService') }, function (error, stdout, stderr) {
-=======
-                if (obj.fs.existsSync(servicepath) == false) { try { obj.fs.mkdirSync(servicepath); } catch (ex) { console.log('ERROR: Unable to create WinService folder: ' + ex); process.exit(); return; } }
-                try { obj.fs.createReadStream(obj.path.join(__dirname, 'winservice.js')).pipe(obj.fs.createWriteStream(obj.path.join(servicepath, 'winservice.js'))); } catch (ex) { console.log('ERROR: Unable to copy winservice.js: ' + ex); process.exit(); return; }
-                require('child_process').exec('node winservice.js --install', { maxBuffer: 512000, timeout: 120000, cwd: servicepath }, function (error, stdout, stderr) {
->>>>>>> upstream/master
                     if ((error != null) && (error != '')) { console.log('ERROR: Unable to install MeshCentral as a service: ' + error); process.exit(); return; }
                     console.log(stdout);
                 });
                 return;
             } else if (obj.args.uninstall == true) {
                 console.log('Uninstalling MeshCentral Windows Service...');
-<<<<<<< HEAD
                 if (obj.fs.existsSync(obj.path.join(__dirname, '../WinService')) == true) {
-=======
-                if (obj.fs.existsSync(servicepath) == true) {
-                    require('child_process').exec('node winservice.js --uninstall', { maxBuffer: 512000, timeout: 120000, cwd: servicepath }, function (error, stdout, stderr) {
-                        if ((error != null) && (error != '')) { console.log('ERROR: Unable to uninstall MeshCentral service: ' + error); process.exit(); return; }
-                        console.log(stdout);
-                        try { obj.fs.unlinkSync(obj.path.join(servicepath, 'winservice.js')); } catch (ex) { }
-                        try { obj.fs.rmdirSync(servicepath); } catch (ex) { }
-                    });
-                } else if (obj.fs.existsSync(obj.path.join(__dirname, '../WinService')) == true) {
->>>>>>> upstream/master
                     require('child_process').exec('node winservice.js --uninstall', { maxBuffer: 512000, timeout: 120000, cwd: obj.path.join(__dirname, '../WinService') }, function (error, stdout, stderr) {
                         if ((error != null) && (error != '')) { console.log('ERROR: Unable to uninstall MeshCentral service: ' + error); process.exit(); return; }
                         console.log(stdout);
@@ -493,11 +432,7 @@ function CreateMeshCentralServer(config, args) {
                 if (error != null) {
                     // This is an un-expected restart
                     console.log(error);
-<<<<<<< HEAD
                     console.log('ERROR: MeshCentral failed with critical error, check MeshErrors.txt. Restarting in 5 seconds...');
-=======
-                    console.log('ERROR: MeshCentral failed with critical error, check mesherrors.txt. Restarting in 5 seconds...');
->>>>>>> upstream/master
                     setTimeout(function () { obj.launchChildServer(startArgs); }, 5000);
                 }
             }
@@ -724,11 +659,7 @@ function CreateMeshCentralServer(config, args) {
         }
 
         // Check top level configuration for any unreconized values
-<<<<<<< HEAD
         if (config) { for (var i in config) { if ((typeof i == 'string') && (i.length > 0) && (i[0] != '_') && (['settings', 'domaindefaults', 'domains', 'configfiles', 'smtp', 'letsencrypt', 'peers', 'sms', '$schema'].indexOf(i) == -1)) { addServerWarning('Unrecognized configuration option \"' + i + '\".'); } } }
-=======
-        if (config) { for (var i in config) { if ((typeof i == 'string') && (i.length > 0) && (i[0] != '_') && (['settings', 'domaindefaults', 'domains', 'configfiles', 'smtp', 'letsencrypt', 'peers', 'sms', 'sendgrid', 'firebase', 'firebaserelay', '$schema'].indexOf(i) == -1)) { addServerWarning('Unrecognized configuration option \"' + i + '\".'); } } }
->>>>>>> upstream/master
 
         if (typeof obj.args.userallowedip == 'string') { if (obj.args.userallowedip == '') { config.settings.userallowedip = obj.args.userallowedip = null; } else { config.settings.userallowedip = obj.args.userallowedip = obj.args.userallowedip.split(','); } }
         if (typeof obj.args.userblockedip == 'string') { if (obj.args.userblockedip == '') { config.settings.userblockedip = obj.args.userblockedip = null; } else { config.settings.userblockedip = obj.args.userblockedip = obj.args.userblockedip.split(','); } }
@@ -778,49 +709,22 @@ function CreateMeshCentralServer(config, args) {
                     if (obj.args.recordencryptionrecode) { obj.db.performRecordEncryptionRecode(function (count) { console.log('Re-encoded ' + count + ' record(s).'); process.exit(); }); return; }
                     if (obj.args.dbstats) { obj.db.getDbStats(function (stats) { console.log(stats); process.exit(); }); return; }
                     if (obj.args.createaccount) { // Create a new user account
-<<<<<<< HEAD
                         if ((typeof obj.args.createaccount != 'string') || (obj.args.pass == null) || (obj.args.pass == '') || (obj.args.createaccount.indexOf(' ') >= 0)) { console.log("Usage: --createaccount [userid] --pass [password] --domain (domain) --email (email) --name (name)."); process.exit(); return; }
-=======
-                        if ((typeof obj.args.createaccount != 'string') || ((obj.args.pass == null) && (obj.args.hashpass == null)) || (obj.args.pass == '') || (obj.args.hashpass == '') || (obj.args.createaccount.indexOf(' ') >= 0)) { console.log("Usage: --createaccount [userid] --pass [password] --domain (domain) --email (email) --name (name)."); process.exit(); return; }
->>>>>>> upstream/master
                         var userid = 'user/' + (obj.args.domain ? obj.args.domain : '') + '/' + obj.args.createaccount.toLowerCase(), domainid = obj.args.domain ? obj.args.domain : '';
                         if (obj.args.createaccount.startsWith('user/')) { userid = obj.args.createaccount; domainid = obj.args.createaccount.split('/')[1]; }
                         if (userid.split('/').length != 3) { console.log("Invalid userid."); process.exit(); return; }
                         obj.db.Get(userid, function (err, docs) {
-<<<<<<< HEAD
                             if (err != null) { console.log("Database error: " + err); process.exit(); return;  }
                             if ((docs != null) && (docs.length != 0)) { console.log('User already exists.'); process.exit(); return; }
                             if ((domainid != '') &&  ((config.domains == null) || (config.domains[domainid] == null))) { console.log("Invalid domain."); process.exit(); return; }
                             var user = { _id: userid, type: 'user', name: (typeof obj.args.name == 'string') ? obj.args.name : (userid.split('/')[2]), domain: domainid, creation: Math.floor(Date.now() / 1000), links: {} };
                             if (typeof obj.args.email == 'string') { user.email = obj.args.email; user.emailVerified = true; }
                             require('./pass').hash(obj.args.pass, function (err, salt, hash, tag) { if (err) { console.log("Unable create account password: " + err); process.exit(); return; } user.salt = salt; user.hash = hash; obj.db.Set(user, function () { console.log("Done."); process.exit(); return; }); }, 0);
-=======
-                            if (err != null) { console.log("Database error: " + err); process.exit(); return; }
-                            if ((docs != null) && (docs.length != 0)) { console.log('User already exists.'); process.exit(); return; }
-                            if ((domainid != '') && ((config.domains == null) || (config.domains[domainid] == null))) { console.log("Invalid domain."); process.exit(); return; }
-                            var user = { _id: userid, type: 'user', name: (typeof obj.args.name == 'string') ? obj.args.name : (userid.split('/')[2]), domain: domainid, creation: Math.floor(Date.now() / 1000), links: {} };
-                            if (typeof obj.args.email == 'string') { user.email = obj.args.email; user.emailVerified = true; }
-                            if (obj.args.hashpass) {
-                                // Create an account using a pre-hashed password. Use --hashpassword to pre-hash a password.
-                                var hashpasssplit = obj.args.hashpass.split(',');
-                                if (hashpasssplit.length != 2) { console.log("Invalid hashed password."); process.exit(); return; }
-                                user.salt = hashpasssplit[0];
-                                user.hash = hashpasssplit[1];
-                                obj.db.Set(user, function () { console.log("Done."); process.exit(); return; });
-                            } else {
-                                // Hash the password and create the account.
-                                require('./pass').hash(obj.args.pass, function (err, salt, hash, tag) { if (err) { console.log("Unable create account password: " + err); process.exit(); return; } user.salt = salt; user.hash = hash; obj.db.Set(user, function () { console.log("Done."); process.exit(); return; }); }, 0);
-                            }
->>>>>>> upstream/master
                         });
                         return;
                     }
                     if (obj.args.resetaccount) { // Unlock a user account, set a new password and remove 2FA
-<<<<<<< HEAD
                         if ((typeof obj.args.resetaccount != 'string') || (obj.args.pass == null) || (obj.args.pass == '') || (obj.args.resetaccount.indexOf(' ') >= 0)) { console.log("Usage: --resetaccount [userid] --domain (domain) --pass [password]."); process.exit(); return; }
-=======
-                        if ((typeof obj.args.resetaccount != 'string') || ((obj.args.pass == null) && (obj.args.hashpass == null)) || (obj.args.pass == '') || (obj.args.hashpass == '') || (obj.args.resetaccount.indexOf(' ') >= 0)) { console.log("Usage: --resetaccount [userid] --domain (domain) --pass [password]."); process.exit(); return; }
->>>>>>> upstream/master
                         var userid = 'user/' + (obj.args.domain ? obj.args.domain : '') + '/' + obj.args.resetaccount.toLowerCase();
                         if (obj.args.resetaccount.startsWith('user/')) { userid = obj.args.resetaccount; }
                         if (userid.split('/').length != 3) { console.log("Invalid userid."); process.exit(); return; }
@@ -829,21 +733,7 @@ function CreateMeshCentralServer(config, args) {
                             if ((docs == null) || (docs.length == 0)) { console.log("Unknown userid, usage: --resetaccount [userid] --domain (domain) --pass [password]."); process.exit(); return; }
                             var user = docs[0]; if ((user.siteadmin) && (user.siteadmin != 0xFFFFFFFF) && (user.siteadmin & 32) != 0) { user.siteadmin -= 32; } // Unlock the account.
                             delete user.otpekey; delete user.otpsecret; delete user.otpkeys; delete user.otphkeys; // Disable 2FA
-<<<<<<< HEAD
                             require('./pass').hash(obj.args.pass, user.salt, function (err, hash, tag) { if (err) { console.log("Unable to reset password: " + err); process.exit(); return; } user.hash = hash; obj.db.Set(user, function () { console.log("Done."); process.exit(); return; }); }, 0);
-=======
-                            if (obj.args.hashpass) {
-                                // Reset an account using a pre-hashed password. Use --hashpassword to pre-hash a password.
-                                var hashpasssplit = obj.args.hashpass.split(',');
-                                if (hashpasssplit.length != 2) { console.log("Invalid hashed password."); process.exit(); return; }
-                                user.salt = hashpasssplit[0];
-                                user.hash = hashpasssplit[1];
-                                obj.db.Set(user, function () { console.log("Done."); process.exit(); return; });
-                            } else {
-                                // Hash the password and reset the account.
-                                require('./pass').hash(obj.args.pass, user.salt, function (err, hash, tag) { if (err) { console.log("Unable to reset password: " + err); process.exit(); return; } user.hash = hash; obj.db.Set(user, function () { console.log("Done."); process.exit(); return; }); }, 0);
-                            }
->>>>>>> upstream/master
                         });
                         return;
                     }
@@ -860,7 +750,6 @@ function CreateMeshCentralServer(config, args) {
                         });
                         return;
                     }
-<<<<<<< HEAD
                     if (obj.args.removeaccount) { // Remove a user account
                         if ((typeof obj.args.removeaccount != 'string') || (obj.args.removeaccount.indexOf(' ') >= 0)) { console.log("Invalid userid, usage: --removeaccount [username] --domain (domain)."); process.exit(); return; }
                         var userid = 'user/' + (obj.args.domain ? obj.args.domain : '') + '/' + obj.args.removeaccount.toLowerCase();
@@ -871,83 +760,10 @@ function CreateMeshCentralServer(config, args) {
                             if ((docs == null) || (docs.length == 0)) { console.log("Unknown userid, usage: --removeaccount [userid] --domain (domain)."); process.exit(); return; }
                             if ((docs[0].links != null) && (Object.keys(docs[0].links).length > 0)) { console.log("Unable to delete account since user has device rights."); process.exit(); return; }
                             obj.db.Remove(docs[0]._id, function () { console.log("Done."); process.exit(); return; });
-=======
-                    if (obj.args.removetestagents) { // Remove all test agents from the database
-                        db.GetAllType('node', function (err, docs) {
-                            if ((err != null) || (docs.length == 0)) {
-                                console.log('Unable to get any nodes from the database');
-                                process.exit(0);
-                            } else {
-                                // Load all users
-                                var allusers = {}, removeCount = 0;
-                                obj.db.GetAllType('user', function (err, docs) {
-                                    obj.common.unEscapeAllLinksFieldName(docs);
-                                    for (i in docs) { allusers[docs[i]._id] = docs[i]; }
-                                });
-
-                                // Look at all devices
-                                for (var i in docs) {
-                                    if ((docs[i] != null) && (docs[i].agent != null) && (docs[i].agent.id == 23)) {
-                                        // Remove this test node
-                                        var node = docs[i];
-
-                                        // Delete this node including network interface information, events and timeline
-                                        removeCount++;
-                                        db.Remove(node._id);                                 // Remove node with that id
-                                        db.Remove('if' + node._id);                          // Remove interface information
-                                        db.Remove('nt' + node._id);                          // Remove notes
-                                        db.Remove('lc' + node._id);                          // Remove last connect time
-                                        db.Remove('si' + node._id);                          // Remove system information
-                                        if (db.RemoveSMBIOS) { db.RemoveSMBIOS(node._id); }  // Remove SMBios data
-                                        db.RemoveAllNodeEvents(node._id);                    // Remove all events for this node
-                                        db.removeAllPowerEventsForNode(node._id);            // Remove all power events for this node
-                                        if (typeof node.pmt == 'string') { db.Remove('pmt_' + node.pmt); } // Remove Push Messaging Token
-                                        db.Get('ra' + node._id, function (err, nodes) {
-                                            if ((nodes != null) && (nodes.length == 1)) { db.Remove('da' + nodes[0].daid); } // Remove diagnostic agent to real agent link
-                                            db.Remove('ra' + node._id); // Remove real agent to diagnostic agent link
-                                        });
-
-                                        // Remove any user node links
-                                        if (node.links != null) {
-                                            for (var i in node.links) {
-                                                if (i.startsWith('user/')) {
-                                                    var cuser = allusers[i];
-                                                    if ((cuser != null) && (cuser.links != null) && (cuser.links[node._id] != null)) {
-                                                        // Remove the user link & save the user
-                                                        delete cuser.links[node._id];
-                                                        if (Object.keys(cuser.links).length == 0) { delete cuser.links; }
-                                                        db.SetUser(cuser);
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                    }
-                                }
-                                if (removeCount == 0) {
-                                    console.log("Done, no devices removed.");
-                                    process.exit(0);
-                                } else {
-                                    console.log("Removed " + removeCount + " device(s), holding 10 seconds...");
-                                    setTimeout(function () { console.log("Done."); process.exit(0); }, 10000)
-                                }
-                            }
->>>>>>> upstream/master
                         });
                         return;
                     }
 
-<<<<<<< HEAD
-=======
-                    // Import NeDB data into database
-                    if (obj.args.nedbtodb) {
-                        if (db.databaseType == 1) { console.log("NeDB is current database, can't perform transfer."); process.exit(); return; }
-                        console.log("Transfering NeDB data into database...");
-                        db.nedbtodb(function (msg) { console.log(msg); process.exit(); })
-                        return;
-                    }
-
->>>>>>> upstream/master
                     // Show a list of all configuration files in the database
                     if (obj.args.dblistconfigfiles) {
                         obj.db.GetAllType('cfile', function (err, docs) { if (err == null) { if (docs.length == 0) { console.log("No files found."); } else { for (var i in docs) { console.log(docs[i]._id.split('/')[1] + ', ' + Buffer.from(docs[i].data, 'base64').length + ' bytes.'); } } } else { console.log('Unable to read from database.'); } process.exit(); }); return;
@@ -1060,27 +876,13 @@ function CreateMeshCentralServer(config, args) {
                     if (obj.args.dbimport) {
                         // Import the entire database from a JSON file
                         if (obj.args.dbimport == true) { obj.args.dbimport = obj.getConfigFilePath('meshcentral.db.json'); }
-<<<<<<< HEAD
                         var json = null, json2 = "", badCharCount = 0;
-=======
-                        var json = null, json2 = '', badCharCount = 0;
->>>>>>> upstream/master
                         try { json = obj.fs.readFileSync(obj.args.dbimport, { encoding: 'utf8' }); } catch (e) { console.log('Invalid JSON file: ' + obj.args.dbimport + ': ' + e); process.exit(); }
                         for (i = 0; i < json.length; i++) { if (json.charCodeAt(i) >= 32) { json2 += json[i]; } else { var tt = json.charCodeAt(i); if (tt != 10 && tt != 13) { badCharCount++; } } } // Remove all bad chars
                         if (badCharCount > 0) { console.log(badCharCount + ' invalid character(s) where removed.'); }
                         try { json = JSON.parse(json2); } catch (e) { console.log('Invalid JSON format: ' + obj.args.dbimport + ': ' + e); process.exit(); }
                         if ((json == null) || (typeof json.length != 'number') || (json.length < 1)) { console.log('Invalid JSON format: ' + obj.args.dbimport + '.'); }
-<<<<<<< HEAD
                         for (i in json) { if ((json[i].type == "mesh") && (json[i].links != null)) { for (var j in json[i].links) { var esc = obj.common.escapeFieldName(j); if (esc !== j) { json[i].links[esc] = json[i].links[j]; delete json[i].links[j]; } } } } // Escape MongoDB invalid field chars
-=======
-                        // Escape MongoDB invalid field chars
-                        for (i in json) {
-                            var doc = json[i];
-                            for (var j in doc) { if (j.indexOf('.') >= 0) { console.log("Invalid field name (" + j + ") in document: " + json[i]); return; } }
-                            //if ((json[i].type == 'ifinfo') && (json[i].netif2 != null)) { for (var j in json[i].netif2) { var esc = obj.common.escapeFieldName(j); if (esc !== j) { json[i].netif2[esc] = json[i].netif2[j]; delete json[i].netif2[j]; } } }
-                            //if ((json[i].type == 'mesh') && (json[i].links != null)) { for (var j in json[i].links) { var esc = obj.common.escapeFieldName(j); if (esc !== j) { json[i].links[esc] = json[i].links[j]; delete json[i].links[j]; } } }
-                        } 
->>>>>>> upstream/master
                         //for (i in json) { if ((json[i].type == "node") && (json[i].host != null)) { json[i].rname = json[i].host; delete json[i].host; } } // DEBUG: Change host to rname
                         setTimeout(function () { // If the Mongo database is being created for the first time, there is a race condition here. This will get around it.
                             obj.db.RemoveAll(function () {
@@ -1166,12 +968,6 @@ function CreateMeshCentralServer(config, args) {
                         return;
                     }
 
-<<<<<<< HEAD
-=======
-                    // Check if the database is capable of performing a backup
-                    obj.db.checkBackupCapability(function (err, msg) { if (msg != null) { obj.addServerWarning(msg, true) } });
-
->>>>>>> upstream/master
                     // Load configuration for database if needed
                     if (obj.args.loadconfigfromdb) {
                         var key = null;
@@ -1224,12 +1020,6 @@ function CreateMeshCentralServer(config, args) {
     obj.StartEx1b = function () {
         var i;
 
-<<<<<<< HEAD
-=======
-        // Setup certificate operations
-        obj.certificateOperations = require('./certoperations.js').CertificateOperations(obj);
-
->>>>>>> upstream/master
         // Linux format /var/log/auth.log
         if (obj.config.settings.authlog != null) {
             obj.fs.open(obj.config.settings.authlog, 'a', function (err, fd) {
@@ -1278,18 +1068,10 @@ function CreateMeshCentralServer(config, args) {
             obj.config.domains[i].id = i;
             if (typeof obj.config.domains[i].loginkey == 'string') { obj.config.domains[i].loginkey = [obj.config.domains[i].loginkey]; }
             if ((obj.config.domains[i].loginkey != null) && (obj.common.validateAlphaNumericArray(obj.config.domains[i].loginkey, 1, 128) == false)) { console.log("ERROR: Invalid login key, must be alpha-numeric string with no spaces."); process.exit(); return; }
-<<<<<<< HEAD
             if (typeof obj.config.domains[i].userallowedip == 'string') { if (obj.config.domains[i].userallowedip == '') { obj.config.domains[i].userallowedip = null; } else { obj.config.domains[i].userallowedip = obj.config.domains[i].userallowedip.split(','); } }
             if (typeof obj.config.domains[i].userblockedip == 'string') { if (obj.config.domains[i].userblockedip == '') { obj.config.domains[i].userblockedip = null; } else { obj.config.domains[i].userblockedip = obj.config.domains[i].userblockedip.split(','); } }
             if (typeof obj.config.domains[i].agentallowedip == 'string') { if (obj.config.domains[i].agentallowedip == '') { obj.config.domains[i].agentallowedip = null; } else { obj.config.domains[i].agentallowedip = obj.config.domains[i].agentallowedip.split(','); } }
             if (typeof obj.config.domains[i].agentblockedip == 'string') { if (obj.config.domains[i].agentblockedip == '') { obj.config.domains[i].agentblockedip = null; } else { obj.config.domains[i].agentblockedip = obj.config.domains[i].agentblockedip.split(','); } }
-=======
-            if (typeof obj.config.domains[i].userallowedip == 'string') { if (obj.config.domains[i].userallowedip == '') { delete obj.config.domains[i].userallowedip; } else { obj.config.domains[i].userallowedip = obj.config.domains[i].userallowedip.split(','); } }
-            if (typeof obj.config.domains[i].userblockedip == 'string') { if (obj.config.domains[i].userblockedip == '') { delete obj.config.domains[i].userblockedip; } else { obj.config.domains[i].userblockedip = obj.config.domains[i].userblockedip.split(','); } }
-            if (typeof obj.config.domains[i].agentallowedip == 'string') { if (obj.config.domains[i].agentallowedip == '') { delete obj.config.domains[i].agentallowedip; } else { obj.config.domains[i].agentallowedip = obj.config.domains[i].agentallowedip.split(','); } }
-            if (typeof obj.config.domains[i].agentblockedip == 'string') { if (obj.config.domains[i].agentblockedip == '') { delete obj.config.domains[i].agentblockedip; } else { obj.config.domains[i].agentblockedip = obj.config.domains[i].agentblockedip.split(','); } }
-            if (typeof obj.config.domains[i].ignoreagenthashcheck == 'string') { if (obj.config.domains[i].ignoreagenthashcheck == '') { delete obj.config.domains[i].ignoreagenthashcheck; } else { obj.config.domains[i].ignoreagenthashcheck = obj.config.domains[i].ignoreagenthashcheck.split(','); } }
->>>>>>> upstream/master
             if ((obj.config.domains[i].passwordrequirements != null) && (typeof obj.config.domains[i].passwordrequirements == 'object')) {
                 if (typeof obj.config.domains[i].passwordrequirements.skip2factor == 'string') {
                     obj.config.domains[i].passwordrequirements.skip2factor = obj.config.domains[i].passwordrequirements.skip2factor.split(',');
@@ -1303,10 +1085,6 @@ function CreateMeshCentralServer(config, args) {
                 return;
             }
             if ((obj.config.domains[i].auth == 'ldap') || (obj.config.domains[i].auth == 'sspi')) { obj.config.domains[i].newaccounts = 0; } // No new accounts allowed in SSPI/LDAP authentication modes.
-<<<<<<< HEAD
-=======
-            if (obj.config.domains[i].sitestyle == null) { obj.config.domains[i].sitestyle = 2; } // Default to site style #2
->>>>>>> upstream/master
 
             // Convert newAccountsRights from a array of strings to flags number.
             obj.config.domains[i].newaccountsrights = obj.common.meshServerRightsArrayToNumber(obj.config.domains[i].newaccountsrights);
@@ -1332,36 +1110,6 @@ function CreateMeshCentralServer(config, args) {
             } else {
                 delete obj.config.domains[i].agentcustomization;
             }
-<<<<<<< HEAD
-=======
-
-            // Convert user consent flags
-            if (typeof obj.config.domains[i].userconsentflags == 'object') {
-                var flags = 0;
-                if (obj.config.domains[i].userconsentflags.desktopnotify == true) { flags |= 1; }
-                if (obj.config.domains[i].userconsentflags.terminalnotify == true) { flags |= 2; }
-                if (obj.config.domains[i].userconsentflags.filenotify == true) { flags |= 4; }
-                if (obj.config.domains[i].userconsentflags.desktopprompt == true) { flags |= 8; }
-                if (obj.config.domains[i].userconsentflags.terminalprompt == true) { flags |= 16; }
-                if (obj.config.domains[i].userconsentflags.fileprompt == true) { flags |= 32; }
-                if (obj.config.domains[i].userconsentflags.desktopprivacybar == true) { flags |= 64; }
-                obj.config.domains[i].userconsentflags = flags;
-            }
-
-            // If we have Intel AMT manager settings, take a look at them here.
-            if (typeof obj.config.domains[i].amtmanager == 'object') {
-                if (typeof obj.config.domains[i].amtmanager.tlsrootcert == 'object') {
-                    obj.config.domains[i].amtmanager.tlsrootcert2 = obj.certificateOperations.loadGenericCertAndKey(obj.config.domains[i].amtmanager.tlsrootcert);
-                    if (obj.config.domains[i].amtmanager.tlsrootcert2 == null) { // Show an error message if needed
-                        if (i == '') {
-                            addServerWarning("Unable to load Intel AMT TLS root certificate for default domain.");
-                        } else {
-                            addServerWarning("Unable to load Intel AMT TLS root certificate for domain " + i + ".");
-                        }
-                    }
-                }
-            }
->>>>>>> upstream/master
         }
 
         // Log passed arguments into Windows Service Log
@@ -1380,11 +1128,6 @@ function CreateMeshCentralServer(config, args) {
         if (obj.args.redirport == null) obj.args.redirport = 80;
         if (obj.args.minifycore === 0) obj.args.minifycore = false;
         if (typeof args.agentidletimeout != 'number') { args.agentidletimeout = 150000; } else { args.agentidletimeout *= 1000 } // Default agent idle timeout is 2m, 30sec.
-<<<<<<< HEAD
-=======
-        if ((obj.args.lanonly != true) && (obj.args.webrtconfig == null)) { obj.args.webrtconfig = { iceservers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.services.mozilla.com' }] }; } // Setup default WebRTC STUN servers
-        if (typeof obj.args.ignoreagenthashcheck == 'string') { if (obj.args.ignoreagenthashcheck == '') { delete obj.args.ignoreagenthashcheck; } else { obj.args.ignoreagenthashcheck = obj.args.ignoreagenthashcheck.split(','); } }
->>>>>>> upstream/master
 
         // Setup a site administrator
         if ((obj.args.admin) && (typeof obj.args.admin == 'string')) {
@@ -1481,10 +1224,7 @@ function CreateMeshCentralServer(config, args) {
     // Done starting the redirection server, go on to load the server certificates
     obj.StartEx2 = function () {
         // Load server certificates
-<<<<<<< HEAD
         obj.certificateOperations = require('./certoperations.js').CertificateOperations(obj);
-=======
->>>>>>> upstream/master
         obj.certificateOperations.GetMeshServerCertificate(obj.args, obj.config, function (certs) {
             // Get the current node version
             const nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
@@ -1551,42 +1291,8 @@ function CreateMeshCentralServer(config, args) {
             }
         }
 
-<<<<<<< HEAD
         if (obj.supportsProxyCertificatesRequest == true) { obj.updateProxyCertificates(true); }
         obj.StartEx4(); // Keep going
-=======
-        // Update proxy certificates
-        if (obj.supportsProxyCertificatesRequest == true) { obj.updateProxyCertificates(true); }
-
-        // Load CloudFlare trusted proxies list if needed
-        if ((obj.config.settings.trustedproxy != null) && (typeof obj.config.settings.trustedproxy == 'string') && (obj.config.settings.trustedproxy.toLowerCase() == 'cloudflare')) {
-            obj.config.settings.extrascriptsrc = 'ajax.cloudflare.com'; // Add CloudFlare as a trusted script source. This allows for CloudFlare's RocketLoader feature.
-            delete obj.args.trustedproxy;
-            delete obj.config.settings.trustedproxy;
-            obj.certificateOperations.loadTextFile('https://www.cloudflare.com/ips-v4', null, function (url, data, tag) {
-                if (data != null) {
-                    if (Array.isArray(obj.args.trustedproxy) == false) { obj.args.trustedproxy = []; }
-                    var ipranges = data.split('\n');
-                    for (var i in ipranges) { if (ipranges[i] != '') { obj.args.trustedproxy.push(ipranges[i]); } }
-                    obj.certificateOperations.loadTextFile('https://www.cloudflare.com/ips-v6', null, function (url, data, tag) {
-                        if (data != null) {
-                            var ipranges = data.split('\n');
-                            for (var i in ipranges) { if (ipranges[i] != '') { obj.args.trustedproxy.push(ipranges[i]); } }
-                            obj.config.settings.trustedproxy = obj.args.trustedproxy;
-                        } else {
-                            addServerWarning("Unable to load CloudFlare trusted proxy IPv6 address list.");
-                        }
-                        obj.StartEx4(); // Keep going
-                    });
-                } else {
-                    addServerWarning("Unable to load CloudFlare trusted proxy IPv4 address list.");
-                    obj.StartEx4(); // Keep going
-                }
-            });
-        } else {
-            obj.StartEx4(); // Keep going
-        }
->>>>>>> upstream/master
     }
 
     // Start the server with the given certificates
@@ -1611,19 +1317,8 @@ function CreateMeshCentralServer(config, args) {
         // Load the list of MeshCentral tools
         obj.updateMeshTools();
 
-<<<<<<< HEAD
-=======
-        // Load MeshAgent translation strings
-        try {
-            var translations = JSON.parse(obj.fs.readFileSync(obj.path.join(__dirname, 'agents', 'agent-translations.json')).toString());
-            if (translations['zh-chs']) { translations['zh-hans'] = translations['zh-chs']; delete translations['zh-chs']; }
-            if (translations['zh-cht']) { translations['zh-hant'] = translations['zh-cht']; delete translations['zh-cht']; }
-            obj.agentTranslations = JSON.stringify(translations);
-        } catch (ex) { }
-
->>>>>>> upstream/master
         // Load the list of mesh agents and install scripts
-        if ((obj.args.noagentupdate == 1) || (obj.args.noagentupdate == true)) { for (i in obj.meshAgentsArchitectureNumbers) { obj.meshAgentsArchitectureNumbers[i].update = false; } }
+        if (obj.args.noagentupdate == 1) { for (i in obj.meshAgentsArchitectureNumbers) { obj.meshAgentsArchitectureNumbers[i].update = false; } }
         obj.updateMeshAgentsTable(function () {
             obj.updateMeshAgentInstallScripts();
 
@@ -1633,10 +1328,6 @@ function CreateMeshCentralServer(config, args) {
                 obj.multiServer = require('./multiserver.js').CreateMultiServer(obj, obj.args);
                 if (obj.multiServer != null) {
                     if ((obj.db.databaseType != 3) || (obj.db.changeStream != true)) { console.log("ERROR: Multi-server support requires use of MongoDB with ReplicaSet and ChangeStream enabled."); process.exit(0); return; }
-<<<<<<< HEAD
-=======
-                    if (typeof obj.args.sessionkey != 'string') { console.log("ERROR: Multi-server support requires \"SessionKey\" be set in the settings section of config.json, same key for all servers."); process.exit(0); return; }
->>>>>>> upstream/master
                     obj.serverId = obj.multiServer.serverid;
                     for (var serverid in obj.config.peers.servers) { obj.peerConnectivityByNode[serverid] = {}; }
                 }
@@ -1646,17 +1337,11 @@ function CreateMeshCentralServer(config, args) {
 
                 // Set the session length to 60 minutes if not set and set a random key if needed
                 if ((obj.args.sessiontime != null) && ((typeof obj.args.sessiontime != 'number') || (obj.args.sessiontime < 1))) { delete obj.args.sessiontime; }
-                if (typeof obj.args.sessionkey != 'string') { obj.args.sessionkey = buf.toString('hex').toUpperCase(); }
+                if (!obj.args.sessionkey) { obj.args.sessionkey = buf.toString('hex').toUpperCase(); }
 
                 // Create MQTT Broker to hook into webserver and mpsserver
                 if ((typeof obj.config.settings.mqtt == 'object') && (typeof obj.config.settings.mqtt.auth == 'object') && (typeof obj.config.settings.mqtt.auth.keyid == 'string') && (typeof obj.config.settings.mqtt.auth.key == 'string')) { obj.mqttbroker = require("./mqttbroker.js").CreateMQTTBroker(obj, obj.db, obj.args); }
 
-<<<<<<< HEAD
-                // Create MQTT Broker to hook into webserver and mpsserver
-                if ((typeof obj.config.settings.mqtt == 'object') && (typeof obj.config.settings.mqtt.auth == 'object') && (typeof obj.config.settings.mqtt.auth.keyid == 'string') && (typeof obj.config.settings.mqtt.auth.key == 'string')) { obj.mqttbroker = require("./mqttbroker.js").CreateMQTTBroker(obj, obj.db, obj.args); }
-
-=======
->>>>>>> upstream/master
                 // Start the web server and if needed, the redirection web server.
                 obj.webserver = require('./webserver.js').CreateWebServer(obj, obj.db, obj.args, obj.certificates);
                 if (obj.redirserver != null) { obj.redirserver.hookMainWebServer(obj.certificates); }
@@ -1684,74 +1369,17 @@ function CreateMeshCentralServer(config, args) {
                     obj.swarmserver = require('./swarmserver.js').CreateSwarmServer(obj, obj.db, obj.args, obj.certificates);
                 }
 
-                // Setup the main email server
-                if (obj.config.sendgrid != null) {
-                    // Sendgrid server
-                    obj.mailserver = require('./meshmail.js').CreateMeshMail(obj);
-                    obj.mailserver.verify();
-                    if (obj.args.lanonly == true) { addServerWarning("SendGrid server has limited use in LAN mode."); }
-                } else if ((obj.config.smtp != null) && (obj.config.smtp.host != null) && (obj.config.smtp.from != null)) {
-                    // SMTP server
+                // Setup email server
+                if ((obj.config.smtp != null) && (obj.config.smtp.host != null) && (obj.config.smtp.from != null)) {
                     obj.mailserver = require('./meshmail.js').CreateMeshMail(obj);
                     obj.mailserver.verify();
                     if (obj.args.lanonly == true) { addServerWarning("SMTP server has limited use in LAN mode."); }
                 }
 
-<<<<<<< HEAD
-=======
-                // Setup the email server for each domain
-                for (i in obj.config.domains) {
-                    if (obj.config.domains[i].sendgrid != null) {
-                        // Sendgrid server
-                        obj.config.domains[i].mailserver = require('./meshmail.js').CreateMeshMail(obj, obj.config.domains[i]);
-                        obj.config.domains[i].mailserver.verify();
-                        if (obj.args.lanonly == true) { addServerWarning("SendGrid server has limited use in LAN mode."); }
-                    } else if ((obj.config.domains[i].smtp != null) && (obj.config.domains[i].smtp.host != null) && (obj.config.domains[i].smtp.from != null)) {
-                        // SMTP server
-                        obj.config.domains[i].mailserver = require('./meshmail.js').CreateMeshMail(obj, obj.config.domains[i]);
-                        obj.config.domains[i].mailserver.verify();
-                        if (obj.args.lanonly == true) { addServerWarning("SMTP server has limited use in LAN mode."); }
-                    } else {
-                        // Setup the parent mail server for this domain
-                        if (obj.mailserver != null) { obj.config.domains[i].mailserver = obj.mailserver; }
-                    }
-                }
-
->>>>>>> upstream/master
                 // Setup SMS gateway
                 if (config.sms != null) {
                     obj.smsserver = require('./meshsms.js').CreateMeshSMS(obj);
                     if ((obj.smsserver != null) && (obj.args.lanonly == true)) { addServerWarning("SMS gateway has limited use in LAN mode."); }
-<<<<<<< HEAD
-=======
-                }
-
-                // Setup web based push notifications
-                if ((typeof config.settings.webpush == 'object') && (typeof config.settings.webpush.email == 'string')) {
-                    obj.webpush = require('web-push');
-                    var vapidKeys = null;
-                    try { vapidKeys = JSON.parse(obj.fs.readFileSync(obj.path.join(obj.datapath, 'vapid.json')).toString()); } catch (ex) { }
-                    if ((vapidKeys == null) || (typeof vapidKeys.publicKey != 'string') || (typeof vapidKeys.privateKey != 'string')) {
-                        console.log("Generating web push VAPID keys...");
-                        vapidKeys = obj.webpush.generateVAPIDKeys();
-                        obj.fs.writeFileSync(obj.path.join(obj.datapath, 'vapid.json'), JSON.stringify(vapidKeys));
-                    }
-                    obj.webpush.vapidPublicKey = vapidKeys.publicKey;
-                    obj.webpush.setVapidDetails('mailto:' + config.settings.webpush.email, vapidKeys.publicKey, vapidKeys.privateKey);
-                    if (typeof config.settings.webpush.gcmapi == 'string') { webpush.setGCMAPIKey(config.settings.webpush.gcmapi); }
-                }
-
-                // Setup Firebase
-                if ((config.firebase != null) && (typeof config.firebase.senderid == 'string') && (typeof config.firebase.serverkey == 'string')) {
-                    const NodeJSVer = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
-                    if (NodeJSVer >= 10) { obj.firebase = require('./firebase').CreateFirebase(obj, config.firebase.senderid, config.firebase.serverkey); }
-                } else if ((typeof config.firebaserelay == 'object') && (typeof config.firebaserelay.url == 'string')) {
-                    // Setup the push messaging relay
-                    obj.firebase = require('./firebase').CreateFirebaseRelay(obj, config.firebaserelay.url, config.firebaserelay.key);
-                } else if (obj.config.settings.publicpushnotifications === true) {
-                    // Setup the Firebase push messaging relay using https://meshcentral.com, this is the public push notification server.
-                    obj.firebase = require('./firebase').CreateFirebaseRelay(obj, 'https://meshcentral.com/firebaserelay.aspx');
->>>>>>> upstream/master
                 }
 
                 // Start periodic maintenance
@@ -1790,14 +1418,6 @@ function CreateMeshCentralServer(config, args) {
                     }
                 });
 
-<<<<<<< HEAD
-=======
-                // Setup Intel AMT hello server
-                if ((typeof config.settings.amtprovisioningserver == 'object') && (typeof config.settings.amtprovisioningserver.devicegroup == 'string') && (typeof config.settings.amtprovisioningserver.newmebxpassword == 'string') && (typeof config.settings.amtprovisioningserver.trustedfqdn == 'string') && (typeof config.settings.amtprovisioningserver.ip == 'string')) {
-                    obj.amtProvisioningServer = require('./amtprovisioningserver').CreateAmtProvisioningServer(obj, config.settings.amtprovisioningserver);
-                }
-
->>>>>>> upstream/master
                 // Start collecting server stats every 5 minutes
                 setInterval(function () {
                     obj.serverStatsCounter++;
@@ -1827,10 +1447,6 @@ function CreateMeshCentralServer(config, args) {
                         for (var i in obj.mpsserver.ciraConnections) { data.conn.am += obj.mpsserver.ciraConnections[i].length; }
                     }
                     if (obj.firstStats === true) { delete obj.firstStats; data.first = true; }
-<<<<<<< HEAD
-=======
-                    if (obj.multiServer != null) { data.s = obj.multiServer.serverid; }
->>>>>>> upstream/master
                     obj.db.SetServerStats(data); // Save the stats to the database
                     obj.DispatchEvent(['*'], obj, { action: 'servertimelinestats', data: data }); // Event the server stats
                 }, 300000);
@@ -2105,28 +1721,8 @@ function CreateMeshCentralServer(config, args) {
     obj.GetConnectivityState = function (nodeid) { return obj.connectivityByNode[nodeid]; };
 
     // Get the routing server id for a given node and connection type, can never be self.
-    obj.GetRoutingServerIdNotSelf = function (nodeid, connectType) {
-        if (obj.multiServer == null) return null;
-        for (var serverid in obj.peerConnectivityByNode) {
-            if (serverid == obj.serverId) continue;
-            var state = obj.peerConnectivityByNode[serverid][nodeid];
-            if ((state != null) && ((state.connectivity & connectType) != 0)) { return { serverid: serverid, meshid: state.meshid }; }
-        }
-        return null;
-    };
-
-    // Get the routing server id for a given node and connection type, self first
     obj.GetRoutingServerId = function (nodeid, connectType) {
         if (obj.multiServer == null) return null;
-
-        // Look at our own server first
-        var connections = obj.peerConnectivityByNode[obj.serverId];
-        if (connections != null) {
-            var state = connections[nodeid];
-            if ((state != null) && ((state.connectivity & connectType) != 0)) { return { serverid: obj.serverId, meshid: state.meshid }; }
-        }
-
-        // Look at other servers
         for (var serverid in obj.peerConnectivityByNode) {
             if (serverid == obj.serverId) continue;
             var state = obj.peerConnectivityByNode[serverid][nodeid];
@@ -2381,19 +1977,6 @@ function CreateMeshCentralServer(config, args) {
             }
         }
 
-<<<<<<< HEAD
-=======
-        // Read the tiny core if present
-        var meshTinyCore = null;
-        if (obj.fs.existsSync(obj.path.join(__dirname, 'agents', 'tinycore.js')) == true) {
-            try { meshTinyCore = obj.fs.readFileSync(obj.path.join(__dirname, 'agents', 'tinycore.js')).toString(); } catch (ex) { }
-            if (meshTinyCore != null) {
-                modulesAdd['windows-tiny'] = ['var addedModules = [];\r\n'];
-                modulesAdd['linux-tiny'] = ['var addedModules = [];\r\n'];
-            }
-        }
-
->>>>>>> upstream/master
         if (obj.args.minifycore !== false) { try { meshCore = obj.fs.readFileSync(obj.path.join(meshcorePath, 'meshcore.min.js')).toString(); } catch (e) { } } // Favor minified meshcore if present.
         if (meshCore == null) { try { meshCore = obj.fs.readFileSync(obj.path.join(meshcorePath, 'meshcore.js')).toString(); } catch (e) { } } // Use non-minified meshcore.
         if (meshCore != null) {
@@ -2457,19 +2040,10 @@ function CreateMeshCentralServer(config, args) {
                     obj.defaultMeshCores[i] = [obj.common.IntToStr(0), ...modulesAdd[i], meshRecoveryCore].join('');
                 } else if ((i == 'windows-agentrecovery') || (i == 'linux-agentrecovery')) {
                     obj.defaultMeshCores[i] = [obj.common.IntToStr(0), ...modulesAdd[i], meshAgentRecoveryCore].join('');
-<<<<<<< HEAD
                 } else {
                     obj.defaultMeshCores[i] = [obj.common.IntToStr(0), ...modulesAdd[i], meshCore].join('');
                 }
                 obj.defaultMeshCoresHash[i] = obj.crypto.createHash('sha384').update(obj.defaultMeshCores[i]).digest("binary");
-=======
-                } else if ((i == 'windows-tiny') || (i == 'linux-tiny')) {
-                    obj.defaultMeshCores[i] = [obj.common.IntToStr(0), ...modulesAdd[i], meshTinyCore].join('');
-                } else {
-                    obj.defaultMeshCores[i] = [obj.common.IntToStr(0), ...modulesAdd[i], meshCore].join('');
-                }
-                obj.defaultMeshCoresHash[i] = obj.crypto.createHash('sha384').update(obj.defaultMeshCores[i]).digest('binary');
->>>>>>> upstream/master
                 obj.debug('main', 'Core module ' + i + ' is ' + obj.defaultMeshCores[i].length + ' bytes.');
                 //console.log('Core module ' + i + ' is ' + obj.defaultMeshCores[i].length + ' bytes.'); // DEBUG, Print the core size
                 //obj.fs.writeFile("C:\\temp\\" + i + ".js", obj.defaultMeshCores[i].substring(4)); // DEBUG, Write the core to file
@@ -2536,10 +2110,6 @@ function CreateMeshCentralServer(config, args) {
     var meshToolsList = {
         'MeshCentralRouter': { localname: 'MeshCentralRouter.exe', dlname: 'winrouter' },
         'MeshCentralAssistant': { localname: 'MeshCentralAssistant.exe', dlname: 'winassistant' }
-<<<<<<< HEAD
-=======
-        //'MeshCentralRouterMacOS': { localname: 'MeshCentralRouter.dmg', dlname: 'MeshCentralRouter.dmg' }
->>>>>>> upstream/master
     };
 
     // Update the list of available mesh agents
@@ -2619,7 +2189,6 @@ function CreateMeshCentralServer(config, args) {
     
     // List of possible mesh agents
     obj.meshAgentsArchitectureNumbers = {
-<<<<<<< HEAD
         0: { id: 0, localname: 'Unknown', rname: 'meshconsole.exe', desc: 'Unknown agent', update: false, amt: true, platform: 'unknown', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery' },
         1: { id: 1, localname: 'MeshConsole.exe', rname: 'meshconsole32.exe', desc: 'Windows x86-32 console', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery' },
         2: { id: 2, localname: 'MeshConsole64.exe', rname: 'meshconsole64.exe', desc: 'Windows x86-64 console', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery' },
@@ -2653,46 +2222,6 @@ function CreateMeshCentralServer(config, args) {
         30: { id: 30, localname: 'meshagent_freebsd_x86-64', rname: 'meshagent', desc: 'FreeBSD x86-64', update: true, amt: false, platform: 'freebsd', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery' }, // FreeBSD x64
         10003: { id: 3, localname: 'MeshService.exe', rname: 'meshagent.exe', desc: 'Windows x86-32 service', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery' }, // Unsigned version of the Windows MeshAgent x86
         10004: { id: 4, localname: 'MeshService64.exe', rname: 'meshagent.exe', desc: 'Windows x86-64 service', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery' } // Unsigned version of the Windows MeshAgent x64
-=======
-        0: { id: 0, localname: 'Unknown', rname: 'meshconsole.exe', desc: 'Unknown agent', update: false, amt: true, platform: 'unknown', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        1: { id: 1, localname: 'MeshConsole.exe', rname: 'meshconsole32.exe', desc: 'Windows x86-32 console', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        2: { id: 2, localname: 'MeshConsole64.exe', rname: 'meshconsole64.exe', desc: 'Windows x86-64 console', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        3: { id: 3, localname: 'MeshService-signed.exe', rname: 'meshagent32.exe', desc: 'Windows x86-32 service', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        4: { id: 4, localname: 'MeshService64-signed.exe', rname: 'meshagent64.exe', desc: 'Windows x86-64 service', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        5: { id: 5, localname: 'meshagent_x86', rname: 'meshagent', desc: 'Linux x86-32', update: true, amt: true, platform: 'linux', core: 'linux-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        6: { id: 6, localname: 'meshagent_x86-64', rname: 'meshagent', desc: 'Linux x86-64', update: true, amt: true, platform: 'linux', core: 'linux-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        7: { id: 7, localname: 'meshagent_mips', rname: 'meshagent', desc: 'Linux MIPS', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        8: { id: 8, localname: 'MeshAgent-Linux-XEN-x86-32', rname: 'meshagent', desc: 'XEN x86-64', update: true, amt: false, platform: 'linux', core: 'linux-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        9: { id: 9, localname: 'meshagent_arm', rname: 'meshagent', desc: 'Linux ARM5', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        10: { id: 10, localname: 'MeshAgent-Linux-ARM-PlugPC', rname: 'meshagent', desc: 'Linux ARM PlugPC', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        11: { id: 11, localname: 'meshagent_osx-x86-32', rname: 'meshosx', desc: 'Apple macOS x86-32', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Apple x86-32 binary, no longer supported.
-        12: { id: 12, localname: 'MeshAgent-Android-x86', rname: 'meshandroid', desc: 'Android x86-32', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        13: { id: 13, localname: 'meshagent_pogo', rname: 'meshagent', desc: 'Linux ARM PogoPlug', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        14: { id: 14, localname: 'MeshAgent-Android-APK', rname: 'meshandroid', desc: 'Android', update: false, amt: false, platform: 'android', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Get this one from Google Play
-        15: { id: 15, localname: 'meshagent_poky', rname: 'meshagent', desc: 'Linux Poky x86-32', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        16: { id: 16, localname: 'meshagent_osx-x86-64', rname: 'meshagent', desc: 'Apple macOS x86-64', update: true, amt: false, platform: 'osx', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Apple x86-64 binary
-        17: { id: 17, localname: 'MeshAgent-ChromeOS', rname: 'meshagent', desc: 'Google ChromeOS', update: false, amt: false, platform: 'chromeos', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Get this one from Chrome store
-        18: { id: 18, localname: 'meshagent_poky64', rname: 'meshagent', desc: 'Linux Poky x86-64', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        19: { id: 19, localname: 'meshagent_x86_nokvm', rname: 'meshagent', desc: 'Linux x86-32 NoKVM', update: true, amt: true, platform: 'linux', core: 'linux-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        20: { id: 20, localname: 'meshagent_x86-64_nokvm', rname: 'meshagent', desc: 'Linux x86-64 NoKVM', update: true, amt: true, platform: 'linux', core: 'linux-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        21: { id: 21, localname: 'MeshAgent-WinMinCore-Console-x86-32.exe', rname: 'meshagent.exe', desc: 'Windows MinCore Console x86-32', update: true, amt: false, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        22: { id: 22, localname: 'MeshAgent-WinMinCore-Service-x86-64.exe', rname: 'meshagent.exe', desc: 'Windows MinCore Service x86-32', update: true, amt: false, platform: 'win32', core: 'windows-amt', rcore: 'windows-recovery', arcore: 'windows-agentrecovery', tcore: 'windows-tiny' },
-        23: { id: 23, localname: 'MeshAgent-NodeJS', rname: 'meshagent', desc: 'NodeJS', update: false, amt: false, platform: 'node', core: 'nodejs', rcore: 'nodejs', arcore: 'nodejs', tcore: 'nodejs' }, // NodeJS based agent
-        24: { id: 24, localname: 'meshagent_arm-linaro', rname: 'meshagent', desc: 'Linux ARM Linaro', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        25: { id: 25, localname: 'meshagent_armhf', rname: 'meshagent', desc: 'Linux ARM - HardFloat', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // "armv6l" and "armv7l"
-        26: { id: 26, localname: 'meshagent_arm64', rname: 'meshagent', desc: 'Linux ARMv8-64', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // "aarch64"
-        27: { id: 27, localname: 'meshagent_armhf2', rname: 'meshagent', desc: 'Linux ARM - HardFloat', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Raspbian 7 2015-02-02 for old Raspberry Pi.
-        28: { id: 28, localname: 'meshagent_mips24kc', rname: 'meshagent', desc: 'Linux MIPS24KC/MUSL (OpenWRT)', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // MIPS Router with OpenWRT
-        29: { id: 29, localname: 'meshagent_osx-arm-64', rname: 'meshagent', desc: 'Apple macOS ARM-64', update: true, amt: false, platform: 'osx', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Apple Silicon ARM 64bit
-        30: { id: 30, localname: 'meshagent_freebsd_x86-64', rname: 'meshagent', desc: 'FreeBSD x86-64', update: true, amt: false, platform: 'freebsd', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // FreeBSD x64
-        32: { id: 32, localname: 'meshagent_aarch64', rname: 'meshagent', desc: 'Linux ARM 64 bit (glibc/2.24 NOKVM)', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' },
-        33: { id: 33, localname: 'meshagent_alpine-x86-64', rname: 'meshagent', desc: 'Alpine Linux x86 64 Bit (MUSL)', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Alpine Linux
-        40: { id: 40, localname: 'meshagent_mipsel24kc', rname: 'meshagent', desc: 'Linux MIPSEL24KC (OpenWRT)', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // MIPS Router with OpenWRT
-        41: { id: 41, localname: 'meshagent_aarch64-cortex-a53', rname: 'meshagent', desc: 'ARMADA/CORTEX-A53/MUSL (OpenWRT)', update: true, amt: false, platform: 'linux', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // OpenWRT Routers
-        10003: { id: 3, localname: 'MeshService.exe', rname: 'meshagent.exe', desc: 'Win x86-32 service, unsigned', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Unsigned version of the Windows MeshAgent x86
-        10004: { id: 4, localname: 'MeshService64.exe', rname: 'meshagent.exe', desc: 'Win x86-64 service, unsigned', update: true, amt: true, platform: 'win32', core: 'windows-amt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' }, // Unsigned version of the Windows MeshAgent x64
-        10005: { id: 10005, localname: 'meshagent_osx-universal-64', rname: 'meshagent', desc: 'Apple macOS Universal Binary', update: true, amt: false, platform: 'osx', core: 'linux-noamt', rcore: 'linux-recovery', arcore: 'linux-agentrecovery', tcore: 'linux-tiny' } // Apple Silicon + x86 universal binary
->>>>>>> upstream/master
     };
 
     // Update the list of available mesh agents
@@ -2733,19 +2262,9 @@ function CreateMeshCentralServer(config, args) {
                             this.meshAgentBinary.size = this.meshAgentBinary.data.length;
                             delete this.bufferList;
 
-<<<<<<< HEAD
                             // Compress the agent using ZIP
                             var archive = require('archiver')('zip', { level: 9 }); // Sets the compression method.
 
-=======
-                            // Hash the uncompressed binary
-                            var hash = obj.crypto.createHash('sha384').update(this.meshAgentBinary.data);
-                            this.meshAgentBinary.fileHash = hash.digest('binary');
-                            this.meshAgentBinary.fileHashHex = Buffer.from(this.meshAgentBinary.fileHash, 'binary').toString('hex');
-
-                            // Compress the agent using ZIP
-                            var archive = require('archiver')('zip', { level: 9 }); // Sets the compression method.
->>>>>>> upstream/master
                             const onZipData = function onZipData(buffer) { onZipData.x.zacc.push(buffer); }
                             const onZipEnd = function onZipEnd() {
                                 // Concat all the buffer for create compressed zip agent
@@ -2803,11 +2322,7 @@ function CreateMeshCentralServer(config, args) {
                             onZipData.x.zdata = concatData;
                             onZipData.x.zsize = concatData.length;
 
-<<<<<<< HEAD
                             console.log('Packed', onZipData.x.size, onZipData.x.zsize);
-=======
-                            //console.log('Packed', onZipData.x.size, onZipData.x.zsize);
->>>>>>> upstream/master
                         }
                         const onZipError = function onZipError() { delete onZipData.x.zacc; }
                         obj.meshAgentBinaries[archid].zacc = [];
@@ -2833,13 +2348,6 @@ function CreateMeshCentralServer(config, args) {
                 var options = { sourcePath: agentpath, targetStream: hashStream, platform: obj.meshAgentsArchitectureNumbers[archid].platform };
                 if (obj.meshAgentBinaries[archid].pe != null) { options.peinfo = obj.meshAgentBinaries[archid].pe; }
                 obj.exeHandler.hashExecutableFile(options);
-
-                // If we are not loading Windows binaries to RAM, compute the RAW file hash of the signed binaries here.
-                if ((obj.args.agentsinram === false) && ((archid == 3) || (archid == 4))) {
-                    var hash = obj.crypto.createHash('sha384').update(obj.fs.readFileSync(agentpath));
-                    obj.meshAgentBinaries[archid].fileHash = hash.digest('binary');
-                    obj.meshAgentBinaries[archid].fileHashHex = Buffer.from(obj.meshAgentBinaries[archid].fileHash, 'binary').toString('hex');
-                }
             }
         }
         if ((obj.meshAgentBinaries[3] == null) && (obj.meshAgentBinaries[10003] != null)) { obj.meshAgentBinaries[3] = obj.meshAgentBinaries[10003]; } // If only the unsigned windows binaries are present, use them.
@@ -2905,14 +2413,8 @@ function CreateMeshCentralServer(config, args) {
         } catch (ex) { obj.debug('cookie', 'ERR: Failed to encode AESGCM cookie due to exception: ' + ex); return null; }
     };
 
-<<<<<<< HEAD
     // Decode a cookie back into an object using a key using AES256-GCM or AES128-CBC/HMAC-SHA386. Return null if it's not a valid cookie. (key must be 32 bytes or more)
     obj.decodeCookie = function (cookie, key, timeout) {
-=======
-    // Decode a cookie back into an object using a key using AES256-GCM or AES128-CBC/HMAC-SHA384. Return null if it's not a valid cookie. (key must be 32 bytes or more)
-    obj.decodeCookie = function (cookie, key, timeout) {
-        if (cookie == null) return null;
->>>>>>> upstream/master
         var r = obj.decodeCookieAESGCM(cookie, key, timeout);
         if (r == null) { r = obj.decodeCookieAESSHA(cookie, key, timeout); }
         if ((r == null) && (obj.args.cookieencoding == null) && (cookie.length != 64) && ((cookie == cookie.toLowerCase()) || (cookie == cookie.toUpperCase()))) {
@@ -2969,11 +2471,7 @@ function CreateMeshCentralServer(config, args) {
         } catch (ex) { obj.debug('cookie', 'ERR: Bad AESGCM cookie due to exception: ' + ex); return null; }
     };
 
-<<<<<<< HEAD
     // Decode a cookie back into an object using a key using AES256 / HMAC-SHA386. Return null if it's not a valid cookie. (key must be 80 bytes or more)
-=======
-    // Decode a cookie back into an object using a key using AES256 / HMAC-SHA384. Return null if it's not a valid cookie. (key must be 80 bytes or more)
->>>>>>> upstream/master
     // We do this because poor .NET does not support AES256-GCM.
     obj.decodeCookieAESSHA = function (cookie, key, timeout) {
         try {
@@ -3122,7 +2620,6 @@ function getConfig(createSampleConfig) {
 
     // Read configuration file if present and change arguments.
     var config = {}, configFilePath = path.join(datapath, 'config.json');
-    if (args.configfile) { configFilePath = path.join(datapath, args.configfile); }
     if (fs.existsSync(configFilePath)) {
         // Load and validate the configuration file
         try { config = require(configFilePath); } catch (e) { console.log('ERROR: Unable to parse ' + configFilePath + '.'); return null; }
@@ -3162,10 +2659,6 @@ function InstallModules(modules, func) {
             var moduleInfo = moduleNameAndVersion.split('@', 2);
             var moduleName = moduleInfo[0];
             var moduleVersion = moduleInfo[1];
-<<<<<<< HEAD
-=======
-            if (moduleName == '') { moduleName = moduleNameAndVersion; moduleVersion = undefined; } // If the module name starts with @, don't use @ as a version seperator.
->>>>>>> upstream/master
             try {
                 // Does the module need a specific version?
                 if (moduleVersion) {
@@ -3195,13 +2688,7 @@ function InstallModule(modulename, func, tag1, tag2) {
 
     child_process.exec(npmpath + ` install --no-optional ${modulename}`, { maxBuffer: 512000, timeout: 120000, cwd: parentpath }, function (error, stdout, stderr) {
         if ((error != null) && (error != '')) {
-<<<<<<< HEAD
             console.log('ERROR: Unable to install required module "' + modulename + '". MeshCentral may not have access to npm, or npm may not have suffisent rights to load the new module. Try "npm install ' + modulename + '" to manualy install this module.\r\n');
-=======
-            var mcpath = __dirname;
-            if (mcpath.endsWith('\\node_modules\\meshcentral') || mcpath.endsWith('/node_modules/meshcentral')) { mcpath = require('path').join(mcpath, '..', '..'); }
-            console.log('ERROR: Unable to install required module "' + modulename + '". MeshCentral may not have access to npm, or npm may not have suffisent rights to load the new module. To manualy install this module try:\r\n\r\n   cd "' + mcpath + '"\r\n   npm install ' + modulename + '\r\n   node node_modules' + ((require('os').platform() == 'win32') ? '\\' : '/') + 'meshcentral');
->>>>>>> upstream/master
             process.exit();
             return;
         }
@@ -3267,26 +2754,13 @@ function mainStart() {
         var allsspi = true;
         var yubikey = false;
         var mstsc = false;
-<<<<<<< HEAD
         var recordingIndex = false;
         var domainCount = 0;
         var wildleek = false;
-=======
-        var sessionRecording = false;
-        var domainCount = 0;
-        var wildleek = false;
-        var nodemailer = false;
-        var sendgrid = false;
->>>>>>> upstream/master
         if (require('os').platform() == 'win32') { for (var i in config.domains) { domainCount++; if (config.domains[i].auth == 'sspi') { sspi = true; } else { allsspi = false; } } } else { allsspi = false; }
         if (domainCount == 0) { allsspi = false; }
         for (var i in config.domains) {
             if (i.startsWith('_')) continue;
-<<<<<<< HEAD
-=======
-            if (config.domains[i].smtp != null) { nodemailer = true; }
-            if (config.domains[i].sendgrid != null) { sendgrid = true; }
->>>>>>> upstream/master
             if (config.domains[i].yubikey != null) { yubikey = true; }
             if (config.domains[i].auth == 'ldap') { ldap = true; }
             if (config.domains[i].mstsc === true) { mstsc = true; }
@@ -3299,16 +2773,11 @@ function mainStart() {
                 if ((typeof config.domains[i].authstrategies.azure == 'object') && (typeof config.domains[i].authstrategies.azure.clientid == 'string') && (typeof config.domains[i].authstrategies.azure.clientsecret == 'string') && (typeof config.domains[i].authstrategies.azure.tenantid == 'string') && (passport.indexOf('passport-azure-oauth2') == -1)) { passport.push('passport-azure-oauth2'); passport.push('jwt-simple'); }
                 if ((typeof config.domains[i].authstrategies.saml == 'object') || (typeof config.domains[i].authstrategies.jumpcloud == 'object')) { passport.push('passport-saml'); }
             }
-<<<<<<< HEAD
             if ((config.domains[i].sessionrecording != null) && (config.domains[i].sessionrecording.index == true)) { recordingIndex = true; }
-=======
-            if (config.domains[i].sessionrecording != null) { sessionRecording = true; }
->>>>>>> upstream/master
             if ((config.domains[i].passwordrequirements != null) && (config.domains[i].passwordrequirements.bancommonpasswords == true)) { if (nodeVersion < 8) { config.domains[i].passwordrequirements = false; addServerWarning('Common password checking requires NodeJS v8 or above.'); } else { wildleek = true; } }
         }
 
         // Build the list of required modules
-<<<<<<< HEAD
         var modules = ['ws', 'cbor', 'nedb', 'https', 'yauzl', 'xmldom', 'ipcheck', 'express', 'archiver@4.0.2', 'multiparty', 'node-forge', 'express-ws', 'compression', 'body-parser', 'connect-redis', 'cookie-session', 'express-handlebars'];
         if (require('os').platform() == 'win32') { modules.push('node-windows@0.1.14'); if (sspi == true) { modules.push('node-sspi'); } } // Add Windows modules
         if (ldap == true) { modules.push('ldapauth-fork'); }
@@ -3318,30 +2787,13 @@ function mainStart() {
         if (config.letsencrypt != null) { if (nodeVersion < 8) { addServerWarning("Let's Encrypt support requires Node v8.x or higher.", !args.launch); } else { modules.push('acme-client'); } } // Add acme-client module
         if (config.settings.mqtt != null) { modules.push('aedes'); } // Add MQTT Modules
         if (config.settings.mysql != null) { modules.push('mysql'); } // Add MySQL, official driver.
-=======
-        var modules = ['ws', 'cbor@5.2.0', 'nedb', 'https', 'yauzl', 'xmldom', 'ipcheck', 'express', 'archiver@4.0.2', 'multiparty', 'node-forge', 'express-ws', 'compression', 'body-parser', 'connect-redis', 'cookie-session', 'express-handlebars'];
-        if (require('os').platform() == 'win32') { modules.push('node-windows'); if (sspi == true) { modules.push('node-sspi'); } } // Add Windows modules
-        if (ldap == true) { modules.push('ldapauth-fork'); }
-        if (mstsc == true) { modules.push('node-rdpjs-2'); }
-        if (passport != null) { modules.push(...passport); }
-        if (sessionRecording == true) { modules.push('image-size'); } // Need to get the remote desktop JPEG sizes to index the recodring file.
-        if (config.letsencrypt != null) { if (nodeVersion < 8) { addServerWarning("Let's Encrypt support requires Node v8.x or higher.", !args.launch); } else { modules.push('acme-client'); } } // Add acme-client module
-        if (config.settings.mqtt != null) { modules.push('aedes'); } // Add MQTT Modules
-        if (config.settings.mysql != null) { modules.push('mysql'); } // Add MySQL.
-        //if (config.settings.mysql != null) { modules.push('@mysql/xdevapi'); } // Add MySQL, official driver (https://dev.mysql.com/doc/dev/connector-nodejs/8.0/)
->>>>>>> upstream/master
         if (config.settings.mongodb != null) { modules.push('mongodb'); modules.push('saslprep'); } // Add MongoDB, official driver.
         if (config.settings.mariadb != null) { modules.push('mariadb'); } // Add MariaDB, official driver.
         if (config.settings.vault != null) { modules.push('node-vault'); } // Add official HashiCorp's Vault module.
         if (config.settings.plugins != null) {  modules.push('semver'); } // Required for version compat testing and update checks
         if ((config.settings.plugins != null) && (config.settings.plugins.proxy != null)) { modules.push('https-proxy-agent'); } // Required for HTTP/HTTPS proxy support
         else if (config.settings.xmongodb != null) { modules.push('mongojs'); } // Add MongoJS, old driver.
-<<<<<<< HEAD
         if (config.smtp != null) { modules.push('nodemailer'); } // Add SMTP support
-=======
-        if (nodemailer || (config.smtp != null)) { modules.push('nodemailer'); } // Add SMTP support
-        if (sendgrid || (config.sendgrid != null)) { modules.push('@sendgrid/mail'); } // Add SendGrid support
->>>>>>> upstream/master
         if (args.translate) { modules.push('jsdom'); modules.push('esprima'); modules.push('minify-js'); modules.push('html-minifier'); } // Translation support
 
         // If running NodeJS < 8, install "util.promisify"
@@ -3384,31 +2836,12 @@ function mainStart() {
         if (config.settings.desktopmultiplex === true) { modules.push('image-size'); }
 
         // SMS support
-<<<<<<< HEAD
         if ((config.sms != null) && (config.sms.provider == 'twilio')) { modules.push('twilio'); }
-=======
-        if ((config.sms != null) && (config.sms.provider == 'twilio')) {
-            const NodeJSVer = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
-            if (NodeJSVer < 8) { console.log("SMS Twilio support requires Node v8 or above, current version is " + process.version + "."); } else { modules.push('twilio'); }
-        }
->>>>>>> upstream/master
         if ((config.sms != null) && (config.sms.provider == 'plivo')) {
             const NodeJSVer = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
             if (NodeJSVer < 8) { console.log("SMS Plivo support requires Node v8 or above, current version is " + process.version + "."); } else { modules.push('plivo'); }
         }
 
-<<<<<<< HEAD
-=======
-        // Setup web based push notifications
-        if ((typeof config.settings.webpush == 'object') && (typeof config.settings.webpush.email == 'string')) { modules.push('web-push'); }
-
-        // Firebase Support
-        if (config.firebase != null) {
-            const NodeJSVer = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
-            if (NodeJSVer < 10) { console.log("Firebase support required Node v10 or above, current version is " + process.version + "."); } else { modules.push('node-xcs'); }
-        }
-
->>>>>>> upstream/master
         // Syslog support
         if ((require('os').platform() != 'win32') && (config.settings.syslog || config.settings.syslogjson)) { modules.push('modern-syslog'); }
 

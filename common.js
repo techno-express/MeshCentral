@@ -1,11 +1,7 @@
 ﻿/**
 * @description MeshCentral Common Library
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -99,19 +95,8 @@ module.exports.data2blob = function (data) {
     return blob;
 };
 
-<<<<<<< HEAD
 // Generate random numbers
 module.exports.random = function (max) { (require('crypto').randomBytes(4).readUInt32BE(0) % max); };
-=======
-// Generate random numbers between 0 and max without bias.
-module.exports.random = function (max) {
-    const crypto = require('crypto');
-    var maxmask = 1, r;
-    while (maxmask < max) { maxmask = (maxmask << 1) + 1; }
-    do { r = (crypto.randomBytes(4).readUInt32BE(0) & maxmask); } while (r > max);
-    return r;
-};
->>>>>>> upstream/master
 
 // Split a comma seperated string, ignoring commas in quotes.
 module.exports.quoteSplit = function (str) {
@@ -301,28 +286,4 @@ module.exports.meshServerRightsArrayToNumber = function (val) {
         return newAccRights;
     }
     return null;
-<<<<<<< HEAD
-=======
-}
-
-
-// Validate an object to make sure it can be stored in MongoDB
-module.exports.validateObjectForMongo = function (obj, maxStrLen) {
-    return validateObjectForMongoRec(obj, maxStrLen);
-}
-
-function validateObjectForMongoRec(obj, maxStrLen) {
-    if (typeof obj != 'object') return false;
-    for (var i in obj) {
-        // Check the key name is not too long
-        if (i.length > 100) return false;
-        // Check if all chars are alpha-numeric or underscore.
-        for (var j in i) { const c = i.charCodeAt(j); if ((c < 48) || ((c > 57) && (c < 65)) || ((c > 90) && (c < 97) && (c != 95)) || (c > 122)) return false; }
-        // If the value is a string, check it's not too long
-        if ((typeof obj[i] == 'string') && (obj[i].length > maxStrLen)) return false;
-        // If the value is an object, check it.
-        if ((typeof obj[i] == 'object') && (Array.isArray(obj[i]) == false) && (validateObjectForMongoRec(obj[i], maxStrLen) == false)) return false;
-    }
-    return true;
->>>>>>> upstream/master
 }

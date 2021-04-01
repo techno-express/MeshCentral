@@ -31,11 +31,7 @@
     </style>
 </head>
 <body id="body" onload="if (typeof(startup) !== 'undefined') startup();" class="arg_hide login">
-<<<<<<< HEAD
     <img style="position:absolute;left:0;bottom:0;z-index:-1;height:60%;opacity:0.1" src="welcome.png" />
-=======
-    <div style="position:absolute;left:0;bottom:0;z-index:-1;height:60%;width:100%;opacity:0.1;background-image:url('welcome.png');background-repeat:no-repeat;background-position:left bottom;background-size:contain"></div>
->>>>>>> upstream/master
     <table id="centralTable" class="container" style="height:100%;z-index:1">
         <tr>
             <td id="logincell">
@@ -46,7 +42,6 @@
                     <form method=post>
                         <input type=hidden name=action value=login />
                         <div id=message1></div>
-<<<<<<< HEAD
                         <table style="width:100%">
                             <tr>
                                 <td>
@@ -88,51 +83,6 @@
                             <a id="auth-jumpcloud" href="auth-jumpcloud" style="display:none"><img src="images/login/jumpcloud32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using JumpCloud" /></a>
                             <a id="auth-intel" href="auth-intel" style="display:none"><img src="images/login/intel32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Intel" /></a>
                             <a id="auth-saml" href="auth-saml" style="display:none"><img src="images/login/generic32.png" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Single Sign-in" /></a>
-=======
-                        <div id="loginuserpassdiv" style="display:none">
-                            <table style="width:100%">
-                                <tr>
-                                    <td>
-                                        <input id=username title="Username" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" {{{autocomplete}}}="username" placeholder="Username" type=text maxlength=64 name=username onchange=validateLogin(1) onkeyup=validateLogin(1,event) />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input id=password title="Password" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" {{{autocomplete}}}="current-password" placeholder="Password" type=password maxlength=256 name=password onchange=validateLogin(2) onkeyup=validateLogin(2,event) />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div id=showPassHintLink title="Password Hint" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC;display:none"><a onclick="return showPassHint(event);" href="#" style="cursor:pointer">Show Hint</a></div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input id=loginButton style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:6px" type=submit value="Log In" disabled="disabled" />
-                                    </td>
-                                </tr>
-                            </table>
-                            <div id="hrAccountDiv" style="display:none"><hr /></div>
-                            <div id="resetAccountDiv" style="display:none;padding:2px">
-                                <span id="resetAccountSpan">Forgot username/password?</span> <a onclick="return xgo(3,event);" href="#" style=cursor:pointer>Reset account</a>.
-                            </div>
-                            <div id="newAccountDiv" style="display:none;padding:2px;padding-top:10px">
-                                Don&#39;t have an account? <a onclick="return xgo(2,event);" href="#" style=cursor:pointer>Create one</a>.
-                            </div>
-                        </div>
-                        <input id=loginformargs name="urlargs" type="hidden" value="" />
-                        <div id="authStrategies" style="display:none">
-                            <hr id="loginuserpasshr" style="display:none" />
-                            <div style="margin-bottom:8px">Log in using an existing account</div>
-                            <a id="auth-twitter" href="auth-twitter" style="display:none"><img src="images/login/twitter32.png" srcset="images/login/twitter64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Twitter" /></a>
-                            <a id="auth-google" href="auth-google" style="display:none"><img src="images/login/google32.png" srcset="images/login/google64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Google" /></a>
-                            <a id="auth-github" href="auth-github" style="display:none"><img src="images/login/github32.png" srcset="images/login/github64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using GitHub" /></a>
-                            <a id="auth-reddit" href="auth-reddit" style="display:none"><img src="images/login/reddit32.png" srcset="images/login/reddit64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Reddit" /></a>
-                            <a id="auth-azure" href="auth-azure" style="display:none"><img src="images/login/azure32.png" srcset="images/login/azure64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Azure" /></a>
-                            <a id="auth-jumpcloud" href="auth-jumpcloud" style="display:none"><img src="images/login/jumpcloud32.png" srcset="images/login/jumpcloud64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using JumpCloud" /></a>
-                            <a id="auth-intel" href="auth-intel" style="display:none"><img src="images/login/intel32.png" srcset="images/login/intel64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Sign-in using Intel" /></a>
-                            <a id="auth-saml" href="auth-saml" style="display:none"><img src="images/login/generic32.png" srcset="images/login/generic64.png 2x" loading="lazy" width="32" height="32" style="margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer" title="Single Sign-in" /></a>
->>>>>>> upstream/master
                         </div>
                     </form>
                 </div>
@@ -147,7 +97,6 @@
                         <table>
                             <tr id="nuUserRow">
                                 <td id="nuUser" align=right width=100>Username:</td>
-<<<<<<< HEAD
                                 <td><input id=ausername type=text autocomplete="username" name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
                             </tr>
                             <tr>
@@ -169,29 +118,6 @@
                             <tr id=newAccountPass title="Enter the account creation token">
                                 <td id="nuToken" align=right>Creation Token:</td>
                                 <td><input id=anewaccountpass type=password name=anewaccountpass autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(6,event) onkeyup=validateCreate(6,event) /></td>
-=======
-                                <td><input id=ausername type=text {{{autocomplete}}}="username" name=username onchange=validateCreate(1) maxlength=64 onkeydown=haltReturn(event) onkeyup=validateCreate(1,event) /></td>
-                            </tr>
-                            <tr>
-                                <td id="nuEmail" align=right width=100>Email:</td>
-                                <td><input id=aemail type=text {{{autocomplete}}}="email" inputmode="email" name=email onchange=validateCreate(2) maxlength=256 onkeydown=haltReturn(event) onkeyup=validateCreate(2,event) /></td>
-                            </tr>
-                            <tr>
-                                <td id="nuPass1" align=right>Password:</td>
-                                <td><input id=apassword1 type=password name=password1 {{{autocomplete}}}="new-password" maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(3,event) onkeyup=validateCreate(3,event) /></td>
-                            </tr>
-                            <tr>
-                                <td id="nuPass2" align=right>Password:</td>
-                                <td><input id=apassword2 type=password name=password2 {{{autocomplete}}}="new-password" maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(4,event) onkeyup=validateCreate(4,event) /></td>
-                            </tr>
-                            <tr id="createPanelHint" style="display:none">
-                                <td id="nuHint" align=right>Password Hint:</td>
-                                <td><input id=apasswordhint type=text name=apasswordhint {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(5,event) onkeyup=validateCreate(5,event) /></td>
-                            </tr>
-                            <tr id=newAccountPass title="Enter the account creation token">
-                                <td id="nuToken" align=right>Creation Token:</td>
-                                <td><input id=anewaccountpass type=password name=anewaccountpass {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validateCreate(6,event) onkeyup=validateCreate(6,event) /></td>
->>>>>>> upstream/master
                             </tr>
                             <tr>
                                 <td colspan=2>
@@ -214,11 +140,7 @@
                         <table style="width:100%;margin-top:4px;margin-bottom:4px">
                             <tr>
                                 <td>
-<<<<<<< HEAD
                                     <input id=remail title="Email" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" autocomplete="username" placeholder="Email" type=text maxlength=256 name=email onchange=validateReset() onkeyup=validateReset(event) />
-=======
-                                    <input id=remail title="Email" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" {{{autocomplete}}}="username" placeholder="Email" type=text maxlength=256 name=email onchange=validateReset() onkeyup=validateReset(event) />
->>>>>>> upstream/master
                                 </td>
                             </tr>
                             <tr>
@@ -232,22 +154,14 @@
                     </form>
                 </div>
                 <div id=tokenpanel style="display:none">
-<<<<<<< HEAD
                     <form method=post autocomplete=off>
-=======
-                    <form method=post {{{autocomplete}}}=off>
->>>>>>> upstream/master
                         <input type=hidden name=action value=tokenlogin />
                         <input type=hidden name=hwstate value="{{{hwstate}}}" />
                         <div id=message4></div>
                         <table style="width:100%">
                             <tr>
                                 <td>
-<<<<<<< HEAD
                                     <input id=tokenInput autocomplete="one-time-code" title="Token" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" placeholder="Token" type=text maxlength=50 name=token onchange=checkToken(event) onpaste=resetCheckToken(event) onkeyup=checkToken(event) onkeydown=checkToken(event) /><br />
-=======
-                                    <input id=tokenInput {{{autocomplete}}}="one-time-code" title="Token" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" placeholder="Token" type=text maxlength=50 name=token onchange=checkToken(event) onpaste=resetCheckToken(event) onkeyup=checkToken(event) onkeydown=checkToken(event) /><br />
->>>>>>> upstream/master
                                     <input id=hwtokenInput type=text name=hwtoken style="display:none" />
                                 </td>
                             </tr>
@@ -267,15 +181,9 @@
                                 <td>
                                     <hr />
                                     <div>
-<<<<<<< HEAD
                                         <img id=securityKeyButton src="images/login/2fa-key-48.png" title="Use Security Key" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSecurityKey(1)" />
                                         <img id=smsKeyButton src="images/login/2fa-sms-48.png" title="SMS" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSMSToken(1)" />
                                         <img id=emailKeyButton src="images/login/2fa-mail-48.png" title="Email" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useEmailToken(1)" />
-=======
-                                        <img id=securityKeyButton src="images/login/2fa-key-48.png" srcset="images/login/2fa-key-96.png 2x" title="Use Security Key" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSecurityKey(1)" />
-                                        <img id=smsKeyButton src="images/login/2fa-sms-48.png" srcset="images/login/2fa-sms-96.png 2x" title="SMS" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSMSToken(1)" />
-                                        <img id=emailKeyButton src="images/login/2fa-mail-48.png" srcset="images/login/2fa-mail-96.png 2x" title="Email" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useEmailToken(1)" />
->>>>>>> upstream/master
                                     </div>
                                 </td>
                             </tr>
@@ -291,11 +199,7 @@
                         <table style="width:100%">
                             <tr>
                                 <td>
-<<<<<<< HEAD
                                     <input id=resetTokenInput autocomplete="one-time-code" title="Token" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" placeholder="Token" type=text maxlength=50 name=token onchange=resetCheckToken(event) onpaste=resetCheckToken(event) onkeyup=resetCheckToken(event) onkeydown=resetCheckToken(event) /><br />
-=======
-                                    <input id=resetTokenInput {{{autocomplete}}}="one-time-code" title="Token" style="box-sizing:border-box;width:280px;border:0;border-radius:4px;padding:8px;background-color:#FFF8CC" placeholder="Token" type=text maxlength=50 name=token onchange=resetCheckToken(event) onpaste=resetCheckToken(event) onkeyup=resetCheckToken(event) onkeydown=resetCheckToken(event) /><br />
->>>>>>> upstream/master
                                     <input id=resetHwtokenInput type=text name=hwtoken style="display:none" />
                                 </td>
                             </tr>
@@ -310,15 +214,9 @@
                                 <td colspan=2>
                                     <hr />
                                     <div>
-<<<<<<< HEAD
                                         <img id=securityKeyButton2 src="images/login/2fa-key-48.png" title="Use Security Key" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSecurityKey(2)" />
                                         <img id=smsKeyButton2 src="images/login/2fa-sms-48.png" title="SMS" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSMSToken(2)" />
                                         <img id=emailKeyButton2 src="images/login/2fa-mail-48.png" title="Email" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useEmailToken(2)" />
-=======
-                                        <img id=securityKeyButton2 src="images/login/2fa-key-48.png" srcset="images/login/2fa-key-96.png 2x" title="Use Security Key" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSecurityKey(2)" />
-                                        <img id=smsKeyButton2 src="images/login/2fa-sms-48.png" srcset="images/login/2fa-sms-96.png 2x" title="SMS" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useSMSToken(2)" />
-                                        <img id=emailKeyButton2 src="images/login/2fa-mail-48.png" srcset="images/login/2fa-mail-96.png 2x" title="Email" loading="lazy" width="48" height="48" style="display:none;margin-left:3px;margin-right:3px;border-radius:3px;box-shadow:2px 2px 5px black;cursor:pointer;background-color:#FFF" onclick="useEmailToken(2)" />
->>>>>>> upstream/master
                                     </div>
                                 </td>
                             </tr>
@@ -335,7 +233,6 @@
                         <table>
                             <tr>
                                 <td id="rnuPass1" width=100 align=right>Password:</td>
-<<<<<<< HEAD
                                 <td><input id=rapassword1 type=password name=rpassword1 autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(3,event) onkeyup=validatePassReset(3,event) /></td>
                             </tr>
                             <tr>
@@ -345,17 +242,6 @@
                             <tr id="resetpasswordpanelHint" style="display:none">
                                 <td id="rnuHint" align=right>Password Hint:</td>
                                 <td><input id=rapasswordhint type=text name=rpasswordhint autocomplete=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(5,event) onkeyup=validatePassReset(5,event) /></td>
-=======
-                                <td><input id=rapassword1 type=password name=rpassword1 {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(3,event) onkeyup=validatePassReset(3,event) /></td>
-                            </tr>
-                            <tr>
-                                <td id="rnuPass2" align=right>Password:</td>
-                                <td><input id=rapassword2 type=password name=rpassword2 {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(4,event) onkeyup=validatePassReset(4,event) /></td>
-                            </tr>
-                            <tr id="resetpasswordpanelHint" style="display:none">
-                                <td id="rnuHint" align=right>Password Hint:</td>
-                                <td><input id=rapasswordhint type=text name=rpasswordhint {{{autocomplete}}}=off maxlength=256 onkeydown=haltReturn(event) onchange=validatePassReset(5,event) onkeyup=validatePassReset(5,event) /></td>
->>>>>>> upstream/master
                             </tr>
                             <tr>
                                 <td colspan=2>
@@ -426,10 +312,6 @@
     </div>
     <script>
         'use strict';
-<<<<<<< HEAD
-=======
-        var passlogin = '{{{passlogin}}}';
->>>>>>> upstream/master
         var passhint = '{{{passhint}}}';
         var loginMode = '{{{loginmode}}}';
         var newAccount = '{{{newAccount}}}';
@@ -458,11 +340,7 @@
             var i;
             var messageid = parseInt('{{{messageid}}}');
             var okmessages = ['', "If valid, reset mail sent.", "Email sent.", "Email verification required, check your mailbox and click the confirmation link.", "SMS sent."];
-<<<<<<< HEAD
             var failmessages = ["Unable to create account.", "Account limit reached.", "Existing account with this email address.", "Invalid account creation token.", "Username already exists.", "Password rejected, use a different one.", "Invalid email.", "Account not found.", "Invalid token, try again.", "Unable to sent email.", "Account locked.", "Access denied.", "Login failed, check username and password.", "Password change requested.", "IP address blocked, try again later."];
-=======
-            var failmessages = ["Unable to create account.", "Account limit reached.", "Existing account with this email address.", "Invalid account creation token.", "Username already exists.", "Password rejected, use a different one.", "Invalid email.", "Account not found.", "Invalid token, try again.", "Unable to sent email.", "Account locked.", "Access denied.", "Login failed, check username and password.", "Password change requested.", "IP address blocked, try again later.", "Server under maintenance."];
->>>>>>> upstream/master
             if (messageid > 0) {
                 var msg = '';
                 if ((messageid < 100) && (messageid < okmessages.length)) { msg = okmessages[messageid]; }
@@ -477,16 +355,6 @@
             var urlargs = parseUriArgs();
             //if (urlargs.key) { Q('termsLinkFooter').href += '?key=' + urlargs.key; }
 
-<<<<<<< HEAD
-=======
-            // Show user/pass login
-            passlogin = (passlogin == 'true');
-            if (urlargs.passlogin === 1) { passlogin = true; }
-            if (urlargs.passlogin === 0) { passlogin = false; }
-            QV('loginuserpassdiv', passlogin)
-            QV('loginuserpasshr', passlogin)
-
->>>>>>> upstream/master
             // Setup two factor cookie time
             if (twoFactorCookieDays > 0) {
                 QV('tokenInputRememberLabel', true);
@@ -920,11 +788,7 @@
 
         function changeEmailAddress() {
             var email = Q('unconfirmedEmail').innerHTML;
-<<<<<<< HEAD
             var x = addHtmlValue("Email", '<input id=dp1email style=width:230px maxlength=256 value="' + email + '" autocomplete=off onchange=validateEmailAddress() onkeyup=validateEmailAddress() />');
-=======
-            var x = addHtmlValue("Email", '<input id=dp1email style=width:230px maxlength=256 value="' + email + '" {{{autocomplete}}}=off onchange=validateEmailAddress() onkeyup=validateEmailAddress() />');
->>>>>>> upstream/master
             setDialogMode(1, "Email Confirmation", 3, changeEmailAddressEx, x);
             validateEmailAddress();
         }

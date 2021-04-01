@@ -1,10 +1,6 @@
 {
   "name": "meshcentral",
-<<<<<<< HEAD
   "version": "0.6.85",
-=======
-  "version": "0.8.0",
->>>>>>> upstream/master
   "keywords": [
     "Remote Device Management",
     "Remote Device Monitoring",
@@ -17,17 +13,12 @@
     "Intel Active Management Technology",
     "Intel AMT"
   ],
-<<<<<<< HEAD
   "homepage": "http://meshcommander.com",
   "description": "Web based remote computer management and file server",
-=======
-  "homepage": "https://meshcentral.com",
-  "description": "Web based remote computer management server",
->>>>>>> upstream/master
   "author": "Ylian Saint-Hilaire <ylianst@gmail.com>",
   "main": "meshcentral.js",
   "bin": {
-    "meshcentral": "bin/meshcentral"
+    "meshcentral": "./bin/meshcentral"
   },
   "license": "Apache-2.0",
   "files": [
@@ -46,11 +37,7 @@
   ],
   "dependencies": {
     "body-parser": "^1.19.0",
-<<<<<<< HEAD
     "cbor": "^4.1.5",
-=======
-    "cbor": "~5.2.0",
->>>>>>> upstream/master
     "compression": "^1.7.4",
     "connect-redis": "^3.4.1",
     "cookie-session": "^2.0.0-beta.3",
@@ -63,13 +50,10 @@
     "nedb": "^1.8.0",
     "node-forge": "^0.10.0",
     "ws": "^6.2.1",
-<<<<<<< HEAD
     "xmldom": "^0.1.27",
-=======
-    "xmldom": "^0.5.0",
->>>>>>> upstream/master
     "yauzl": "^2.10.0"
   },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/Ylianst/MeshCentral.git"

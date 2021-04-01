@@ -1,11 +1,7 @@
 /**
 * @description MeshCentral remote desktop multiplexor
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -456,7 +452,6 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
         var cmdsize = data.readUInt16BE(2);
         //console.log('ViewerData', data.length, command, cmdsize);
         switch (command) {
-<<<<<<< HEAD
             case 1:// Key Events, forward to agent
                 //console.log('Viewer-Keys');
                 obj.sendToAgent(data);
@@ -466,15 +461,6 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
                 obj.sendToAgent(data);
                 break;
             case 5:// Compression
-=======
-            case 1: // Key Events, forward to agent
-                if (viewer.viewOnly == false) { obj.sendToAgent(data); }
-                break;
-            case 2: // Mouse events, forward to agent
-                if (viewer.viewOnly == false) { obj.sendToAgent(data); }
-                break;
-            case 5: // Compression
->>>>>>> upstream/master
                 if (data.length < 10) return;
                 //viewer.imageType = data[4]; // Always 1=JPEG
                 viewer.imageCompression = data[5];
@@ -507,20 +493,12 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
                     obj.sendToAgent(cmd);
                 }
                 break;
-<<<<<<< HEAD
             case 6:// Refresh, handle this on the server
-=======
-            case 6: // Refresh, handle this on the server
->>>>>>> upstream/master
                 //console.log('Viewer-Refresh');
                 viewer.dataPtr = obj.firstData; // Start over
                 if (viewer.sending == false) { sendViewerNext(viewer); }
                 break;
-<<<<<<< HEAD
             case 8:// Pause and unpause
-=======
-            case 8: // Pause and unpause
->>>>>>> upstream/master
                 if (data.length != 5) break;
                 var pause = data[4]; // 0 = Unpause, 1 = Pause
                 if (viewer.desktopPaused == (pause == 1)) break;
@@ -535,7 +513,6 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
                     obj.sendToAgent(data);
                 }
                 break;
-<<<<<<< HEAD
             case 10:// CTRL-ALT-DEL, forward to agent
                 obj.sendToAgent(data);
                 break;
@@ -543,18 +520,6 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
                 obj.sendToAgent(data);
                 break;
             case 14:// Touch setup
-=======
-            case 10: // CTRL-ALT-DEL, forward to agent
-                if (viewer.viewOnly == false) { obj.sendToAgent(data); }
-                break;
-            case 12: // SET DISPLAY, forward to agent
-                if (viewer.viewOnly == false) { obj.sendToAgent(data); }
-                break;
-            case 14: // Touch setup
-                break;
-            case 85: // Unicode Key Events, forward to agent
-                if (viewer.viewOnly == false) { obj.sendToAgent(data); }
->>>>>>> upstream/master
                 break;
             default:
                 console.log('Un-handled viewer command: ' + command);
@@ -598,19 +563,12 @@ function CreateDesktopMultiplexor(parent, domain, nodeid, func) {
             
         switch (command) {
             case 3: // Tile, check dimentions and store
-<<<<<<< HEAD
                 if (data.length < 10) break;
-=======
-                if ((data.length < 10) || (obj.lastData == null)) break;
->>>>>>> upstream/master
                 var x = data.readUInt16BE(4), y = data.readUInt16BE(6);
                 var dimensions = require('image-size')(data.slice(8));
                 var sx = (x / 16), sy = (y / 16), sw = (dimensions.width / 16), sh = (dimensions.height / 16);
                 obj.counter++;
-<<<<<<< HEAD
                 //console.log("Tile", x, y, dimensions.width, dimensions.height);
-=======
->>>>>>> upstream/master
                 
                 // Keep a reference to this image & how many tiles it covers
                 obj.images[obj.counter] = { next: null, prev: obj.lastData, data: jumboData };
@@ -870,7 +828,6 @@ module.exports.CreateMeshRelay = function (parent, ws, req, domain, user, cookie
     }
 }
 
-<<<<<<< HEAD
 function CreateMeshRelayEx(parent, ws, req, domain, user, cookie) {
     const currentTime = Date.now();
     if (cookie) {
@@ -878,37 +835,6 @@ function CreateMeshRelayEx(parent, ws, req, domain, user, cookie) {
         else if (typeof cookie.nid == 'string') { req.query.nodeid = cookie.nid; }
     }
     if ((req.query.nodeid == null) || (req.query.p != '2') || (req.query.id == null) || (domain == null)) { try { ws.close(); } catch (e) { } return; } // Not is not a valid remote desktop connection.
-=======
-// If we are in multi-server mode, the desktop multiplexor needs to be created on the server with the agent connected to it.
-// So, if the agent is connected to a different server, just relay the connection to that server
-function CreateMeshRelayEx(parent, ws, req, domain, user, cookie) {
-    // Do validation work
-    if (cookie) {
-        if ((typeof cookie.expire == 'number') && (cookie.expire <= Date.now())) { delete req.query.nodeid; }
-        else if (typeof cookie.nid == 'string') { req.query.nodeid = cookie.nid; }
-    }
-    if ((req.query.nodeid == null) || (req.query.p != '2') || (req.query.id == null) || (domain == null)) { try { ws.close(); } catch (e) { } return; } // Not is not a valid remote desktop connection.
-
-    // Check routing if in multi-server mode
-    var nodeid = req.query.nodeid;
-    if (parent.parent.multiServer != null) {
-        const routing = parent.parent.GetRoutingServerIdNotSelf(nodeid, 1); // 1 = MeshAgent routing type
-        if (routing == null) {
-            // No need to relay the connection to a different server
-            return CreateMeshRelayEx2(parent, ws, req, domain, user, cookie);
-        } else {
-            // We must relay the connection to a different server
-            return parent.parent.multiServer.createPeerRelay(ws, req, routing.serverid, req.session.userid);
-        }
-    } else {
-        // No need to relay the connection to a different server
-        return CreateMeshRelayEx2(parent, ws, req, domain, user, cookie);
-    }
-}
-
-function CreateMeshRelayEx2(parent, ws, req, domain, user, cookie) {
-    const currentTime = Date.now();
->>>>>>> upstream/master
     var obj = {};
     obj.ws = ws;
     obj.ws.me = obj;
@@ -917,10 +843,6 @@ function CreateMeshRelayEx2(parent, ws, req, domain, user, cookie) {
     obj.user = user;
     obj.ruserid = null;
     obj.req = req; // Used in multi-server.js
-<<<<<<< HEAD
-=======
-    obj.viewOnly = ((cookie != null) && (cookie.vo == 1)); // set view only mode
->>>>>>> upstream/master
 
     // Setup subscription for desktop sharing public identifier
     // If the identifier is removed, drop the connection
@@ -1023,11 +945,7 @@ function CreateMeshRelayEx2(parent, ws, req, domain, user, cookie) {
                 }
             } else {
                 // Check if a peer server is connected to this agent
-<<<<<<< HEAD
                 var routing = parent.parent.GetRoutingServerId(command.nodeid, 1); // 1 = MeshAgent routing type
-=======
-                var routing = parent.parent.GetRoutingServerIdNotSelf(command.nodeid, 1); // 1 = MeshAgent routing type
->>>>>>> upstream/master
                 if (routing != null) {
                     // Check if we have permission to send a message to that node
                     rights = parent.GetNodeRights(user, routing.meshid, command.nodeid);

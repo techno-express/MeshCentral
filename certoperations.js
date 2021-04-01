@@ -1,11 +1,7 @@
 /**
 * @description Certificate generator
 * @author Joko Sastriawan / Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -32,46 +28,6 @@ module.exports.CertificateOperations = function (parent) {
 
     const TopLevelDomainExtendedSupport = { 'net': 2, 'com': 2, 'arpa': 3, 'org': 2, 'gov': 2, 'edu': 2, 'de': 2, 'fr': 3, 'cn': 3, 'nl': 3, 'br': 3, 'mx': 3, 'uk': 3, 'pl': 3, 'tw': 3, 'ca': 3, 'fi': 3, 'be': 3, 'ru': 3, 'se': 3, 'ch': 2, 'dk': 2, 'ar': 3, 'es': 3, 'no': 3, 'at': 3, 'in': 3, 'tr': 3, 'cz': 2, 'ro': 3, 'hu': 3, 'nz': 3, 'pt': 3, 'il': 3, 'gr': 3, 'co': 3, 'ie': 3, 'za': 3, 'th': 3, 'sg': 3, 'hk': 3, 'cl': 2, 'lt': 3, 'id': 3, 'hr': 3, 'ee': 3, 'bg': 3, 'ua': 2 };
 
-<<<<<<< HEAD
-=======
-    // Sign a Intel AMT TLS ACM activation request
-    obj.getAcmCertChain = function (domain, fqdn, hash) {
-        if ((domain == null) || (domain.amtacmactivation == null) || (domain.amtacmactivation.certs == null) || (fqdn == null) || (hash == null)) return { action: 'acmactivate', error: 1, errorText: 'Invalid arguments' };
-        if (parent.common.validateString(fqdn, 4, 256) == false) return { action: 'acmactivate', error: 1, errorText: "Invalid FQDN argument." };
-        if (parent.common.validateString(hash, 16, 256) == false) return { action: 'acmactivate', error: 1, errorText: "Invalid hash argument." };
-
-        // Look for the signing certificate
-        var signkey = null, certChain = null, hashAlgo = null, certIndex = null;
-        for (var i in domain.amtacmactivation.certs) {
-            const certEntry = domain.amtacmactivation.certs[i];
-            if ((certEntry.sha256 == hash) && ((certEntry.cn == '*') || (certEntry.cn == fqdn))) { hashAlgo = 'sha256'; signkey = certEntry.key; certChain = certEntry.certs; certIndex = i; break; }
-            if ((certEntry.sha1 == hash) && ((certEntry.cn == '*') || (certEntry.cn == fqdn))) { hashAlgo = 'sha1'; signkey = certEntry.key; certChain = certEntry.certs; certIndex = i; break; }
-        }
-        if (signkey == null) return { action: 'acmactivate', error: 2, errorText: "No signing certificate found." }; // Did not find a match.
-
-        // If the matching certificate our wildcard root cert, we can use the root to match any FQDN
-        if (domain.amtacmactivation.certs[certIndex].cn == '*') {
-            // Create a leaf certificate that matches the FQDN we want
-            // TODO: This is an expensive operation, work on ways to pre-generate or cache this leaf certificate.
-            var rootcert = { cert: domain.amtacmactivation.certs[certIndex].rootcert, key: obj.pki.privateKeyFromPem(domain.amtacmactivation.certs[certIndex].key) };
-            var leafcert = obj.IssueWebServerCertificate(rootcert, false, fqdn, 'mc', 'Intel(R) Client Setup Certificate', { serverAuth: true, '2.16.840.1.113741.1.2.3': true }, false);
-
-            // Setup the certificate chain and key
-            //certChain = [ obj.pki.certificateToPem(leafcert.cert), obj.pki.certificateToPem(domain.amtacmactivation.certs[certIndex].rootcert) ];
-            certChain = [ obj.pki.certificateToPem(domain.amtacmactivation.certs[certIndex].rootcert), obj.pki.certificateToPem(leafcert.cert) ];
-            signkey = obj.pki.privateKeyToPem(leafcert.key);
-        } else {
-            // Make sure the cert chain is in PEM format
-            var certChain2 = [];
-            for (var i in certChain) { certChain2.push("-----BEGIN CERTIFICATE-----\r\n" + certChain[i] + "\r\n-----END CERTIFICATE-----\r\n"); }
-            certChain = certChain2;
-        }
-
-        // Hash the leaf certificate and return the certificate chain and signing key
-        return { action: 'acmactivate', certs: certChain, signkey: signkey, hash384: obj.getCertHash(certChain[certChain.length - 1]), hash256: obj.getCertHashSha256(certChain[certChain.length - 1]) };
-    }
-
->>>>>>> upstream/master
     // Sign a Intel AMT ACM activation request
     obj.signAcmRequest = function (domain, request, user, pass, ipport, nodeid, meshid, computerName, agentId) {
         if ((domain == null) || (domain.amtacmactivation == null) || (domain.amtacmactivation.certs == null) || (request == null) || (request.nonce == null) || (request.realm == null) || (request.fqdn == null) || (request.hash == null)) return { 'action': 'acmactivate', 'error': 1, 'errorText': 'Invalid arguments' };
@@ -126,18 +82,6 @@ module.exports.CertificateOperations = function (parent) {
     // Remove the PEM header, footer and carriage returns so we only have the Base64 DER.
     function pemToBase64(pem) { return pem.split('-----BEGIN CERTIFICATE-----').join('').split('-----END CERTIFICATE-----').join('').split('\r\n').join(''); }
 
-<<<<<<< HEAD
-=======
-    // Return true if both arrays match
-    function compareArrays(a1, a2) {
-        if (Array.isArray(a1) == false) return false;
-        if (Array.isArray(a2) == false) return false;
-        if (a1.length !== a2.length) return false;
-        for (var i = 0; i < a1.length; i++) { if (a1[i] !== a2[i]) return false; }
-        return true;
-    }
-
->>>>>>> upstream/master
     // Log the Intel AMT activation operation in the domain log
     obj.logAmtActivation = function (domain, x) {
         if (x == null) return true;
@@ -157,10 +101,6 @@ module.exports.CertificateOperations = function (parent) {
         var acmCerts = [], acmmatch = [];
         if (amtacmactivation.certs != null) {
             for (var j in amtacmactivation.certs) {
-<<<<<<< HEAD
-=======
-                if (j.startsWith('_')) continue; // Skip any certificates that start with underscore as the name.
->>>>>>> upstream/master
                 var acmconfig = amtacmactivation.certs[j], r = null;
 
                 if ((typeof acmconfig.certpfx == 'string') && (typeof acmconfig.certpfxpass == 'string')) {
@@ -191,15 +131,6 @@ module.exports.CertificateOperations = function (parent) {
                 if (orderingError == true) continue;
                 r.certs = or;
 
-<<<<<<< HEAD
-=======
-                // Check that the certificate and private key match
-                if ((compareArrays(r.certs[0].publicKey.n.data, r.keys[0].n.data) == false) || (compareArrays(r.certs[0].publicKey.e.data, r.keys[0].e.data) == false)) {
-                    parent.addServerWarning('Intel AMT activation certificate provided with a mismatching private key.');
-                    continue;
-                }
-
->>>>>>> upstream/master
                 /*
                 // Debug: Display all certs & key as PEM
                 for (var k in r.certs) {
@@ -265,33 +196,6 @@ module.exports.CertificateOperations = function (parent) {
         }
     }
 
-<<<<<<< HEAD
-=======
-    // Load a generic certificate and key from PFX/P12 or PEM format. Load both keys and attributes.
-    obj.loadGenericCertAndKey = function (config) {
-        if ((typeof config.certpfx == 'string') || (typeof config.certpfxpass == 'string')) {
-            // Load a PFX certificate
-            var r = null;
-            try { r = obj.loadPfxCertificate(parent.getConfigFilePath(config.certpfx), config.certpfxpass); } catch (ex) { console.log(ex); }
-            if ((r != null) && (r.keys.length > 0) && (r.certs.length > 0)) {
-                var attributes = {};
-                for (var j in r.certs[0].subject.attributes) { attributes[r.certs[0].subject.attributes[j].shortName] = r.certs[0].subject.attributes[j].value; }
-                return { cert: obj.pki.certificateToPem(r.certs[0]), key: obj.pki.privateKeyToPem(r.keys[0]), attributes: attributes };
-            }
-        }
-        if ((typeof config.certfile == 'string') || (typeof config.keyfile == 'string')) {
-            // Load a PEM certificate
-            var r = {}
-            r.cert = obj.fs.readFileSync(parent.getConfigFilePath(config.certfile), 'utf8');
-            r.key = obj.fs.readFileSync(parent.getConfigFilePath(config.keyfile), 'utf8');
-            var cert = obj.pki.certificateFromPem(r.cert);
-            r.attributes = {};
-            for (var j in cert.subject.attributes) { r.attributes[cert.subject.attributes[j].shortName] = cert.subject.attributes[j].value; }
-            return r;
-        }
-        return null;
-    }
->>>>>>> upstream/master
 
     // Get the setup.bin file
     obj.GetSetupBinFile = function (amtacmactivation, oldmebxpass, newmebxpass, domain, user) {
@@ -305,18 +209,6 @@ module.exports.CertificateOperations = function (parent) {
         var setupbin = AmtSetupBinStack.AmtSetupBinCreate(3, 1); // Version 3, 1 = Records will not be consumed.
         var certRootName = 'MeshCentral';
 
-<<<<<<< HEAD
-=======
-        // Figure out what trusted FQDN to use.
-        var trustedFQDN = 'rootcert.meshcentral.com'; // Default DNS name. Any DNS name will do, we this is the fallback.
-        if (typeof domain.dns == 'string') {
-            // Use domain DNS name
-            trustedFQDN = domain.dns;
-        } else if (typeof parent.config.settings.cert == 'string') {
-            // Use main DNS name
-            trustedFQDN = parent.config.settings.cert;
-        }
-
         // Create a new record
         var r = {};
         r.typeIdentifier = 1;
@@ -356,135 +248,11 @@ module.exports.CertificateOperations = function (parent) {
         v.moduleid = 2;
         v.varid = 3;
         v.length = -1;
-        v.value = trustedFQDN;
-        setupbin.records[0].variables.push(v);
-
-        // Create "ME Provision Halt Active" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 28;
-        v.length = -1;
-        v.value = 0; // Stop
-        setupbin.records[0].variables.push(v);
-
-        // Write to log file
-        obj.logAmtActivation(domain, { time: new Date(), action: 'setupbin', domain: domain.id, userid: user._id, oldmebx: oldmebxpass, newmebx: newmebxpass, rootname: certRootName, hash: wildcardCertSha256, dns: trustedFQDN });
-
-        // Encode the setup.bin file
-        return AmtSetupBinStack.AmtSetupBinEncode(setupbin);
-    }
-
-
-    // Get a bare metal setup.bin file
-    obj.GetBareMetalSetupBinFile = function (amtacmactivation, oldmebxpass, newmebxpass, domain, user) {
-        // Create a setup.bin file for our own root cert
-        // Get the wiadcard certificate hash
-        var wildcardCertSha256 = null;
-        for (var i = 0; i < amtacmactivation.acmmatch.length; i++) { if (amtacmactivation.acmmatch[i].cn == '*') { wildcardCertSha256 = amtacmactivation.acmmatch[i].sha256; } }
-
-        // Create the Setup.bin stack
-        const AmtSetupBinStack = require('./amt/amt-setupbin')();
-        var setupbin = AmtSetupBinStack.AmtSetupBinCreate(3, 1); // Version 3, 1 = Records will not be consumed.
-        var certRootName = 'MeshCentral';
-
-        // Figure out what trusted FQDN to use.
-        var trustedFQDN = parent.config.settings.amtprovisioningserver.trustedfqdn
-
-        // Figure out the provisioning server port
-        var port = 9971;
-        if (typeof parent.config.settings.amtprovisioningserver.port == 'number') { port = parent.config.settings.amtprovisioningserver.port; }
-
-        // Get the provisioning server IP address from the config file
-        if (typeof parent.config.settings.amtprovisioningserver.ip != 'string') return null;
-        var ipaddr = parent.config.settings.amtprovisioningserver.ip;
-        var ipaddrSplit = ipaddr.split('.');
-        var ipaddrStr = String.fromCharCode(parseInt(ipaddrSplit[3])) + String.fromCharCode(parseInt(ipaddrSplit[2])) + String.fromCharCode(parseInt(ipaddrSplit[1])) + String.fromCharCode(parseInt(ipaddrSplit[0]));
-
->>>>>>> upstream/master
-        // Create a new record
-        var r = {};
-        r.typeIdentifier = 1;
-        r.flags = 1; // Valid, unscrambled record.
-        r.chunkCount = 0;
-        r.headerByteCount = 0;
-        r.number = 0;
-        r.variables = [];
-        setupbin.records.push(r);
-
-        // Create "Current MEBx Password" variable
-        var v = {};
-        v.moduleid = 1;
-        v.varid = 1;
-        v.length = -1;
-        v.value = oldmebxpass;
-        setupbin.records[0].variables.push(v);
-
-        // Create "New MEBx Password" variable
-        v = {};
-        v.moduleid = 1;
-        v.varid = 2;
-        v.length = -1;
-        v.value = newmebxpass;
-        setupbin.records[0].variables.push(v);
-
-        // Create "User Defined Certificate Addition" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 8;
-        v.length = -1;
-        v.value = String.fromCharCode(2) + Buffer.from(wildcardCertSha256, 'hex').toString('binary') + String.fromCharCode(certRootName.length) + certRootName; // 2 = SHA256 hash type
-        setupbin.records[0].variables.push(v);
-
-        // Create "PKI DNS Suffix" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 3;
-        v.length = -1;
-<<<<<<< HEAD
         v.value = 'rootcert.meshcentral.com';
         setupbin.records[0].variables.push(v);
 
         // Write to log file
         obj.logAmtActivation(domain, { time: new Date(), action: 'setupbin', domain: domain.id, userid: user._id, oldmebx: oldmebxpass, newmebx: newmebxpass, rootname: certRootName, hash: wildcardCertSha256, dns: 'rootcert.meshcentral.com' });
-=======
-        v.value = trustedFQDN;
-        setupbin.records[0].variables.push(v);
-
-        // Create "Configuration Server FQDN" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 4;
-        v.length = -1;
-        v.value = trustedFQDN;
-        setupbin.records[0].variables.push(v);
-
-        // Create "Provisioning Server Address" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 17;
-        v.length = -1;
-        v.value = ipaddrStr;
-        setupbin.records[0].variables.push(v);
-
-        // Create "Provisioning Server Port Number" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 18;
-        v.length = -1;
-        v.value = port;
-        setupbin.records[0].variables.push(v);
-
-        // Create "ME Provision Halt Active" variable
-        v = {};
-        v.moduleid = 2;
-        v.varid = 28;
-        v.length = -1;
-        v.value = 1; // Start
-        setupbin.records[0].variables.push(v);
-
-        // Write to log file
-        obj.logAmtActivation(domain, { time: new Date(), action: 'setupbin-bare-metal', domain: domain.id, userid: user._id, oldmebx: oldmebxpass, newmebx: newmebxpass, rootname: certRootName, hash: wildcardCertSha256, dns: trustedFQDN, ip: ipaddr, port: port });
->>>>>>> upstream/master
 
         // Encode the setup.bin file
         return AmtSetupBinStack.AmtSetupBinEncode(setupbin);
@@ -506,29 +274,6 @@ module.exports.CertificateOperations = function (parent) {
         return r;
     }
 
-<<<<<<< HEAD
-=======
-    // Return a text file from a remote HTTPS server
-    obj.loadTextFile = function (url, tag, func) {
-        const u = require('url').parse(url);
-        if (u.protocol == 'https:') {
-            // Read from HTTPS
-            const https = require('https');
-            https.get(url, function(resp) {
-                var data = '';
-                resp.on('data', function(chunk) { data += chunk; });
-                resp.on('end', function () { func(url, data, tag); });
-                resp.on('error', function (chunk) { func(url, null, tag); });
-            }).on('error', function (err) { func(url, null, tag); });
-        } else if (u.protocol == 'file:') {
-            // Read a file
-            obj.fs.readFile(url.substring(7), 'utf8', function (err, data) {
-                func(url, err ? null : data, tag);
-            });
-        } else { func(url, null, tag); }
-    };
-
->>>>>>> upstream/master
     // Return the certificate of the remote HTTPS server
     obj.loadCertificate = function (url, hostname, tag, func) {
         const u = require('url').parse(url);
@@ -549,11 +294,7 @@ module.exports.CertificateOperations = function (parent) {
         } else if (u.protocol == 'file:') {
             // Read the certificate from a file
             obj.fs.readFile(url.substring(7), 'utf8', function (err, data) {
-<<<<<<< HEAD
                 if (err) { func(url, null, tag); return; }
-=======
-                if (err) { func(url, null, hostname, tag); return; }
->>>>>>> upstream/master
                 var x1 = data.indexOf('-----BEGIN CERTIFICATE-----'), x2 = data.indexOf('-----END CERTIFICATE-----');
                 if ((x1 >= 0) && (x2 > x1)) {
                     func(url, Buffer.from(data.substring(x1 + 27, x2), 'base64').toString('binary'), hostname, tag);
@@ -587,11 +328,7 @@ module.exports.CertificateOperations = function (parent) {
         return obj.pki.getPublicKeyFingerprint(publickey, { encoding: 'hex', md: obj.forge.md.sha384.create() });
     };
 
-<<<<<<< HEAD
     // Return the SHA384 hash of the certificate, return hex
-=======
-    // Return the SHA1 hash of the certificate, return hex
->>>>>>> upstream/master
     obj.getCertHashSha1 = function (cert) {
         try {
             var md = obj.forge.md.sha1.create();
@@ -606,24 +343,6 @@ module.exports.CertificateOperations = function (parent) {
         }
     };
 
-<<<<<<< HEAD
-=======
-    // Return the SHA256 hash of the certificate, return hex
-    obj.getCertHashSha256 = function (cert) {
-        try {
-            var md = obj.forge.md.sha256.create();
-            md.update(obj.forge.asn1.toDer(obj.pki.certificateToAsn1(obj.pki.certificateFromPem(cert))).getBytes());
-            return md.digest().toHex();
-        } catch (ex) {
-            // If this is not an RSA certificate, hash the raw PKCS7 out of the PEM file
-            var x1 = cert.indexOf('-----BEGIN CERTIFICATE-----'), x2 = cert.indexOf('-----END CERTIFICATE-----');
-            if ((x1 >= 0) && (x2 > x1)) {
-                return obj.crypto.createHash('sha256').update(Buffer.from(cert.substring(x1 + 27, x2), 'base64')).digest('hex');
-            } else { console.log("ERROR: Unable to decode certificate."); return null; }
-        }
-    };
-
->>>>>>> upstream/master
     // Return the SHA384 hash of the certificate, return hex
     obj.getCertHash = function (cert) {
         try {
@@ -803,7 +522,6 @@ module.exports.CertificateOperations = function (parent) {
                 r.root.cert = obj.pki.certificateToPem(xroot);
                 try { obj.fs.writeFileSync(parent.getConfigFilePath('root-cert-public.crt'), r.root.cert); } catch (ex) { }
             }
-<<<<<<< HEAD
         }
 
         // If web certificate exist, load it as default. This is useful for agent-only port. Load both certificate and private key
@@ -812,16 +530,6 @@ module.exports.CertificateOperations = function (parent) {
             if (obj.checkCertificate(r.webdefault.cert, r.webdefault.key) == false) { delete r.webdefault; }
         }
 
-=======
-        }
-
-        // If web certificate exist, load it as default. This is useful for agent-only port. Load both certificate and private key
-        if (obj.fileExists('webserver-cert-public.crt') && obj.fileExists('webserver-cert-private.key')) {
-            r.webdefault = { cert: obj.fileLoad('webserver-cert-public.crt', 'utf8'), key: obj.fileLoad('webserver-cert-private.key', 'utf8') };
-            if (obj.checkCertificate(r.webdefault.cert, r.webdefault.key) == false) { delete r.webdefault; }
-        }
-
->>>>>>> upstream/master
         if (args.tlsoffload) {
             // If the web certificate already exist, load it. Load just the certificate since we are in TLS offload situation
             if (obj.fileExists('webserver-cert-public.crt')) {
@@ -909,15 +617,8 @@ module.exports.CertificateOperations = function (parent) {
             var altNames = webCertificate.getExtension('subjectAltName');
             if (altNames) {
                 for (i = 0; i < altNames.altNames.length; i++) {
-<<<<<<< HEAD
                     var acn = altNames.altNames[i].value.toLowerCase();
                     if (r.CommonNames.indexOf(acn) == -1) { r.CommonNames.push(acn); }
-=======
-                    if ((altNames.altNames[i] != null) && (altNames.altNames[i].type === 2) && (typeof altNames.altNames[i].value === 'string')) {
-                        var acn = altNames.altNames[i].value.toLowerCase();
-                        if (r.CommonNames.indexOf(acn) == -1) { r.CommonNames.push(acn); }
-                    }
->>>>>>> upstream/master
                 }
             }
             var rootCertificate = obj.pki.certificateFromPem(r.root.cert);
@@ -1082,18 +783,7 @@ module.exports.CertificateOperations = function (parent) {
         }
         r.CommonNames = [r.CommonName.toLowerCase()];
         var altNames = webCertificate.getExtension('subjectAltName');
-<<<<<<< HEAD
         if (altNames) { for (i = 0; i < altNames.altNames.length; i++) { r.CommonNames.push(altNames.altNames[i].value.toLowerCase()); } }
-=======
-        if (altNames) {
-            for (i = 0; i < altNames.altNames.length; i++) {
-                if ((altNames.altNames[i] != null) && (altNames.altNames[i].type === 2) && (typeof altNames.altNames[i].value === 'string')) {
-                    var acn = altNames.altNames[i].value.toLowerCase();
-                    if (r.CommonNames.indexOf(acn) == -1) { r.CommonNames.push(acn); }
-                }
-            }
-        }
->>>>>>> upstream/master
         var rootCertificate = obj.pki.certificateFromPem(r.root.cert);
         r.RootName = rootCertificate.subject.getField('CN').value;
 

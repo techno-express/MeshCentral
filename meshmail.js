@@ -1,11 +1,7 @@
 /**
 * @description MeshCentral e-mail server communication modules
 * @author Ylian Saint-Hilaire
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -21,28 +17,20 @@
 // TODO: Add NTML support with "nodemailer-ntlm-auth" https://github.com/nodemailer/nodemailer-ntlm-auth
 
 // Construct a MeshAgent object, called upon connection
-module.exports.CreateMeshMail = function (parent, domain) {
+module.exports.CreateMeshMail = function (parent) {
     var obj = {};
     obj.pendingMails = [];
     obj.parent = parent;
     obj.retry = 0;
     obj.sendingMail = false;
     obj.mailCookieEncryptionKey = null;
-<<<<<<< HEAD
     //obj.mailTemplates = {};
     const constants = (obj.parent.crypto.constants ? obj.parent.crypto.constants : require('constants')); // require('constants') is deprecated in Node 11.10, use require('crypto').constants instead.
     const nodemailer = require('nodemailer');
-=======
-    obj.verifyemail = false;
-    obj.domain = domain;
-    //obj.mailTemplates = {};
-    const constants = (obj.parent.crypto.constants ? obj.parent.crypto.constants : require('constants')); // require('constants') is deprecated in Node 11.10, use require('crypto').constants instead.
->>>>>>> upstream/master
 
     function EscapeHtml(x) { if (typeof x == "string") return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;'); if (typeof x == "boolean") return x; if (typeof x == "number") return x; }
     //function EscapeHtmlBreaks(x) { if (typeof x == "string") return x.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;').replace(/\r/g, '<br />').replace(/\n/g, '').replace(/\t/g, '&nbsp;&nbsp;'); if (typeof x == "boolean") return x; if (typeof x == "number") return x; }
 
-<<<<<<< HEAD
 
     // Setup mail server
     var options = { host: parent.config.smtp.host, secure: (parent.config.smtp.tls == true), tls: { } };
@@ -104,80 +92,6 @@ module.exports.CreateMeshMail = function (parent, domain) {
         for (var i in lines) { var line = lines[i]; if ((line.length > 0) && (line[0] == '~')) { txtbody.push(line.substring(1)); } else { txtbody.push(line); } }
         r.txt = txtbody.join('\r\n');
 
-=======
-    // Setup where we read our configuration from
-    if (obj.domain == null) { obj.config = parent.config; } else { obj.config = domain; }
-
-    if (obj.config.sendgrid != null) {
-        // Setup SendGrid mail server
-        obj.sendGridServer = require('@sendgrid/mail');
-        obj.sendGridServer.setApiKey(obj.config.sendgrid.apikey);
-        if (obj.config.sendgrid.verifyemail == true) { obj.verifyemail = true; }
-    } else if (obj.config.smtp != null) {
-        // Setup SMTP mail server
-        const nodemailer = require('nodemailer');
-        var options = { host: obj.config.smtp.host, secure: (obj.config.smtp.tls == true), tls: {} };
-        //var options = { host: obj.config.smtp.host, secure: (obj.config.smtp.tls == true), tls: { secureProtocol: 'SSLv23_method', ciphers: 'RSA+AES:!aNULL:!MD5:!DSS', secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_COMPRESSION | constants.SSL_OP_CIPHER_SERVER_PREFERENCE, rejectUnauthorized: false } };
-        if (obj.config.smtp.port != null) { options.port = obj.config.smtp.port; }
-        if (obj.config.smtp.tlscertcheck === false) { options.tls.rejectUnauthorized = false; }
-        if (obj.config.smtp.tlsstrict === true) { options.tls.secureProtocol = 'SSLv23_method'; options.tls.ciphers = 'RSA+AES:!aNULL:!MD5:!DSS'; options.tls.secureOptions = constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_COMPRESSION | constants.SSL_OP_CIPHER_SERVER_PREFERENCE; }
-        if ((obj.config.smtp.user != null) && (obj.config.smtp.pass != null)) { options.auth = { user: obj.config.smtp.user, pass: obj.config.smtp.pass }; }
-        if (obj.config.smtp.verifyemail == true) { obj.verifyemail = true; }
-        obj.smtpServer = nodemailer.createTransport(options);
-    }
-
-    // Get the correct mail template object
-    function getTemplate(name, domain, lang) {
-        parent.debug('email', 'Getting mail template for: ' + name + ', lang: ' + lang);
-        if (Array.isArray(lang)) { lang = lang[0]; } // TODO: For now, we only use the first language given.
-
-        var r = {}, emailsPath = null;
-        if ((domain != null) && (domain.webemailspath != null)) { emailsPath = domain.webemailspath; }
-        else if (obj.parent.webEmailsOverridePath != null) { emailsPath = obj.parent.webEmailsOverridePath; }
-        else if (obj.parent.webEmailsPath != null) { emailsPath = obj.parent.webEmailsPath; }
-        if ((emailsPath == null) || (obj.parent.fs.existsSync(emailsPath) == false)) { return null }
-
-        // Get the non-english email if needed
-        var htmlfile = null, txtfile = null;
-        if ((lang != null) && (lang != 'en')) {
-            var translationsPath = obj.parent.path.join(emailsPath, 'translations');
-            var translationsPathHtml = obj.parent.path.join(emailsPath, 'translations', name + '_' + lang + '.html');
-            var translationsPathTxt = obj.parent.path.join(emailsPath, 'translations', name + '_' + lang + '.txt');
-            if (obj.parent.fs.existsSync(translationsPath) && obj.parent.fs.existsSync(translationsPathHtml) && obj.parent.fs.existsSync(translationsPathTxt)) {
-                htmlfile = obj.parent.fs.readFileSync(translationsPathHtml).toString();
-                txtfile = obj.parent.fs.readFileSync(translationsPathTxt).toString();
-            }
-        }
-
-        // Get the english email
-        if ((htmlfile == null) || (txtfile == null)) {
-            var pathHtml = obj.parent.path.join(emailsPath, name + '.html');
-            var pathTxt = obj.parent.path.join(emailsPath, name + '.txt');
-            if (obj.parent.fs.existsSync(pathHtml) && obj.parent.fs.existsSync(pathTxt)) {
-                htmlfile = obj.parent.fs.readFileSync(pathHtml).toString();
-                txtfile = obj.parent.fs.readFileSync(pathTxt).toString();
-            }
-        }
-
-        // No email templates
-        if ((htmlfile == null) || (txtfile == null)) { return null; }
-
-        // Decode the HTML file
-        htmlfile = htmlfile.split('<html>').join('').split('</html>').join('').split('<head>').join('').split('</head>').join('').split('<body>').join('').split('</body>').join('').split(' notrans="1"').join('');
-        var lines = htmlfile.split('\r\n').join('\n').split('\n');
-        r.htmlSubject = lines.shift();
-        if (r.htmlSubject.startsWith('<div>')) { r.htmlSubject = r.htmlSubject.substring(5); }
-        if (r.htmlSubject.endsWith('</div>')) { r.htmlSubject = r.htmlSubject.substring(0, r.htmlSubject.length - 6); }
-        r.html = lines.join('\r\n');
-
-        // Decode the TXT file
-        lines = txtfile.split('\r\n').join('\n').split('\n');
-        r.txtSubject = lines.shift();
-        var txtbody = [];
-        for (var i in lines) { var line = lines[i]; if ((line.length > 0) && (line[0] == '~')) { txtbody.push(line.substring(1)); } else { txtbody.push(line); } }
-        r.txt = txtbody.join('\r\n');
-
->>>>>>> upstream/master
         return r;
     }
 
@@ -230,11 +144,7 @@ module.exports.CreateMeshMail = function (parent, domain) {
 
     // Send a generic email
     obj.sendMail = function (to, subject, text, html) {
-        if (obj.config.sendgrid != null) {
-            obj.pendingMails.push({ to: to, from: obj.config.sendgrid.from, subject: subject, text: text, html: html });
-        } else if (obj.config.smtp != null) {
-            obj.pendingMails.push({ to: to, from: obj.config.smtp.from, subject: subject, text: text, html: html });
-        }
+        obj.pendingMails.push({ to: to, from: parent.config.smtp.from, subject: subject, text: text, html: html });
         sendNextMail();
     };
 
@@ -259,18 +169,8 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 var options = { email: email, servername: domain.title ? domain.title : 'MeshCentral', token: token };
                 if (loginkey != null) { options.urlargs1 = '?key=' + loginkey; options.urlargs2 = '&key=' + loginkey; } else { options.urlargs1 = ''; options.urlargs2 = ''; }
 
-<<<<<<< HEAD
                 // Send the email
                 obj.pendingMails.push({ to: email, from: parent.config.smtp.from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
-=======
-                // Get from field
-                var from = null;
-                if (obj.config.sendgrid && (typeof obj.config.sendgrid.from == 'string')) { from = obj.config.sendgrid.from; }
-                else if (obj.config.smtp && (typeof obj.config.smtp.from == 'string')) { from = obj.config.smtp.from; }
-
-                // Send the email
-                obj.pendingMails.push({ to: email, from: from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
->>>>>>> upstream/master
                 sendNextMail();
             }
         });
@@ -297,29 +197,15 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 var options = { username: username, accountname: accountname, email: email, servername: domain.title ? domain.title : 'MeshCentral', password: password };
                 if (loginkey != null) { options.urlargs1 = '?key=' + loginkey; options.urlargs2 = '&key=' + loginkey; } else { options.urlargs1 = ''; options.urlargs2 = ''; }
 
-<<<<<<< HEAD
                 // Send the email
                 obj.pendingMails.push({ to: email, from: parent.config.smtp.from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
-=======
-                // Get from field
-                var from = null;
-                if (obj.config.sendgrid && (typeof obj.config.sendgrid.from == 'string')) { from = obj.config.sendgrid.from; }
-                else if (obj.config.smtp && (typeof obj.config.smtp.from == 'string')) { from = obj.config.smtp.from; }
-
-                // Send the email
-                obj.pendingMails.push({ to: email, from: from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
->>>>>>> upstream/master
                 sendNextMail();
             }
         });
     };
 
     // Send account check mail
-<<<<<<< HEAD
     obj.sendAccountCheckMail = function (domain, username, email, language, loginkey) {
-=======
-    obj.sendAccountCheckMail = function (domain, username, userid, email, language, loginkey) {
->>>>>>> upstream/master
         obj.checkEmail(email, function (checked) {
             if (checked) {
                 parent.debug('email', "Sending email verification to " + email);
@@ -338,33 +224,17 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 // Set all the options.
                 var options = { username: username, email: email, servername: domain.title ? domain.title : 'MeshCentral' };
                 if (loginkey != null) { options.urlargs1 = '?key=' + loginkey; options.urlargs2 = '&key=' + loginkey; } else { options.urlargs1 = ''; options.urlargs2 = ''; }
-<<<<<<< HEAD
                 options.cookie = obj.parent.encodeCookie({ u: domain.id + '/' + username.toLowerCase(), e: email, a: 1 }, obj.mailCookieEncryptionKey);
 
                 // Send the email
                 obj.pendingMails.push({ to: email, from: parent.config.smtp.from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
-=======
-                options.cookie = obj.parent.encodeCookie({ u: userid, e: email, a: 1 }, obj.mailCookieEncryptionKey);
-
-                // Get from field
-                var from = null;
-                if (obj.config.sendgrid && (typeof obj.config.sendgrid.from == 'string')) { from = obj.config.sendgrid.from; }
-                else if (obj.config.smtp && (typeof obj.config.smtp.from == 'string')) { from = obj.config.smtp.from; }
-
-                // Send the email
-                obj.pendingMails.push({ to: email, from: from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
->>>>>>> upstream/master
                 sendNextMail();
             }
         });
     };
 
     // Send account reset mail
-<<<<<<< HEAD
     obj.sendAccountResetMail = function (domain, username, email, language, loginkey) {
-=======
-    obj.sendAccountResetMail = function (domain, username, userid, email, language, loginkey) {
->>>>>>> upstream/master
         obj.checkEmail(email, function (checked) {
             if (checked) {
                 parent.debug('email', "Sending account password reset to " + email);
@@ -383,22 +253,10 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 // Set all the options.
                 var options = { username: username, email: email, servername: domain.title ? domain.title : 'MeshCentral' };
                 if (loginkey != null) { options.urlargs1 = '?key=' + loginkey; options.urlargs2 = '&key=' + loginkey; } else { options.urlargs1 = ''; options.urlargs2 = ''; }
-<<<<<<< HEAD
                 options.cookie = obj.parent.encodeCookie({ u: domain.id + '/' + username, e: email, a: 2 }, obj.mailCookieEncryptionKey);
 
                 // Send the email
                 obj.pendingMails.push({ to: email, from: parent.config.smtp.from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
-=======
-                options.cookie = obj.parent.encodeCookie({ u: userid, e: email, a: 2 }, obj.mailCookieEncryptionKey);
-
-                // Get from field
-                var from = null;
-                if (obj.config.sendgrid && (typeof obj.config.sendgrid.from == 'string')) { from = obj.config.sendgrid.from; }
-                else if (obj.config.smtp && (typeof obj.config.smtp.from == 'string')) { from = obj.config.smtp.from; }
-
-                // Send the email
-                obj.pendingMails.push({ to: email, from: from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
->>>>>>> upstream/master
                 sendNextMail();
             }
         });
@@ -430,18 +288,8 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 options.link = (os == 4) ? 1 : 0;
                 options.linkurl = createInviteLink(domain, meshid, flags, expirehours);
 
-<<<<<<< HEAD
                 // Send the email
                 obj.pendingMails.push({ to: email, from: parent.config.smtp.from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
-=======
-                // Get from field
-                var from = null;
-                if (obj.config.sendgrid && (typeof obj.config.sendgrid.from == 'string')) { from = obj.config.sendgrid.from; }
-                else if (obj.config.smtp && (typeof obj.config.smtp.from == 'string')) { from = obj.config.smtp.from; }
-
-                // Send the email
-                obj.pendingMails.push({ to: email, from: from, subject: mailReplacements(template.htmlSubject, domain, options), text: mailReplacements(template.txt, domain, options), html: mailReplacements(template.html, domain, options) });
->>>>>>> upstream/master
                 sendNextMail();
             }
         });
@@ -453,7 +301,6 @@ module.exports.CreateMeshMail = function (parent, domain) {
 
         var mailToSend = obj.pendingMails[0];
         obj.sendingMail = true;
-<<<<<<< HEAD
         parent.debug('email', 'SMTP sending mail to ' + mailToSend.to + '.');
         obj.smtpServer.sendMail(mailToSend, function (err, info) {
             parent.debug('email', 'SMTP response: ' + JSON.stringify(err) + ', ' + JSON.stringify(info));
@@ -480,84 +327,19 @@ module.exports.CreateMeshMail = function (parent, domain) {
                 }
             }
         });
-=======
-
-        if (obj.sendGridServer != null) {
-            // SendGrid send
-            parent.debug('email', 'SendGrid sending mail to ' + mailToSend.to + '.');
-            obj.sendGridServer
-                .send(mailToSend)
-                .then(function () {
-                    obj.sendingMail = false;
-                    parent.debug('email', 'SendGrid sending success.');
-                    obj.pendingMails.shift();
-                    obj.retry = 0;
-                    sendNextMail();
-                }, function (error) {
-                    obj.sendingMail = false;
-                    parent.debug('email', 'SendGrid sending error: ' + JSON.stringify(error));
-                    obj.retry++;
-                    // Wait and try again
-                    if (obj.retry < 3) {
-                        setTimeout(sendNextMail, 10000);
-                    } else {
-                        // Failed, send the next mail
-                        parent.debug('email', 'SendGrid server failed (Skipping): ' + JSON.stringify(err));
-                        console.log('SendGrid server failed (Skipping): ' + JSON.stringify(err));
-                        obj.pendingMails.shift();
-                        obj.retry = 0;
-                        sendNextMail();
-                    }
-                });
-        } else if (obj.smtpServer != null) {
-            // SMTP send
-            parent.debug('email', 'SMTP sending mail to ' + mailToSend.to + '.');
-            obj.smtpServer.sendMail(mailToSend, function (err, info) {
-                parent.debug('email', 'SMTP response: ' + JSON.stringify(err) + ', ' + JSON.stringify(info));
-                obj.sendingMail = false;
-                if (err == null) {
-                    // Send the next mail
-                    obj.pendingMails.shift();
-                    obj.retry = 0;
-                    sendNextMail();
-                } else {
-                    obj.retry++;
-                    parent.debug('email', 'SMTP server failed (Retry:' + obj.retry + '): ' + JSON.stringify(err));
-                    console.log('SMTP server failed (Retry:' + obj.retry + '/3): ' + JSON.stringify(err));
-                    // Wait and try again
-                    if (obj.retry < 3) {
-                        setTimeout(sendNextMail, 10000);
-                    } else {
-                        // Failed, send the next mail
-                        parent.debug('email', 'SMTP server failed (Skipping): ' + JSON.stringify(err));
-                        console.log('SMTP server failed (Skipping): ' + JSON.stringify(err));
-                        obj.pendingMails.shift();
-                        obj.retry = 0;
-                        sendNextMail();
-                    }
-                }
-            });
-        }
->>>>>>> upstream/master
     }
 
     // Send out the next mail in the pending list
     obj.verify = function () {
-        if (obj.smtpServer == null) return;
         obj.smtpServer.verify(function (err, info) {
             if (err == null) {
-                console.log('SMTP mail server ' + obj.config.smtp.host + ' working as expected.');
+                console.log('SMTP mail server ' + parent.config.smtp.host + ' working as expected.');
             } else {
                 // Remove all non-object types from error to avoid a JSON stringify error.
                 var err2 = {};
                 for (var i in err) { if (typeof (err[i]) != 'object') { err2[i] = err[i]; } }
-<<<<<<< HEAD
                 parent.debug('email', 'SMTP mail server ' + parent.config.smtp.host + ' failed: ' + JSON.stringify(err2));
                 console.log('SMTP mail server ' + parent.config.smtp.host + ' failed: ' + JSON.stringify(err2));
-=======
-                parent.debug('email', 'SMTP mail server ' + obj.config.smtp.host + ' failed: ' + JSON.stringify(err2));
-                console.log('SMTP mail server ' + obj.config.smtp.host + ' failed: ' + JSON.stringify(err2));
->>>>>>> upstream/master
             }
         });
     };
@@ -582,10 +364,6 @@ module.exports.CreateMeshMail = function (parent, domain) {
     // Check the email domain DNS MX record.
     obj.approvedEmailDomains = {};
     obj.checkEmail = function (email, func) {
-<<<<<<< HEAD
-=======
-        if (obj.verifyemail == false) { func(true); return; }
->>>>>>> upstream/master
         var emailSplit = email.split('@');
         if (emailSplit.length != 2) { func(false); return; }
         if (obj.approvedEmailDomains[emailSplit[1]] === true) { func(true); return; }

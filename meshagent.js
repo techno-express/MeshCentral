@@ -1,11 +1,7 @@
 /**
 * @description MeshCentral MeshAgent communication module
 * @author Ylian Saint-Hilaire & Bryan Roe
-<<<<<<< HEAD
 * @copyright Intel Corporation 2018-2020
-=======
-* @copyright Intel Corporation 2018-2021
->>>>>>> upstream/master
 * @license Apache-2.0
 * @version v0.0.1
 */
@@ -93,25 +89,12 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         // Set this agent as no longer authenticated
         obj.authenticated = -1;
 
-<<<<<<< HEAD
         // If we where updating the agent, clean that up.
-=======
-        // If we where updating the agent using native method, clean that up.
->>>>>>> upstream/master
         if (obj.agentUpdate != null) {
             if (obj.agentUpdate.fd) { try { parent.fs.close(obj.agentUpdate.fd); } catch (ex) { } }
             parent.parent.taskLimiter.completed(obj.agentUpdate.taskid); // Indicate this task complete
             delete obj.agentUpdate.buf;
             delete obj.agentUpdate;
-<<<<<<< HEAD
-=======
-        }
-
-        // If we where updating the agent meshcore method, clean that up.
-        if (obj.agentCoreUpdateTaskId != null) {
-            parent.parent.taskLimiter.completed(obj.agentCoreUpdateTaskId);
-            delete obj.agentCoreUpdateTaskId;
->>>>>>> upstream/master
         }
 
         // Perform timer cleanup
@@ -168,20 +151,10 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
                 // We need to check if the core is current. Figure out what core we need.
                 var corename = null;
-<<<<<<< HEAD
                 if (parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId] != null) {
                     if (obj.agentCoreCheck == 1001) {
                         // If the user asked, use the recovery core.
                         corename = parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].rcore;
-=======
-                if ((obj.agentInfo != null) && (parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId] != null)) {
-                    if ((obj.agentCoreCheck == 1001) || (obj.agentCoreUpdate == true)) {
-                        // If the user asked, use the recovery core.
-                        corename = parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].rcore;
-                    } else if (obj.agentCoreCheck == 1011) {
-                        // If the user asked, use the tiny core.
-                        corename = parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].tcore;
->>>>>>> upstream/master
                     } else if (obj.agentInfo.capabilities & 0x40) {
                         // If this is a recovery agent, use the agent recovery core.
                         corename = parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].arcore;
@@ -195,11 +168,7 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (corename != null) {
                     const meshcorehash = parent.parent.defaultMeshCoresHash[corename];
                     if (agentMeshCoreHash != meshcorehash) {
-<<<<<<< HEAD
                         if ((obj.agentCoreCheck < 5) || (obj.agentCoreCheck == 1001)) {
-=======
-                        if ((obj.agentCoreCheck < 5) || (obj.agentCoreCheck == 1001) || (obj.agentCoreCheck == 1011) || (obj.agentCoreUpdate == true)) {
->>>>>>> upstream/master
                             if (meshcorehash == null) {
                                 // Clear the core
                                 obj.sendBinary(common.ShortToStr(10) + common.ShortToStr(0)); // MeshCommand_CoreModule, ask mesh agent to clear the core
@@ -218,11 +187,7 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                                 obj.agentCoreUpdatePending = true;
                                 parent.parent.taskLimiter.launch(function (argument, taskid, taskLimiterQueue) {
                                     if (obj.authenticated == 2) {
-<<<<<<< HEAD
                                         // Send the updated code.
-=======
-                                        // Send the updated core.
->>>>>>> upstream/master
                                         delete obj.agentCoreUpdatePending;
                                         obj.sendBinary(common.ShortToStr(10) + common.ShortToStr(0) + argument.hash + argument.core, function () { parent.parent.taskLimiter.completed(taskid); }); // MeshCommand_CoreModule, start core update
                                         parent.agentStats.updatingCoreCount++;
@@ -269,20 +234,7 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
             else if (cmdid == 12) { // MeshCommand_AgentHash
                 if ((msg.length == 52) && (obj.agentExeInfo != null) && (obj.agentExeInfo.update == true)) {
                     const agenthash = msg.substring(4);
-<<<<<<< HEAD
                     if ((agenthash != obj.agentExeInfo.hash) && (agenthash != '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0')) {
-=======
-                    const agentUpdateMethod = compareAgentBinaryHash(obj.agentExeInfo, agenthash)
-                    if (agentUpdateMethod === 2) { // Use meshcore agent update system
-                        // Send the recovery core to the agent, if the agent is capable of running one
-                        if (((obj.agentInfo.capabilities & 16) != 0) && (parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].core != null)) {
-                            parent.agentStats.agentMeshCoreBinaryUpdate++;
-                            obj.agentCoreUpdate = true;
-                            obj.sendBinary(common.ShortToStr(10) + common.ShortToStr(0)); // Ask to clear the core
-                            obj.sendBinary(common.ShortToStr(11) + common.ShortToStr(0)); // Ask for meshcore hash
-                        }
-                    } else if (agentUpdateMethod === 1) { // Use native agent update system
->>>>>>> upstream/master
                         // Mesh agent update required, do it using task limiter so not to flood the network. Medium priority task.
                         parent.parent.taskLimiter.launch(function (argument, taskid, taskLimiterQueue) {
                             if (obj.authenticated != 2) { parent.parent.taskLimiter.completed(taskid); return; } // If agent disconnection, complete and exit now.
@@ -309,10 +261,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                                     obj.agentUpdate.buf[2] = 0;
                                     obj.agentUpdate.buf[3] = 1;
                                     parent.fs.read(obj.agentUpdate.fd, obj.agentUpdate.buf, 4, parent.parent.agentUpdateBlockSize, obj.agentUpdate.ptr, function (err, bytesRead, buffer) {
-<<<<<<< HEAD
-=======
-                                        if (obj.agentUpdate == null) return;
->>>>>>> upstream/master
                                         if ((err != null) || (bytesRead == 0)) {
                                             // Error reading the agent file, stop here.
                                             try { parent.fs.close(obj.agentUpdate.fd); } catch (ex) { }
@@ -453,51 +401,30 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if ((msg.length != 98) || ((obj.receivedCommands & 1) != 0)) return;
                 obj.receivedCommands += 1; // Agent can't send the same command twice on the same connection ever. Block DOS attack path.
 
-<<<<<<< HEAD
                 if ((args.ignoreagenthashcheck === true) || (domain.ignoreagenthashcheck === true)) {
-=======
-                if (isIgnoreHashCheck()) {
->>>>>>> upstream/master
                     // Send the agent web hash back to the agent
                     // Send 384 bits SHA384 hash of TLS cert + 384 bits nonce
                     obj.sendBinary(common.ShortToStr(1) + msg.substring(2, 50) + obj.nonce); // Command 1, hash + nonce. Use the web hash given by the agent.
                 } else {
                     // Check that the server hash matches our own web certificate hash (SHA384)
-<<<<<<< HEAD
                     const agentSeenCerthash = msg.substring(2, 50);
                     if ((getWebCertHash(domain) != agentSeenCerthash) && (getWebCertFullHash(domain) != agentSeenCerthash) && (parent.defaultWebCertificateHash != agentSeenCerthash) && (parent.defaultWebCertificateFullHash != agentSeenCerthash)) {
-=======
-                    obj.agentSeenCerthash = msg.substring(2, 50);
-                    if ((getWebCertHash(domain) != obj.agentSeenCerthash) && (getWebCertFullHash(domain) != obj.agentSeenCerthash) && (parent.defaultWebCertificateHash != obj.agentSeenCerthash) && (parent.defaultWebCertificateFullHash != obj.agentSeenCerthash)) {
->>>>>>> upstream/master
                         if (parent.parent.supportsProxyCertificatesRequest !== false) {
                             obj.badWebCert = Buffer.from(parent.crypto.randomBytes(16), 'binary').toString('base64');
                             parent.wsagentsWithBadWebCerts[obj.badWebCert] = obj; // Add this agent to the list of of agents with bad web certificates.
                             parent.parent.updateProxyCertificates(false);
                         }
                         parent.agentStats.agentBadWebCertHashCount++;
-<<<<<<< HEAD
-=======
-                        parent.setAgentIssue(obj, "BadWebCertHash: " + Buffer.from(msg.substring(2, 50), 'binary').toString('hex'));
->>>>>>> upstream/master
                         parent.parent.debug('agent', 'Agent bad web cert hash (Agent:' + (Buffer.from(msg.substring(2, 50), 'binary').toString('hex').substring(0, 10)) + ' != Server:' + (Buffer.from(getWebCertHash(domain), 'binary').toString('hex').substring(0, 10)) + ' or ' + (Buffer.from(getWebCertFullHash(domain), 'binary').toString('hex').substring(0, 10)) + '), holding connection (' + obj.remoteaddrport + ').');
                         parent.parent.debug('agent', 'Agent reported web cert hash:' + (Buffer.from(msg.substring(2, 50), 'binary').toString('hex')) + '.');
                         console.log('Agent bad web cert hash (Agent:' + (Buffer.from(msg.substring(2, 50), 'binary').toString('hex').substring(0, 10)) + ' != Server:' + (Buffer.from(getWebCertHash(domain), 'binary').toString('hex').substring(0, 10)) + ' or ' + (Buffer.from(getWebCertFullHash(domain), 'binary').toString('hex').substring(0, 10)) + '), holding connection (' + obj.remoteaddrport + ').');
                         console.log('Agent reported web cert hash:' + (Buffer.from(msg.substring(2, 50), 'binary').toString('hex')) + '.');
-<<<<<<< HEAD
-=======
-                        delete obj.agentSeenCerthash;
->>>>>>> upstream/master
                         return;
                     } else {
                         // The hash matched one of the acceptable values, send the agent web hash back to the agent
                         // Send 384 bits SHA384 hash of TLS cert + 384 bits nonce
                         // Command 1, hash + nonce. Use the web hash given by the agent.
-<<<<<<< HEAD
                         obj.sendBinary(common.ShortToStr(1) + agentSeenCerthash + obj.nonce);
-=======
-                        obj.sendBinary(common.ShortToStr(1) + obj.agentSeenCerthash + obj.nonce);
->>>>>>> upstream/master
                     }
                 }
 
@@ -526,10 +453,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (obj.unauthsign != null) {
                     if (processAgentSignature(obj.unauthsign) == false) {
                         parent.agentStats.agentBadSignature1Count++;
-<<<<<<< HEAD
-=======
-                        parent.setAgentIssue(obj, "BadSignature1");
->>>>>>> upstream/master
                         parent.parent.debug('agent', 'Agent connected with bad signature, holding connection (' + obj.remoteaddrport + ').');
                         console.log('Agent connected with bad signature, holding connection (' + obj.remoteaddrport + ').'); return;
                     } else { completeAgentConnection(); }
@@ -550,10 +473,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (obj.agentnonce == null) { obj.unauthsign = msg.substring(4 + certlen); } else {
                     if (processAgentSignature(msg.substring(4 + certlen)) == false) {
                         parent.agentStats.agentBadSignature2Count++;
-<<<<<<< HEAD
-=======
-                        parent.setAgentIssue(obj, "BadSignature2");
->>>>>>> upstream/master
                         parent.parent.debug('agent', 'Agent connected with bad signature, holding connection (' + obj.remoteaddrport + ').');
                         console.log('Agent connected with bad signature, holding connection (' + obj.remoteaddrport + ').'); return;
                     }
@@ -587,10 +506,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                     obj.agentInfo.computerName = '';
                     //console.log('computerName-none');
                 }
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
                 obj.dbMeshKey = 'mesh/' + domain.id + '/' + obj.meshid;
                 completeAgentConnection();
             } else if (cmd == 4) {
@@ -600,13 +515,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
             } else if (cmd == 5) {
                 // ServerID. Agent is telling us what serverid it expects. Useful if we have many server certificates.
                 if ((msg.substring(2, 34) == parent.swarmCertificateHash256) || (msg.substring(2, 50) == parent.swarmCertificateHash384)) { obj.useSwarmCert = true; }
-<<<<<<< HEAD
-=======
-            } else if (cmd == 30) {
-                // Agent Commit Date. This is future proofing. Can be used to change server behavior depending on the date range of the agent.
-                try { obj.AgentCommitDate = Date.parse(msg.substring(2)) } catch (ex) { }
-                //console.log('Connected Agent Commit Date: ' + msg.substring(2) + ", " + Date.parse(msg.substring(2)));
->>>>>>> upstream/master
             }
         }
     });
@@ -622,21 +530,11 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
             //console.log('Agent disconnect ' + obj.nodeid + ' (' + obj.remoteaddrport + ') id=' + agentId);
             parent.parent.debug('agent', 'Agent disconnect ' + obj.nodeid + ' (' + obj.remoteaddrport + ') id=' + agentId);
 
-<<<<<<< HEAD
             // Log the agent disconnection
             if (parent.wsagentsDisconnections[obj.nodeid] == null) {
                 parent.wsagentsDisconnections[obj.nodeid] = 1;
             } else {
                 parent.wsagentsDisconnections[obj.nodeid] = ++parent.wsagentsDisconnections[obj.nodeid];
-=======
-            // Log the agent disconnection if we are not testing agent update
-            if (args.agentupdatetest == null) {
-                if (parent.wsagentsDisconnections[obj.nodeid] == null) {
-                    parent.wsagentsDisconnections[obj.nodeid] = 1;
-                } else {
-                    parent.wsagentsDisconnections[obj.nodeid] = ++parent.wsagentsDisconnections[obj.nodeid];
-                }
->>>>>>> upstream/master
             }
         }
         obj.close(0);
@@ -826,10 +724,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (mesh == null) {
                     // If we disconnect, the agent will just reconnect. We need to log this or tell agent to connect in a few hours.
                     parent.agentStats.invalidDomainMesh2Count++;
-<<<<<<< HEAD
-=======
-                    parent.setAgentIssue(obj, "invalidDomainMesh2");
->>>>>>> upstream/master
                     parent.parent.debug('agent', 'Agent connected with invalid domain/mesh, holding connection (' + obj.remoteaddrport + ', ' + obj.dbMeshKey + ').');
                     console.log('Agent connected with invalid domain/mesh, holding connection (' + obj.remoteaddrport + ', ' + obj.dbMeshKey + ').');
                     return;
@@ -839,10 +733,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (mesh.mtype != 2) {
                     // If we disconnect, the agent will just reconnect. We need to log this or tell agent to connect in a few hours.
                     parent.agentStats.invalidMeshType2Count++;
-<<<<<<< HEAD
-=======
-                    parent.setAgentIssue(obj, "invalidMeshType2");
->>>>>>> upstream/master
                     parent.parent.debug('agent', 'Agent connected with invalid mesh type, holding connection (' + obj.remoteaddrport + ').');
                     console.log('Agent connected with invalid mesh type, holding connection (' + obj.remoteaddrport + ').');
                     return;
@@ -894,10 +784,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         if (mesh == null) {
             // If we disconnect, the agent will just reconnect. We need to log this or tell agent to connect in a few hours.
             parent.agentStats.invalidDomainMeshCount++;
-<<<<<<< HEAD
-=======
-            parent.setAgentIssue(obj, "invalidDomainMesh");
->>>>>>> upstream/master
             parent.parent.debug('agent', 'Agent connected with invalid domain/mesh, holding connection (' + obj.remoteaddrport + ', ' + obj.dbMeshKey + ').');
             console.log('Agent connected with invalid domain/mesh, holding connection (' + obj.remoteaddrport + ', ' + obj.dbMeshKey + ').');
             return;
@@ -907,10 +793,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         if (mesh.mtype != 2) {
             // If we disconnect, the agent will just reconnect. We need to log this or tell agent to connect in a few hours.
             parent.agentStats.invalidMeshTypeCount++;
-<<<<<<< HEAD
-=======
-            parent.setAgentIssue(obj, "invalidMeshType");
->>>>>>> upstream/master
             parent.parent.debug('agent', 'Agent connected with invalid mesh type, holding connection (' + obj.remoteaddrport + ').');
             console.log('Agent connected with invalid mesh type, holding connection (' + obj.remoteaddrport + ').');
             return;
@@ -957,10 +839,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
             // Close the duplicate agent
             parent.agentStats.duplicateAgentCount++;
-<<<<<<< HEAD
-=======
-            parent.setAgentIssue(obj, 'duplicateAgent');
->>>>>>> upstream/master
             if (obj.nodeid != null) { parent.parent.debug('agent', 'Duplicate agent ' + obj.nodeid + ' (' + obj.remoteaddrport + ')'); }
             dupAgent.close(3);
         } else {
@@ -977,33 +855,10 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         if (disconnectCount > 6) {
             parent.parent.debug('agent', 'Agent in big trouble: NodeId=' + obj.nodeid + ', IP=' + obj.remoteaddrport + ', Agent=' + obj.agentInfo.agentId + '.');
             console.log('Agent in big trouble: NodeId=' + obj.nodeid + ', IP=' + obj.remoteaddrport + ', Agent=' + obj.agentInfo.agentId + '.');
-<<<<<<< HEAD
-=======
-            parent.agentStats.agentInBigTrouble++;
             // TODO: Log or do something to recover?
             return;
         }
 
-        // Command 4, inform mesh agent that it's authenticated.
-        obj.sendBinary(common.ShortToStr(4));
-
-        // Not sure why, but in rare cases, obj.agentInfo is undefined here.
-        if ((obj.agentInfo == null) || (typeof obj.agentInfo.capabilities != 'number')) { return; } // This is an odd case.
-        obj.agentExeInfo = parent.parent.meshAgentBinaries[obj.agentInfo.agentId];
-
-        // Check if this agent is reconnecting too often.
-        if (disconnectCount > 4) {
-            // Too many disconnections, this agent has issues. Just clear the core.
-            obj.sendBinary(common.ShortToStr(10) + common.ShortToStr(0));
-            parent.parent.debug('agent', 'Agent in trouble: NodeId=' + obj.nodeid + ', IP=' + obj.remoteaddrport + ', Agent=' + obj.agentInfo.agentId + '.');
-            parent.agentStats.agentInTrouble++;
-            //console.log('Agent in trouble: NodeId=' + obj.nodeid + ', IP=' + obj.remoteaddrport + ', Agent=' + obj.agentInfo.agentId + '.');
->>>>>>> upstream/master
-            // TODO: Log or do something to recover?
-            return;
-        }
-
-<<<<<<< HEAD
         // Command 4, inform mesh agent that it's authenticated.
         obj.sendBinary(common.ShortToStr(4));
 
@@ -1021,9 +876,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
         // Check if we need to make an native update check
         obj.agentExeInfo = parent.parent.meshAgentBinaries[obj.agentInfo.agentId];
-=======
-        // Check if we need to make an native update check
->>>>>>> upstream/master
         var corename = null;
         if (parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId] != null) {
             corename = parent.parent.meshAgentsArchitectureNumbers[obj.agentInfo.agentId].core;
@@ -1056,7 +908,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
             }
         }
     }
-<<<<<<< HEAD
 
     function recoveryAgentCoreIsStable(mesh) {
         parent.agentStats.recoveryCoreIsStableCount++;
@@ -1064,15 +915,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         // Recovery agent is doing ok, lets perform main agent checking.
         //console.log('recoveryAgentCoreIsStable()');
 
-=======
-
-    function recoveryAgentCoreIsStable(mesh) {
-        parent.agentStats.recoveryCoreIsStableCount++;
-
-        // Recovery agent is doing ok, lets perform main agent checking.
-        //console.log('recoveryAgentCoreIsStable()');
-
->>>>>>> upstream/master
         // Fetch the the real agent nodeid
         db.Get('da' + obj.dbNodeKey, function (err, nodes, self) {
             if ((nodes != null) && (nodes.length == 1)) {
@@ -1097,10 +939,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         const mesh = parent.meshes[obj.dbMeshKey];
         if (mesh == null) {
             parent.agentStats.meshDoesNotExistCount++;
-<<<<<<< HEAD
-=======
-            parent.setAgentIssue(obj, "meshDoesNotExist");
->>>>>>> upstream/master
             // TODO: Mark this agent as part of a mesh that does not exists.
             return; // Probably not worth doing anything else. Hold this agent.
         }
@@ -1199,21 +1037,10 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
     // Verify the agent signature
     function processAgentSignature(msg) {
-<<<<<<< HEAD
         if ((args.ignoreagenthashcheck !== true) && (domain.ignoreagenthashcheck !== true)) {
             var verified = false;
 
             if (msg.length != 384) {
-=======
-        if (isIgnoreHashCheck() == false) {
-            var verified = false;
-
-            // This agent did not report a valid TLS certificate hash, fail now.
-            if (obj.agentSeenCerthash == null) return false;
-
-            // Raw RSA signatures have an exact length of 256 or 384. PKCS7 is larger.
-            if ((msg.length != 384) && (msg.length != 256)) {
->>>>>>> upstream/master
                 // Verify a PKCS7 signature.
                 var msgDer = null;
                 try { msgDer = forge.asn1.fromDer(forge.util.createBuffer(msg, 'binary')); } catch (ex) { }
@@ -1223,16 +1050,11 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         const sig = p7.rawCapture.signature;
 
                         // Verify with key hash
-<<<<<<< HEAD
                         var buf = Buffer.from(getWebCertHash(domain) + obj.nonce + obj.agentnonce, 'binary');
-=======
-                        var buf = Buffer.from(obj.agentSeenCerthash + obj.nonce + obj.agentnonce, 'binary');
->>>>>>> upstream/master
                         var verifier = parent.crypto.createVerify('RSA-SHA384');
                         verifier.update(buf);
                         verified = verifier.verify(obj.unauth.nodeCertPem, sig, 'binary');
                         if (verified !== true) {
-<<<<<<< HEAD
                             // Verify with full hash
                             buf = Buffer.from(getWebCertFullHash(domain) + obj.nonce + obj.agentnonce, 'binary');
                             verifier = parent.crypto.createVerify('RSA-SHA384');
@@ -1256,11 +1078,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         if (verified !== true) {
                             // Not a valid signature
                             parent.agentStats.invalidPkcsSignatureCount++;
-=======
-                            // Not a valid signature
-                            parent.agentStats.invalidPkcsSignatureCount++;
-                            parent.setAgentIssue(obj, "invalidPkcsSignature");
->>>>>>> upstream/master
                             return false;
                         }
                     } catch (ex) { };
@@ -1270,7 +1087,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
             if (verified == false) {
                 // Verify the RSA signature. This is the fast way, without using forge.
                 const verify = parent.crypto.createVerify('SHA384');
-<<<<<<< HEAD
                 verify.end(Buffer.from(getWebCertHash(domain) + obj.nonce + obj.agentnonce, 'binary')); // Test using the private key hash
                 if (verify.verify(obj.unauth.nodeCertPem, Buffer.from(msg, 'binary')) !== true) {
                     const verify2 = parent.crypto.createVerify('SHA384');
@@ -1279,13 +1095,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         parent.agentStats.invalidRsaSignatureCount++;
                         return false;
                     }
-=======
-                verify.end(Buffer.from(obj.agentSeenCerthash + obj.nonce + obj.agentnonce, 'binary')); // Test using the private key hash
-                if (verify.verify(obj.unauth.nodeCertPem, Buffer.from(msg, 'binary')) !== true) {
-                    parent.agentStats.invalidRsaSignatureCount++;
-                    parent.setAgentIssue(obj, "invalidRsaSignature");
-                    return false;
->>>>>>> upstream/master
                 }
             }
         }
@@ -1297,10 +1106,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         delete obj.agentnonce;
         delete obj.unauth;
         delete obj.receivedCommands;
-<<<<<<< HEAD
-=======
-        delete obj.agentSeenCerthash;
->>>>>>> upstream/master
         if (obj.unauthsign) delete obj.unauthsign;
         parent.agentStats.verifiedAgentConnectionCount++;
         parent.parent.debug('agent', 'Verified agent connection to ' + obj.nodeid + ' (' + obj.remoteaddrport + ').');
@@ -1310,19 +1115,11 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
     // Process incoming agent JSON data
     function processAgentData(msg) {
-<<<<<<< HEAD
-=======
-        if (obj.agentInfo == null) return;
->>>>>>> upstream/master
         var i, str = msg.toString('utf8'), command = null;
         if (str[0] == '{') {
             try { command = JSON.parse(str); } catch (ex) {
                 // If the command can't be parsed, ignore it.
                 parent.agentStats.invalidJsonCount++;
-<<<<<<< HEAD
-=======
-                parent.setAgentIssue(obj, "invalidJson (" + str.length + "): " + str);
->>>>>>> upstream/master
                 parent.parent.debug('agent', 'Unable to parse agent JSON (' + obj.remoteaddrport + ')');
                 console.log('Unable to parse agent JSON (' + obj.remoteaddrport + '): ' + str, ex);
                 return;
@@ -1333,61 +1130,12 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                     {
                         // Route a message
                         parent.routeAgentCommand(command, obj.domain.id, obj.dbNodeKey, obj.dbMeshKey);
-<<<<<<< HEAD
-=======
                         break;
                     }
                 case 'coreinfo':
                     {
                         // Sent by the agent to update agent information
                         ChangeAgentCoreInfo(command);
-
-                        if ((obj.agentCoreUpdate === true) && (obj.agentExeInfo != null) && (typeof obj.agentExeInfo.url == 'string')) {
-                            // Agent update. The recovery core was loaded in the agent, send a command to update the agent
-                            parent.parent.taskLimiter.launch(function (argument, taskid, taskLimiterQueue) { // Medium priority task
-                                // If agent disconnection, complete and exit now.
-                                if ((obj.authenticated != 2) || (obj.agentExeInfo == null)) { parent.parent.taskLimiter.completed(taskid); return; }
-
-                                // Agent update. The recovery core was loaded in the agent, send a command to update the agent
-                                obj.agentCoreUpdateTaskId = taskid;
-                                const url = '*' + require('url').parse(obj.agentExeInfo.url).path;
-                                var cmd = { action: 'agentupdate', url: url, hash: obj.agentExeInfo.hashhex };
-                                parent.parent.debug('agentupdate', "Sending agent update url: " + cmd.url);
-
-                                // Add the hash
-                                if (obj.agentExeInfo.fileHash != null) { cmd.hash = obj.agentExeInfo.fileHashHex; } else { cmd.hash = obj.agentExeInfo.hashhex; }
-
-                                // Add server TLS cert hash
-                                if (isIgnoreHashCheck() == false) {
-                                    const tlsCertHash = parent.webCertificateFullHashs[domain.id];
-                                    if (tlsCertHash != null) { cmd.servertlshash = Buffer.from(tlsCertHash, 'binary').toString('hex'); }
-                                }
-
-                                // Send the agent update command
-                                obj.send(JSON.stringify(cmd));
-                            }, null, 1);
-                        }
->>>>>>> upstream/master
-                        break;
-                    }
-                case 'smbios':
-                    {
-                        // SMBIOS information must never be saved when NeDB is in use. NeDB will currupt that database.
-                        if (db.SetSMBIOS == null) break;
-
-                        // See if we need to save SMBIOS information
-                        if (domain.smbios === true) {
-                            // Store the RAW SMBios table of this computer
-                            // Perform sanity checks before storing
-                            try {
-                                for (var i in command.value) { var k = parseInt(i); if ((k != i) || (i > 255) || (typeof command.value[i] != 'object') || (command.value[i].length == null) || (command.value[i].length > 1024) || (command.value[i].length < 0)) { delete command.value[i]; } }
-                                db.SetSMBIOS({ _id: obj.dbNodeKey, domain: domain.id, time: new Date(), value: command.value });
-                            } catch (ex) { }
-                        }
-
-                        // Event the node interface information change (This is a lot of traffic, probably don't need this).
-                        //parent.parent.DispatchEvent(parent.CreateMeshDispatchTargets(obj.meshid, [obj.dbNodeKey]), obj, { action: 'smBiosChange', nodeid: obj.dbNodeKey, domain: domain.id, smbios: command.value,  nolog: 1 });
-
                         break;
                     }
                 case 'smbios':
@@ -1415,17 +1163,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         // Check if network information is present
                         if ((command.netif2 == null) && (command.netif == null)) return;
 
-<<<<<<< HEAD
-=======
-                        // Escape any field names that have special characters
-                        if (command.netif2 != null) {
-                            for (var i in command.netif2) {
-                                var esc = common.escapeFieldName(i);
-                                if (esc !== i) { command.netif2[esc] = command.netif2[i]; delete command.netif2[i]; }
-                            }
-                        }
-
->>>>>>> upstream/master
                         // Sent by the agent to update agent network interface information
                         delete command.action;
                         command.updateTime = Date.now();
@@ -1459,11 +1196,7 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         if (command.oldnodeid.length != 64) break;
                         const oldNodeKey = 'node//' + command.oldnodeid.toLowerCase();
                         db.Get(oldNodeKey, function (err, nodes) {
-<<<<<<< HEAD
                             if ((nodes != null) && (nodes.length != 1)) return;
-=======
-                            if ((nodes == null) || (nodes.length != 1)) return;
->>>>>>> upstream/master
                             const node = nodes[0];
                             if (node.meshid == obj.dbMeshKey) {
                                 // Update the device name & host
@@ -1541,11 +1274,7 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                                     if ((obj.agentInfo.capabilities & 0x40) != 0) {
                                         // Return nodeid of main agent + connection status
                                         db.Get('da' + obj.dbNodeKey, function (err, nodes) {
-<<<<<<< HEAD
                                             if (nodes.length == 1) {
-=======
-                                            if ((nodes != null) && (nodes.length == 1)) {
->>>>>>> upstream/master
                                                 obj.realNodeKey = nodes[0].raid;
 
                                                 // Get agent connection state
@@ -1575,13 +1304,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                     }
                 case 'sysinfo': {
                     if ((typeof command.data == 'object') && (typeof command.data.hash == 'string')) {
-<<<<<<< HEAD
-=======
-                        // Validate command.data.
-                        if (common.validateObjectForMongo(command.data, 1024) == false) break;
-
-                        // Save to database
->>>>>>> upstream/master
                         command.data._id = 'si' + obj.dbNodeKey;
                         command.data.type = 'sysinfo';
                         command.data.domain = domain.id;
@@ -1614,17 +1336,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                         else if (command.type == 'msg') { obj.sessions.msg = command.value; }
                         else if (command.type == 'app') { obj.sessions.app = command.value; }
                     }
-<<<<<<< HEAD
-=======
-
-                    // Any "help" session must have an associated app, if not, remove it.
-                    if (obj.sessions.help != null) {
-                        for (var i in obj.sessions.help) { if (obj.sessions.app[i] == null) { delete obj.sessions.help[i]; } }
-                        if (Object.keys(obj.sessions.help).length == 0) { delete obj.sessions.help; }
-                    }
-
-                    // Inform everyone of updated sessions
->>>>>>> upstream/master
                     obj.updateSessions();
                     break;
                 }
@@ -1697,48 +1408,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                     try { ws.send(JSON.stringify(responseCmd)); } catch (ex) { }
                     break;
                 }
-<<<<<<< HEAD
-=======
-                case 'agentupdate': {
-                    if ((obj.agentExeInfo != null) && (typeof obj.agentExeInfo.url == 'string')) {
-                        var func = function agentUpdateFunc(argument, taskid, taskLimiterQueue) { // Medium priority task
-                            // If agent disconnection, complete and exit now.
-                            if (obj.authenticated != 2) { parent.parent.taskLimiter.completed(taskid); return; }
-
-                            // Agent is requesting an agent update
-                            obj.agentCoreUpdateTaskId = taskid;
-                            const url = '*' + require('url').parse(obj.agentExeInfo.url).path;
-                            var cmd = { action: 'agentupdate', url: url, hash: obj.agentExeInfo.hashhex, sessionid: agentUpdateFunc.sessionid };
-                            parent.parent.debug('agentupdate', "Sending user requested agent update url: " + cmd.url);
-
-                            // Add the hash
-                            if (obj.agentExeInfo.fileHash != null) { cmd.hash = obj.agentExeInfo.fileHashHex; } else { cmd.hash = obj.agentExeInfo.hashhex; }
-
-                            // Add server TLS cert hash
-                            if (isIgnoreHashCheck() == false) {
-                                const tlsCertHash = parent.webCertificateFullHashs[domain.id];
-                                if (tlsCertHash != null) { cmd.servertlshash = Buffer.from(tlsCertHash, 'binary').toString('hex'); }
-                            }
-
-                            // Send the agent update command
-                            obj.send(JSON.stringify(cmd));
-                        }
-                        func.sessionid = command.sessionid;
-
-                        // Agent update. The recovery core was loaded in the agent, send a command to update the agent
-                        parent.parent.taskLimiter.launch(func, null, 1);
-                    }
-                    break;
-                }
-                case 'agentupdatedownloaded': {
-                    if (obj.agentCoreUpdateTaskId != null) {
-                        // Indicate this udpate task is complete
-                        parent.parent.taskLimiter.completed(obj.agentCoreUpdateTaskId);
-                        delete obj.agentCoreUpdateTaskId;
-                    }
-                    break;
-                }
->>>>>>> upstream/master
                 default: {
                     parent.agentStats.unknownAgentActionCount++;
                     parent.parent.debug('agent', 'Unknown agent action (' + obj.remoteaddrport + '): ' + JSON.stringify(command) + '.');
@@ -1795,7 +1464,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                     if ((command.intelamt.Versions != null) && (typeof command.intelamt.Versions == 'object')) {
                         if ((command.intelamt.Versions.AMT != null) && (typeof command.intelamt.Versions.AMT == 'string') && (command.intelamt.Versions.AMT.length < 12) && (device.intelamt.ver != command.intelamt.Versions.AMT)) { changes.push('AMT version'); device.intelamt.ver = command.intelamt.Versions.AMT; change = 1; log = 1; }
                         if ((command.intelamt.Versions.Sku != null) && (typeof command.intelamt.Versions.Sku == 'string')) { var sku = parseInt(command.intelamt.Versions.Sku); if (device.intelamt.sku !== command.intelamt.sku) { device.intelamt.sku = sku; change = 1; log = 1; } }
-<<<<<<< HEAD
                     }
                     if ((command.intelamt.ProvisioningState != null) && (typeof command.intelamt.ProvisioningState == 'number') && (device.intelamt.state != command.intelamt.ProvisioningState)) { changes.push('AMT state'); device.intelamt.state = command.intelamt.ProvisioningState; change = 1; log = 1; }
                     if ((command.intelamt.Flags != null) && (typeof command.intelamt.Flags == 'number') && (device.intelamt.flags != command.intelamt.Flags)) {
@@ -1807,31 +1475,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
                 if (command.av) {
                     if (!device.av) { device.av = []; }
                     if ((command.av != null) && (JSON.stringify(device.av) != JSON.stringify(command.av))) { /*changes.push('AV status');*/ device.av = command.av; change = 1; log = 1; }
-=======
-                    }
-                    if ((command.intelamt.ProvisioningState != null) && (typeof command.intelamt.ProvisioningState == 'number') && (device.intelamt.state != command.intelamt.ProvisioningState)) { changes.push('AMT state'); device.intelamt.state = command.intelamt.ProvisioningState; change = 1; log = 1; }
-                    if ((command.intelamt.Flags != null) && (typeof command.intelamt.Flags == 'number') && (device.intelamt.flags != command.intelamt.Flags)) {
-                        if (device.intelamt.flags) { changes.push('AMT flags (' + device.intelamt.flags + ' --> ' + command.intelamt.Flags + ')'); } else { changes.push('AMT flags (' + command.intelamt.Flags + ')'); }
-                        device.intelamt.flags = command.intelamt.Flags; change = 1; log = 1;
-                    }
-                    if ((command.intelamt.UUID != null) && (typeof command.intelamt.UUID == 'string') && (device.intelamt.uuid != command.intelamt.UUID)) { changes.push('AMT uuid'); device.intelamt.uuid = command.intelamt.UUID; change = 1; log = 1; }
-                }
-                if (command.av != null) { // Antivirus
-                    if (!device.av) { device.av = []; }
-                    if (JSON.stringify(device.av) != JSON.stringify(command.av)) { /*changes.push('AV status');*/ device.av = command.av; change = 1; log = 1; }
-                }
-                if (command.wsc != null) { // Windows Security Center
-                    if (!device.wsc) { device.wsc = {}; }
-                    if (JSON.stringify(device.wsc) != JSON.stringify(command.wsc)) { /*changes.push('Windows Security Center status');*/ device.wsc = command.wsc; change = 1; log = 1; }
-                }
-
-                // Push Messaging Token
-                if ((command.pmt != null) && (typeof command.pmt == 'string') && (device.pmt != command.pmt)) {
-                    if (typeof device.pmt == 'string') { db.Remove('pmt_' + device.pmt); }
-                    device.pmt = command.pmt;
-                    change = 1; // Don't save this change as an event to the db, so no log=1.
-                    parent.removePmtFromAllOtherNodes(device); // We need to make sure to remove this push messaging token from any other device on this server, all domains included.
->>>>>>> upstream/master
                 }
 
                 if ((command.users != null) && (Array.isArray(command.users)) && (device.users != command.users)) { device.users = command.users; change = 1; } // Don't save this to the db.
@@ -1916,24 +1559,11 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
 
     // Update the mesh agent tab in the database
     function ChangeAgentTag(tag) {
-<<<<<<< HEAD
         if (obj.agentInfo.capabilities & 0x40) return;
         if ((tag != null) && (tag.length == 0)) { tag = null; }
 
         // If the device is pending a change, hold.
         if (obj.deviceChanging === true) { setTimeout(function () { ChangeAgentCoreInfo(command); }, 100); return; }
-=======
-        if ((obj.agentInfo == null) || (obj.agentInfo.capabilities & 0x40)) return;
-        if ((tag != null) && (tag.length == 0)) { tag = null; }
-
-        // If the device is pending a change, hold.
-        if (obj.deviceChanging === true) {
-            var func = function ChangeAgentTagFunc() { ChangeAgentCoreInfo(ChangeAgentTagFunc.tag); }
-            func.tag = tag;
-            setTimeout(func, 100);
-            return;
-        }
->>>>>>> upstream/master
         obj.deviceChanging = true;
 
         // Get the node and change it if needed
@@ -2016,27 +1646,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         });
     }
 
-<<<<<<< HEAD
-=======
-    // Check if we need to update this agent, return true if agent binary update required.
-    // Return 0 is no update needed, 1 update using native system, 2 update using meshcore system
-    function compareAgentBinaryHash(agentExeInfo, agentHash) {
-        // If we are testing the agent update system, always return true
-        if ((args.agentupdatetest === true) || (args.agentupdatetest === 1)) return 1;
-        if (args.agentupdatetest === 2) return 2;
-        // If the hash matches or is null, no update required.
-        if ((agentExeInfo.hash == agentHash) || (agentHash == '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0')) return 0;
-        // If this is a macOS x86 or ARM agent type and it matched the universal binary, no update required.
-        if (((agentExeInfo.id == 16) || (agentExeInfo.id == 29)) && (parent.parent.meshAgentBinaries[10005].hash == agentHash)) return 0;
-
-        // No match, update the agent.
-        // NOTE: Windows agents with no commit dates may have bad native update system, so use meshcore system instead.
-        // NOTE: Windows agents with commit date prior to 1612740413000 did not kill all "meshagent.exe" processes and update could fail as a result executable being locked, meshcore system will do this.
-        if (((obj.AgentCommitDate == null) || (obj.AgentCommitDate < 1612740413000)) && ((agentExeInfo.id == 3) || (agentExeInfo.id == 4))) return 2; // For older Windows agents, use the meshcore update technique.
-        return 1; // By default, use the native update technique.
-    }
-
->>>>>>> upstream/master
     // Request that the core dump file on this agent be uploaded to the server
     obj.RequestCoreDump = function (agenthashhex, corehashhex) {
         if (agenthashhex.length > 16) { agenthashhex = agenthashhex.substring(0, 16); }
@@ -2044,30 +1653,6 @@ module.exports.CreateMeshAgent = function (parent, db, ws, req, args, domain) {
         obj.send('{"action":"msg","type":"tunnel","value":"*/' + (((domain.dns == null) && (domain.id != '')) ? (domain.id + '/') : '') + 'agenttransfer.ashx?c=' + cookie + '","rights":"4294967295"}');
     }
 
-<<<<<<< HEAD
-=======
-    // Return true if we need to ignore the agent hash check
-    function isIgnoreHashCheck() {
-        if ((args.ignoreagenthashcheck === true) || (domain.ignoreagenthashcheck === true)) return true;
-
-        // Check site wide exceptions
-        if (Array.isArray(args.ignoreagenthashcheck)) {
-            for (var i = 0; i < args.ignoreagenthashcheck.length; i++) {
-                if (require('ipcheck').match(obj.remoteaddr, args.ignoreagenthashcheck[i])) return true;
-            }
-        }
-
-        // Check domain wide exceptions
-        if (Array.isArray(domain.ignoreagenthashcheck)) {
-            for (var i = 0; i < domain.ignoreagenthashcheck.length; i++) {
-                if (require('ipcheck').match(obj.remoteaddr, domain.ignoreagenthashcheck[i])) return true;
-            }
-        }
-
-        return false;
-    }
-
->>>>>>> upstream/master
     // Generate a random Intel AMT password
     function checkAmtPassword(p) { return (p.length > 7) && (/\d/.test(p)) && (/[a-z]/.test(p)) && (/[A-Z]/.test(p)) && (/\W/.test(p)); }
     function getRandomAmtPassword() { var p; do { p = Buffer.from(parent.crypto.randomBytes(9), 'binary').toString('base64').split('/').join('@'); } while (checkAmtPassword(p) == false); return p; }
